@@ -1,279 +1,58 @@
-# 🍽️ SRMS — Smart Restaurant Management System
+<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-SRMS (Smart Restaurant Management System) is a web-based restaurant management system built with **Laravel**.
+<p align="center">
+<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
+<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+</p>
 
-The system helps restaurants manage their tables, QR menus, categories, products, and customer orders through a centralized management system.
+## About Laravel
 
----
+Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
-## 📌 Project Overview
+- [Simple, fast routing engine](https://laravel.com/docs/routing).
+- [Powerful dependency injection container](https://laravel.com/docs/container).
+- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
+- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
+- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
+- [Robust background job processing](https://laravel.com/docs/queues).
+- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-SRMS provides a digital ordering experience using **QR Codes assigned to restaurant tables**.
+Laravel is accessible, powerful, and provides tools required for large, robust applications.
 
-Each table has a unique QR Code. When a customer scans the QR Code, the system automatically identifies the table and displays the restaurant's digital menu.
+## Learning Laravel
 
-The customer can browse products, add items to their order, and place an order directly from their table.
+Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
 
-At the same time, restaurant staff can manage the restaurant's data and monitor orders through the management system.
+In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
 
----
+You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
 
-## ✨ Features
+## Agentic Development
 
-### 🪑 Table Management
-
-* Create and manage restaurant tables
-* Set table capacity
-* Manage table status
-* Generate a unique QR token for each table
-* Access the menu through the table's QR Code
-
-### 📱 QR Menu
-
-* Unique QR Code for every table
-* Automatically identify the table
-* Display the restaurant's digital menu
-* Browse products by category
-
-### 📂 Category Management
-
-* Create categories
-* Edit categories
-* Delete categories
-* Activate or deactivate categories
-
-### 🍔 Product Management
-
-* Create products
-* Edit products
-* Delete products
-* Assign products to categories
-* Manage product availability
-
-### 🛒 Order Management
-
-* Create orders from the digital menu
-* Associate orders with restaurant tables
-* Add multiple products to an order
-* Calculate order totals
-* Manage order status
-
-### 💰 Cash & Payment Management
-
-* Record physical cash collected by employees
-* Compare physical cash with cash sales
-* Calculate cash shortage or surplus
-* Track total Visa/Card payments
-
----
-
-## 🛠️ Technologies
-
-* **Laravel 13**
-* **PHP 8.3+**
-* **MySQL**
-* **Blade**
-* **Tailwind CSS**
-* **JavaScript**
-* **Composer**
-* **Simple QR Code**
-
----
-
-## 🏗️ Project Architecture
-
-The project follows a structured Laravel architecture with separated responsibilities.
-
-```text
-Controller
-    ↓
-Service
-    ↓
-Model
-    ↓
-Database
-```
-
-Services are used to keep business logic separated from controllers.
-
-Example:
-
-```text
-RestaurantTableController
-        ↓
-    TableService
-        ↓
- RestaurantTable
-        ↓
- restaurant_tables
-```
-
-This approach makes the project easier to maintain, extend, and debug.
-
----
-
-## 📂 Main Modules
-
-```text
-Authentication
-│
-├── Tables
-│   └── QR Codes
-│
-├── Categories
-│
-├── Products
-│
-├── Menu
-│
-├── Orders
-│
-└── Cash Reconciliation
-```
-
----
-
-## ⚙️ Installation
-
-### 1. Clone the repository
+Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/srms.git
+composer require laravel/boost --dev
+
+php artisan boost:install
 ```
 
-### 2. Enter the project directory
+Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
 
-```bash
-cd srms
-```
+## Contributing
 
-### 3. Install PHP dependencies
+Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
 
-```bash
-composer install
-```
+## Code of Conduct
 
-### 4. Install frontend dependencies
+In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-```bash
-npm install
-```
+## Security Vulnerabilities
 
-### 5. Create the environment file
+If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
 
-```bash
-cp .env.example .env
-```
+## License
 
-### 6. Generate the application key
-
-```bash
-php artisan key:generate
-```
-
-### 7. Configure the database
-
-Open `.env` and configure your database:
-
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=srms
-DB_USERNAME=root
-DB_PASSWORD=
-```
-
-Change the values according to your local environment.
-
-### 8. Run migrations
-
-```bash
-php artisan migrate
-```
-
-### 9. Create storage link
-
-```bash
-php artisan storage:link
-```
-
-### 10. Start the Laravel server
-
-```bash
-php artisan serve
-```
-
-The application will be available at:
-
-```text
-http://127.0.0.1:8000
-```
-
----
-
-## 🧑‍💻 Development
-
-For frontend development, run:
-
-```bash
-npm run dev
-```
-
-Then in another terminal:
-
-```bash
-php artisan serve
-```
-
----
-
-## 🔐 Security
-
-The system is designed with security and data separation in mind.
-
-Important areas include:
-
-* Authentication
-* CSRF protection
-* Request validation
-* Unique QR tokens
-* Server-side order validation
-* Table/order relationship validation
-* Authorization for management features
-
-Security considerations will continue to be improved as the project develops.
-
----
-
-## 🚧 Project Status
-
-**In Development**
-
-The project is currently under active development.
-
-Planned improvements include:
-
-* Improved order session management
-* More advanced order tracking
-* Restaurant dashboard improvements
-* Payment reporting
-* Better role and permission management
-* UI/UX improvements
-* Additional security hardening
-
----
-
-## 🎯 Goal
-
-The main goal of SRMS is to provide restaurants with a simple digital system that connects:
-
-**Tables → QR Codes → Digital Menu → Orders → Restaurant Management**
-
-while reducing manual ordering and providing restaurant staff with better control over daily operations.
-
----
-
-## 📄 License
-
-This project is currently for educational and development purposes.
+The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
