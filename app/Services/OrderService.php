@@ -124,6 +124,7 @@ class OrderService
 
                 $order->items()->create([
                     'product_id' => $product->id,
+                    'product_name' => $product->name,
                     'quantity' => $item['quantity'],
                     'unit_price' => $unitPrice,
                     'subtotal' => $subtotal,
@@ -335,6 +336,7 @@ class OrderService
 
                 $order->items()->create([
                     'product_id' => $product->id,
+                    'product_name' => $product->name,
                     'quantity' => $item['quantity'],
                     'unit_price' => $unitPrice,
                     'subtotal' => $subtotal,
