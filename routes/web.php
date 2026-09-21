@@ -27,6 +27,22 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+/*
+|--------------------------------------------------------------------------
+| Interface Language
+|--------------------------------------------------------------------------
+| Stores the chosen locale in the session and returns the visitor to the
+| page they were reading. Works for staff and QR-menu guests alike.
+*/
+
+Route::get('/locale/{locale}', function (string $locale) {
+    if (in_array($locale, \App\Http\Middleware\SetLocale::SUPPORTED, true)) {
+        session(['locale' => $locale]);
+    }
+
+    return back();
+})->name('locale.switch');
+
 
 Route::get('/tables/{table}/qr', [QrCodeController::class, 'show'])
     ->name('tables.qr');

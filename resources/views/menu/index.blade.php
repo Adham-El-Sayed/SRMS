@@ -1,6 +1,6 @@
 @extends('layouts.menu')
 
-@section('title', 'Restaurant Menu')
+@section('title', __('Restaurant Menu'))
 
 @section('content')
 
@@ -17,17 +17,17 @@
         <div class="page-header">
 
             <div>
-                <h1>Restaurant Menu</h1>
+                <h1>{{ __('Restaurant Menu') }}</h1>
 
                 <p>
-                    Choose your favorite items and create your order.
+                    {{ __('Choose your favorite items and create your order.') }}
                 </p>
             </div>
 
             @if(isset($table))
 
                 <div class="table-badge">
-                    Table #{{ $table->number }}
+                    {{ __('Table #') }}{{ $table->number }}
                 </div>
 
             @endif
@@ -46,17 +46,17 @@
                 <div class="table-info-main">
 
                     <div class="table-icon">
-                        T
+                        {{ __('T') }}
                     </div>
 
                     <div>
 
                         <h2>
-                            Table {{ $table->number }}
+                            {{ __('Table') }} {{ $table->number }}
                         </h2>
 
                         <p>
-                            Ready to take your order
+                            {{ __('Ready to take your order') }}
                         </p>
 
                     </div>
@@ -69,11 +69,11 @@
                     <div class="table-detail">
 
                         <span>
-                            Capacity
+                            {{ __('Capacity') }}
                         </span>
 
                         <strong>
-                            {{ $table->capacity }} Guests
+                            {{ $table->capacity }} {{ __('Guests') }}
                         </strong>
 
                     </div>
@@ -82,13 +82,13 @@
                     <div class="table-detail">
 
                         <span>
-                            Status
+                            {{ __('Status') }}
                         </span>
 
                         <strong
                             class="table-status {{ $table->status->value ?? $table->status }}"
                         >
-                            {{ ucfirst($table->status->value ?? $table->status) }}
+                            {{ __(ucfirst($table->status->value ?? $table->status)) }}
                         </strong>
 
                     </div>
@@ -106,7 +106,9 @@
 
         @forelse($menu as $category)
 
-            <section class="category">
+            @php $shown = max($category->products->count(), 1); @endphp
+
+            <section class="category" style="--n3: {{ min($shown, 3) }}; --n2: {{ min($shown, 2) }};">
 
                 {{-- Category Header --}}
 
@@ -157,7 +159,7 @@
 
                         {{ $category->products->count() }}
 
-                        {{ $category->products->count() === 1 ? 'Item' : 'Items' }}
+                        {{ __($category->products->count() === 1 ? 'Item' : 'Items') }}
 
                     </span>
 
@@ -200,7 +202,7 @@
 
 
                                 <span class="available-badge">
-                                    Available
+                                    {{ __('Available') }}
                                 </span>
 
                             </div>
@@ -217,7 +219,7 @@
 
                                 <p class="product-description">
 
-                                    {{ $product->description ?? 'No description available.' }}
+                                    {{ __($product->description ?? 'No description available.') }}
 
                                 </p>
 
@@ -233,7 +235,7 @@
                                     {{ number_format($product->price, 2) }}
 
                                     <span>
-                                        EGP
+                                        {{ __('EGP') }}
                                     </span>
 
                                 </div>
@@ -248,7 +250,7 @@
                                         data-product-name="{{ $product->name }}"
                                         data-product-price="{{ $product->price }}"
                                     >
-                                        + Add
+                                        {{ __('+ Add') }}
                                     </button>
 
                                 @endif
@@ -262,7 +264,7 @@
                         <div class="no-products">
 
                             <p>
-                                No products available in this category.
+                                {{ __('No products available in this category.') }}
                             </p>
 
                         </div>
@@ -284,11 +286,11 @@
                 </div>
 
                 <h2>
-                    No Menu Available
+                    {{ __('No Menu Available') }}
                 </h2>
 
                 <p>
-                    There are currently no menu items available.
+                    {{ __('There are currently no menu items available.') }}
                 </p>
 
             </div>
@@ -309,11 +311,11 @@
                     <div>
 
                         <h2>
-                            Your Order
+                            {{ __('Your Order') }}
                         </h2>
 
                         <p>
-                            Review your items before submitting.
+                            {{ __('Review your items before submitting.') }}
                         </p>
 
                     </div>
@@ -323,7 +325,7 @@
                         class="order-count"
                         id="order-count"
                     >
-                        0 Items
+                        0 {{ __('Items') }}
                     </span>
 
                 </div>
@@ -340,11 +342,11 @@
                         </div>
 
                         <p>
-                            Your order is empty.
+                            {{ __('Your order is empty.') }}
                         </p>
 
                         <span>
-                            Add items from the menu above.
+                            {{ __('Add items from the menu above.') }}
                         </span>
 
                     </div>
@@ -357,11 +359,11 @@
                 <div class="order-total">
 
                     <span>
-                        Total
+                        {{ __('Total') }}
                     </span>
 
                     <span id="order-total">
-                        0.00 EGP
+                        0.00 {{ __('EGP') }}
                     </span>
 
                 </div>
@@ -374,13 +376,13 @@
                     <input
                         type="text"
                         id="client-name"
-                        placeholder="Name (optional)"
+                        placeholder="{{ __('Name (optional)') }}"
                     >
 
                     <input
                         type="tel"
                         id="client-phone"
-                        placeholder="Phone Number (optional)"
+                        placeholder="{{ __('Phone Number (optional)') }}"
                     >
 
                 </div>
@@ -392,12 +394,12 @@
 
                     <label>
                         <input type="radio" name="payment_method" value="cash" checked>
-                        cash
+                        {{ __('cash') }}
                     </label>
 
                     <label>
                         <input type="radio" name="payment_method" value="card">
-                        Visa
+                        {{ __('Visa') }}
                     </label>
 
                 </div>
@@ -411,7 +413,7 @@
                     class="submit-button"
                     disabled
                 >
-                    Submit Order
+                    {{ __('Submit Order') }}
                 </button>
 
 
@@ -430,9 +432,9 @@
 
                 <div class="order-header">
                     <div>
-                        <h2>Order #<span id="submitted-order-id"></span></h2>
+                        <h2>{{ __('Order #') }}<span id="submitted-order-id"></span></h2>
                         <p id="edit-window-status">
-                            You can still edit this order for
+                            {{ __('You can still edit this order for') }}
                             <strong><span id="edit-timer">2:30</span></strong>
                         </p>
                     </div>
@@ -441,12 +443,12 @@
                 <div id="submitted-order-items"></div>
 
                 <div class="order-total">
-                    <span>Total</span>
-                    <span id="submitted-order-total">0.00 EGP</span>
+                    <span>{{ __('Total') }}</span>
+                    <span id="submitted-order-total">0.00 {{ __('EGP') }}</span>
                 </div>
 
                 <button type="button" id="save-changes-button" class="submit-button">
-                    Save Changes
+                    {{ __('Save Changes') }}
                 </button>
 
                 <button
@@ -455,7 +457,7 @@
                     class="submit-button"
                     style="display:none; background:#dc2626;"
                 >
-                    Request Waiter
+                    {{ __('Request Waiter') }}
                 </button>
 
                 <div id="submitted-message"></div>
@@ -477,57 +479,57 @@
 
             <div class="payment-modal">
 
-                <h2>Pay with Visa</h2>
+                <h2>{{ __('Pay with Visa') }}</h2>
 
                 <p class="payment-modal-amount">
-                    Amount: <strong id="payment-modal-amount">0.00 EGP</strong>
+                    {{ __('Amount') }}: <strong id="payment-modal-amount">0.00 {{ __('EGP') }}</strong>
                 </p>
 
                 <button type="button" id="scan-card-button" class="scan-card-button">
-                    📷 Scan Card with Camera
+                    📷 {{ __('Scan Card with Camera') }}
                 </button>
 
                 <div id="camera-scan-container" class="camera-scan-container" style="display:none;">
                     <video id="camera-video" autoplay playsinline></video>
                     <div class="camera-scan-frame"></div>
-                    <p id="camera-scan-status">Point your camera at the card...</p>
+                    <p id="camera-scan-status">{{ __('Point your camera at the card...') }}</p>
                     <button type="button" id="cancel-scan-button" class="cancel-payment-button">
-                        Cancel Scan
+                        {{ __('Cancel Scan') }}
                     </button>
                 </div>
 
                 <div class="payment-field">
-                    <label>Card Number</label>
+                    <label>{{ __('Card Number') }}</label>
                     <input type="text" id="card-number" placeholder="4242 4242 4242 4242" maxlength="19">
                 </div>
 
                 <div class="payment-field-row">
 
                     <div class="payment-field">
-                        <label>Expiry</label>
-                        <input type="text" id="card-expiry" placeholder="MM/YY" maxlength="5">
+                        <label>{{ __('Expiry') }}</label>
+                        <input type="text" id="card-expiry" placeholder="{{ __('MM/YY') }}" maxlength="5">
                     </div>
 
                     <div class="payment-field">
-                        <label>CVV</label>
+                        <label>{{ __('CVV') }}</label>
                         <input type="text" id="card-cvv" placeholder="123" maxlength="3">
                     </div>
 
                 </div>
 
                 <div class="payment-field">
-                    <label>Cardholder Name</label>
-                    <input type="text" id="card-name" placeholder="Name on card">
+                    <label>{{ __('Cardholder Name') }}</label>
+                    <input type="text" id="card-name" placeholder="{{ __('Name on card') }}">
                 </div>
 
                 <div id="payment-modal-error" class="payment-modal-error"></div>
 
                 <button type="button" id="pay-now-button" class="submit-button">
-                    Pay Now
+                    {{ __('Pay Now') }}
                 </button>
 
                 <button type="button" id="cancel-payment-button" class="cancel-payment-button">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
 
             </div>
@@ -2063,8 +2065,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 totalQuantity +
                 (
                     totalQuantity === 1
-                        ? ' Item'
-                        : ' Items'
+                        ? ' ' + __t('Item')
+                        : ' ' + __t('Items')
                 );
 
         }
@@ -2083,11 +2085,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
 
                         <p>
-                            Your order is empty.
+                            ${__t('Your order is empty.')}
                         </p>
 
                         <span>
-                            Add items from the menu above.
+                            ${__t('Add items from the menu above.')}
                         </span>
 
                     </div>
@@ -2100,7 +2102,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (orderTotalElement) {
 
                 orderTotalElement.textContent =
-                    '0.00 EGP';
+                    '0.00 ' + __t('EGP');
 
             }
 
@@ -2110,7 +2112,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 submitButton.disabled = true;
 
                 submitButton.textContent =
-                    'Submit Order';
+                    __t('Submit Order');
 
             }
 
@@ -2146,7 +2148,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
 
                             <div class="order-item-price">
-                                ${item.price.toFixed(2)} EGP each
+                                ${item.price.toFixed(2)} ${__t('EGP each')}
                             </div>
 
                         </div>
@@ -2182,7 +2184,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                         <strong class="item-subtotal">
-                            ${subtotal.toFixed(2)} EGP
+                            ${subtotal.toFixed(2)} ${__t('EGP')}
                         </strong>
 
 
@@ -2192,14 +2194,14 @@ document.addEventListener('DOMContentLoaded', function () {
                             data-action="remove"
                             data-index="${index}"
                         >
-                            Remove
+                            ${__t('Remove')}
                         </button>
 
 
                         <input
                             type="text"
                             class="item-notes"
-                            placeholder="Notes (e.g., without tomatoes)"
+                            placeholder="${__t('Notes (e.g., without tomatoes)')}"
                             data-index="${index}"
                             value="${item.notes ? escapeHtml(item.notes) : ''}"
                         >
@@ -2224,7 +2226,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             orderTotalElement.textContent =
                 total.toFixed(2) +
-                ' EGP';
+                ' ' + __t('EGP');
 
         }
 
@@ -2373,7 +2375,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!tableId) {
 
                     showMessage(
-                        'Table information is missing.',
+                        __t('Table information is missing.'),
                         'error'
                     );
 
@@ -2420,7 +2422,7 @@ document.addEventListener('DOMContentLoaded', function () {
         submitButton.disabled = true;
 
         submitButton.textContent =
-            'Submitting...';
+            __t('Submitting...');
 
 
         hideMessage();
@@ -2502,7 +2504,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 showMessage(
                     data.message ||
-                    'Failed to create order.',
+                    __t('Failed to create order.'),
                     'error'
                 );
 
@@ -2512,7 +2514,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                 submitButton.textContent =
-                    'Submit Order';
+                    __t('Submit Order');
 
 
                 return false;
@@ -2537,9 +2539,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             showMessage(
-                'Order #' +
+                __t('Order #') +
                 data.order.id +
-                ' created successfully!',
+                ' ' + __t('created successfully!'),
                 'success'
             );
 
@@ -2549,7 +2551,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             submitButton.textContent =
-                'Submit Order';
+                __t('Submit Order');
 
 
             startEditWindow(data.order);
@@ -2564,7 +2566,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             showMessage(
-                'Something went wrong while submitting the order.',
+                __t('Something went wrong while submitting the order.'),
                 'error'
             );
 
@@ -2574,7 +2576,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             submitButton.textContent =
-                'Submit Order';
+                __t('Submit Order');
 
 
             return false;
@@ -2607,7 +2609,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         paymentModalAmount.textContent =
-            total.toFixed(2) + ' EGP';
+            total.toFixed(2) + ' ' + __t('EGP');
 
 
         cardNumberInput.value = '';
@@ -2624,7 +2626,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         payNowButton.disabled = false;
 
-        payNowButton.textContent = 'Pay Now';
+        payNowButton.textContent = __t('Pay Now');
 
 
         paymentModalOverlay.style.display = 'flex';
@@ -2717,7 +2719,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (cardNumber.length < 12 || !/^\d+$/.test(cardNumber)) {
 
                     showPaymentModalError(
-                        'Please enter a valid card number.'
+                        __t('Please enter a valid card number.')
                     );
 
                     return;
@@ -2728,7 +2730,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (! /^\d{2}\/\d{2}$/.test(expiry)) {
 
                     showPaymentModalError(
-                        'Please enter expiry as MM/YY.'
+                        __t('Please enter expiry as MM/YY.')
                     );
 
                     return;
@@ -2739,7 +2741,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (! /^\d{3}$/.test(cvv)) {
 
                     showPaymentModalError(
-                        'Please enter a valid 3-digit CVV.'
+                        __t('Please enter a valid 3-digit CVV.')
                     );
 
                     return;
@@ -2750,7 +2752,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (! name) {
 
                     showPaymentModalError(
-                        'Please enter the cardholder name.'
+                        __t('Please enter the cardholder name.')
                     );
 
                     return;
@@ -2760,7 +2762,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 payNowButton.disabled = true;
 
-                payNowButton.textContent = 'Processing Payment...';
+                payNowButton.textContent = __t('Processing Payment...');
 
 
                 // Simulated payment processing delay.
@@ -2781,10 +2783,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                             payNowButton.disabled = false;
 
-                            payNowButton.textContent = 'Pay Now';
+                            payNowButton.textContent = __t('Pay Now');
 
                             showPaymentModalError(
-                                'Payment succeeded but the order failed to save. Please contact staff.'
+                                __t('Payment succeeded but the order failed to save. Please contact staff.')
                             );
 
                         }
@@ -2823,7 +2825,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         name: item.product
                             ? item.product.name
-                            : 'Unknown Product',
+                            : __t('Unknown Product'),
 
                         price: Number(item.unit_price),
 
@@ -2848,7 +2850,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         saveChangesButton.disabled = false;
 
-        saveChangesButton.textContent = 'Save Changes';
+        saveChangesButton.textContent = __t('Save Changes');
 
 
         requestHelpButton.style.display = 'none';
@@ -2928,7 +2930,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             editWindowStatus.textContent =
-                'The edit window has expired.';
+                __t('The edit window has expired.');
 
 
             saveChangesButton.style.display = 'none';
@@ -2973,7 +2975,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
 
                             <div class="order-item-price">
-                                ${item.price.toFixed(2)} EGP each
+                                ${item.price.toFixed(2)} ${__t('EGP each')}
                             </div>
 
                         </div>
@@ -3009,7 +3011,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                         <strong class="item-subtotal">
-                            ${subtotal.toFixed(2)} EGP
+                            ${subtotal.toFixed(2)} ${__t('EGP')}
                         </strong>
 
 
@@ -3019,14 +3021,14 @@ document.addEventListener('DOMContentLoaded', function () {
                             data-sub-action="remove"
                             data-sub-index="${index}"
                         >
-                            Remove
+                            ${__t('Remove')}
                         </button>
 
 
                         <input
                             type="text"
                             class="item-notes"
-                            placeholder="Notes (e.g., without tomatoes)"
+                            placeholder="${__t('Notes (e.g., without tomatoes)')}"
                             data-sub-index="${index}"
                             value="${item.notes ? escapeHtml(item.notes) : ''}"
                         >
@@ -3051,7 +3053,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             submittedTotalElement.textContent =
                 total.toFixed(2) +
-                ' EGP';
+                ' ' + __t('EGP');
 
         }
 
@@ -3187,7 +3189,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (submittedItems.length === 0) {
 
                     showSubmittedMessage(
-                        'Order must have at least one item.',
+                        __t('Order must have at least one item.'),
                         'error'
                     );
 
@@ -3198,7 +3200,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 saveChangesButton.disabled = true;
 
-                saveChangesButton.textContent = 'Saving...';
+                saveChangesButton.textContent = __t('Saving...');
 
 
                 hideSubmittedMessage();
@@ -3258,14 +3260,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         showSubmittedMessage(
                             data.message ||
-                            'Failed to update order.',
+                            __t('Failed to update order.'),
                             'error'
                         );
 
 
                         saveChangesButton.disabled = false;
 
-                        saveChangesButton.textContent = 'Save Changes';
+                        saveChangesButton.textContent = __t('Save Changes');
 
 
                         return;
@@ -3274,14 +3276,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                     showSubmittedMessage(
-                        'Order updated successfully!',
+                        __t('Order updated successfully!'),
                         'success'
                     );
 
 
                     saveChangesButton.disabled = false;
 
-                    saveChangesButton.textContent = 'Save Changes';
+                    saveChangesButton.textContent = __t('Save Changes');
 
 
                 } catch (error) {
@@ -3290,14 +3292,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                     showSubmittedMessage(
-                        'Something went wrong while saving changes.',
+                        __t('Something went wrong while saving changes.'),
                         'error'
                     );
 
 
                     saveChangesButton.disabled = false;
 
-                    saveChangesButton.textContent = 'Save Changes';
+                    saveChangesButton.textContent = __t('Save Changes');
 
                 }
 
@@ -3324,7 +3326,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 requestHelpButton.disabled = true;
 
-                requestHelpButton.textContent = 'Notifying...';
+                requestHelpButton.textContent = __t('Notifying...');
 
 
                 hideSubmittedMessage();
@@ -3359,13 +3361,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     showSubmittedMessage(
                         data.message ||
-                        'The waiter has been notified.',
+                        __t('The waiter has been notified.'),
                         'success'
                     );
 
 
                     requestHelpButton.textContent =
-                        'Waiter Notified';
+                        __t('Waiter Notified');
 
 
                 } catch (error) {
@@ -3374,7 +3376,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                     showSubmittedMessage(
-                        'Something went wrong. Please try again.',
+                        __t('Something went wrong. Please try again.'),
                         'error'
                     );
 
@@ -3382,7 +3384,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     requestHelpButton.disabled = false;
 
                     requestHelpButton.textContent =
-                        'Request Waiter';
+                        __t('Request Waiter');
 
                 }
 
@@ -3485,7 +3487,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (! navigator.mediaDevices || ! navigator.mediaDevices.getUserMedia) {
 
                     showPaymentModalError(
-                        'Camera is not supported on this device/browser.'
+                        __t('Camera is not supported on this device/browser.')
                     );
 
                     return;
@@ -3509,14 +3511,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     scanCardButton.style.display = 'none';
 
                     cameraScanStatus.textContent =
-                        'Point your camera at the card...';
+                        __t('Point your camera at the card...');
 
 
                     setTimeout(
                         function () {
 
                             cameraScanStatus.textContent =
-                                'Scanning...';
+                                __t('Scanning...');
 
                         },
                         1200
@@ -3543,7 +3545,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 cardNameInput.value =
                                     clientNameInput && clientNameInput.value
                                         ? clientNameInput.value
-                                        : 'Card Holder';
+                                        : __t('Card Holder');
 
                             }
 
@@ -3558,7 +3560,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                     showPaymentModalError(
-                        'Camera access was denied. Please enter card details manually.'
+                        __t('Camera access was denied. Please enter card details manually.')
                     );
 
                 }

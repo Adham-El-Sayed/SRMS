@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Category')
+@section('title', __('Edit Category'))
 
 @section('content')
 
 <div class="page-header">
 
     <div>
-        <h1>Edit Category</h1>
-        <p>Update category information.</p>
+        <h1>{{ __('Edit Category') }}</h1>
+        <p>{{ __('Update category information.') }}</p>
     </div>
 
     <a href="{{ route('categories.index') }}" class="back-btn">
-        ← Back to Categories
+        ← {{ __('Back to Categories') }}
     </a>
 
 </div>
@@ -33,7 +33,7 @@
         <div class="form-group">
 
             <label for="name">
-                Category Name
+                {{ __('Category Name') }}
             </label>
 
             <input
@@ -56,7 +56,7 @@
         <div class="form-group">
 
             <label for="description">
-                Description
+                {{ __('Description') }}
             </label>
 
             <textarea
@@ -85,7 +85,7 @@
             >
 
             <label for="is_active">
-                Active Category
+                {{ __('Active Category') }}
             </label>
 
         </div>
@@ -94,14 +94,14 @@
         <div class="form-actions">
 
             <button type="submit" class="save-btn">
-                Update Category
+                {{ __('Update Category') }}
             </button>
 
             <a
                 href="{{ route('categories.index') }}"
                 class="cancel-btn"
             >
-                Cancel
+                {{ __('Cancel') }}
             </a>
 
         </div>

@@ -1,0 +1,1576 @@
+/* ==========================================================================
+   SRMS — Design System
+   A warm, appetite-forward theme for the Smart Restaurant Management System.
+   Loaded after page-level styles so it governs the whole application.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Tokens
+   -------------------------------------------------------------------------- */
+
+:root {
+    /* Ink & paper */
+    --ink:          #241D18;
+    --ink-soft:     #4E443C;
+    --muted:        #8A7D71;
+    --paper:        #FAF6F0;
+    --surface:      #FFFFFF;
+    --surface-sunk: #F4EEE5;
+    --line:         #E9DFD2;
+    --line-strong:  #D8CABA;
+
+    /* Brand */
+    --accent:       #BD4E2C;
+    --accent-dark:  #9C3B1E;
+    --accent-soft:  #FBEBE4;
+    --olive:        #5E6E4C;
+    --olive-soft:   #EDF1E6;
+    --amber:        #C1871C;
+    --amber-soft:   #FBF0DA;
+
+    /* Status */
+    --ok:           #3C7A4E;
+    --ok-soft:      #E7F2EA;
+    --warn:         #B07B14;
+    --warn-soft:    #FBF0DA;
+    --danger:       #AE3527;
+    --danger-soft:  #FBE9E6;
+    --info:         #3B6382;
+    --info-soft:    #E8F0F5;
+
+    /* Type */
+    --font-display: 'Fraunces', 'IBM Plex Sans Arabic', Georgia, serif;
+    --font-sans:    'Plus Jakarta Sans', 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Shape */
+    --r-xs: 6px;
+    --r-sm: 9px;
+    --r:    13px;
+    --r-lg: 18px;
+
+    /* Elevation — warm, low, layered */
+    --sh-1: 0 1px 2px rgba(60, 40, 25, .05), 0 1px 1px rgba(60, 40, 25, .04);
+    --sh-2: 0 2px 4px rgba(60, 40, 25, .05), 0 6px 14px -6px rgba(60, 40, 25, .10);
+    --sh-3: 0 4px 8px rgba(60, 40, 25, .06), 0 18px 34px -14px rgba(60, 40, 25, .18);
+
+    --ring: 0 0 0 3px rgba(189, 78, 44, .16);
+}
+
+/* Arabic tunes the scale a touch — Arabic glyphs read smaller at equal size */
+html[lang="ar"] {
+    --font-display: 'IBM Plex Sans Arabic', 'Fraunces', serif;
+    --font-sans:    'IBM Plex Sans Arabic', 'Plus Jakarta Sans', sans-serif;
+}
+
+
+/* --------------------------------------------------------------------------
+   2. Base
+   -------------------------------------------------------------------------- */
+
+body {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink);
+    background-color: var(--paper);
+    /* A barely-there warm grain so flat areas are not dead flat */
+    background-image:
+        radial-gradient(circle at 12% 8%,  rgba(189, 78, 44, .045), transparent 42%),
+        radial-gradient(circle at 88% 0%,  rgba(193, 135, 28, .05), transparent 38%);
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+body h1, body h2, body h3, body h4 {
+    font-family: var(--font-display);
+    color: var(--ink);
+    letter-spacing: -.015em;
+    font-weight: 600;
+}
+
+html[lang="ar"] body h1,
+html[lang="ar"] body h2,
+html[lang="ar"] body h3,
+html[lang="ar"] body h4 { letter-spacing: 0; font-weight: 700; }
+
+body h1 { font-size: clamp(27px, 3.4vw, 36px); line-height: 1.18; }
+body h2 { font-size: clamp(21px, 2.4vw, 26px); line-height: 1.25; }
+body h3 { font-size: 18px; line-height: 1.35; }
+
+body a { color: var(--accent); }
+
+body ::selection { background: var(--accent-soft); color: var(--accent-dark); }
+
+body :focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+    border-radius: var(--r-xs);
+}
+
+/* Prices, counts and totals line up in columns */
+body .price, body .product-price, body .item-price, body .order-total,
+body .total, body .card-value, body .value, body .payment-modal-amount,
+body .item-subtotal, body .revenue, body table td {
+    font-variant-numeric: tabular-nums;
+}
+
+
+/* --------------------------------------------------------------------------
+   3. Application shell
+   -------------------------------------------------------------------------- */
+
+body .page-content {
+    width: min(94%, 1240px);
+    margin: 38px auto 0;
+    padding-bottom: 72px;
+}
+
+body .site-footer {
+    margin-top: 0;
+    padding: 26px 5% 34px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    border-top: 1px solid var(--line);
+}
+
+
+/* --------------------------------------------------------------------------
+   4. Page headers
+   -------------------------------------------------------------------------- */
+
+body .page-header,
+body .header {
+    margin-bottom: 30px;
+}
+
+body .page-header h1,
+body .header h1,
+body .page-title {
+    margin: 0;
+}
+
+body .page-header p,
+body .header p {
+    margin: 9px 0 0;
+    color: var(--muted);
+    font-size: 15.5px;
+    max-width: 62ch;
+}
+
+/* Small uppercase eyebrow above a title */
+body .page-kicker,
+body .modal-kicker {
+    display: inline-block;
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 8px;
+}
+
+html[lang="ar"] body .page-kicker,
+html[lang="ar"] body .modal-kicker { letter-spacing: 0; }
+
+/* Section titles carry a short accent rule instead of a heavy border */
+body .section-title,
+body .products-title,
+body .category-heading-text {
+    position: relative;
+    margin: 42px 0 20px;
+    padding-bottom: 12px;
+    font-size: 22px;
+}
+
+body .section-title::after,
+body .products-title::after,
+body .category-heading-text::after {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    bottom: 0;
+    width: 42px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--accent);
+}
+
+
+/* --------------------------------------------------------------------------
+   5. Surfaces
+   -------------------------------------------------------------------------- */
+
+body .card,
+body .table-card,
+body .product-card,
+body .category-card,
+body .order-card,
+body .order-box,
+body .summary-card,
+body .report-card,
+body .alert-card,
+body .table-wrapper,
+body .qr-container,
+body .menu-page .table-info,
+body .notes-box,
+body .products-section,
+body .scan-card-button {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    box-shadow: var(--sh-1);
+    transition: box-shadow .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+body .card,
+body .summary-card,
+body .report-card {
+    padding: 22px 24px;
+}
+
+body .card-title,
+body .info-label,
+body .label,
+body .summary-card .label {
+    color: var(--muted);
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+html[lang="ar"] body .card-title,
+html[lang="ar"] body .info-label,
+html[lang="ar"] body .label { letter-spacing: 0; text-transform: none; font-size: 13.5px; }
+
+body .card-value,
+body .value,
+body .summary-card .value {
+    font-family: var(--font-display);
+    font-size: 31px;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--ink);
+}
+
+body .revenue { color: var(--ok); }
+body .surplus { color: var(--ok); }
+body .shortage { color: var(--danger); }
+
+/* Stat rows get a hairline accent on the leading edge */
+body .stats-grid > .card,
+body .summary-grid > .summary-card {
+    position: relative;
+    overflow: hidden;
+}
+
+body .stats-grid > .card::before,
+body .summary-grid > .summary-card::before {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    opacity: .85;
+}
+
+body .stats-grid > .card:nth-child(2)::before,
+body .summary-grid > .summary-card:nth-child(2)::before { background: var(--olive); }
+body .stats-grid > .card:nth-child(3)::before,
+body .summary-grid > .summary-card:nth-child(3)::before { background: var(--amber); }
+body .stats-grid > .card:nth-child(4)::before,
+body .summary-grid > .summary-card:nth-child(4)::before { background: var(--info); }
+
+body .stats-grid,
+body .summary-grid {
+    gap: 18px;
+}
+
+body .card:hover,
+body .table-card:hover,
+body .report-card:hover {
+    box-shadow: var(--sh-2);
+}
+
+body .product-card:hover,
+body .category-card:hover {
+    box-shadow: var(--sh-3);
+    border-color: var(--line-strong);
+    transform: translateY(-2px);
+}
+
+
+/* --------------------------------------------------------------------------
+   6. Buttons
+   -------------------------------------------------------------------------- */
+
+body .btn,
+body .primary-btn,
+body .add-button,
+body .add-product-btn,
+body .add-product-trigger,
+body .submit-button,
+body .confirm-button,
+body .complete-button,
+body .status-button,
+body .view-button,
+body .resolve-button,
+body .print-button,
+body .pdf-button,
+body .edit-btn,
+body .delete-btn,
+body .cancel-btn,
+body .qr-btn,
+body .toggle-btn,
+body .small-edit-btn,
+body .small-toggle-btn,
+body .edit-category-btn,
+body .edit-product-btn,
+body .close-btn,
+body .confirm-delete-btn,
+body .cancel-payment-button,
+body .remove-button,
+body .back-link,
+body :where(button[type="submit"]:not([class])) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 11px 17px;
+    border-radius: var(--r-sm);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color .16s ease, border-color .16s ease, color .16s ease, box-shadow .16s ease, transform .06s ease;
+}
+
+body .btn:active,
+body .primary-btn:active,
+body .add-button:active,
+body .submit-button:active,
+body :where(button[type="submit"]:not([class])):active { transform: translateY(1px); }
+
+/* Primary — solid paprika */
+body .primary-btn,
+body .add-button,
+body .add-product-btn,
+body .add-product-trigger,
+body .submit-button,
+body .confirm-button,
+body .scan-card-button,
+body :where(button[type="submit"]:not([class])) {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 1px 2px rgba(120, 45, 20, .22);
+}
+
+body .primary-btn:hover,
+body .add-button:hover,
+body .add-product-btn:hover,
+body .add-product-trigger:hover,
+body .submit-button:hover,
+body .confirm-button:hover,
+body :where(button[type="submit"]:not([class])):hover {
+    background: var(--accent-dark);
+}
+
+/* Secondary — quiet outline */
+body .btn,
+body .view-button,
+body .print-button,
+body .pdf-button,
+body .edit-btn,
+body .qr-btn,
+body .toggle-btn,
+body .small-edit-btn,
+body .small-toggle-btn,
+body .edit-category-btn,
+body .edit-product-btn,
+body .back-link {
+    background: var(--surface);
+    color: var(--ink);
+    border-color: var(--line-strong);
+}
+
+body .btn:hover,
+body .view-button:hover,
+body .print-button:hover,
+body .pdf-button:hover,
+body .edit-btn:hover,
+body .qr-btn:hover,
+body .toggle-btn:hover,
+body .small-edit-btn:hover,
+body .small-toggle-btn:hover,
+body .edit-category-btn:hover,
+body .edit-product-btn:hover,
+body .back-link:hover {
+    background: var(--surface-sunk);
+    border-color: var(--muted);
+}
+
+/* Affirmative */
+body .complete-button,
+body .resolve-button,
+body .status-button {
+    background: var(--olive);
+    color: #fff;
+}
+
+body .complete-button:hover,
+body .resolve-button:hover,
+body .status-button:hover { background: #4C5B3D; }
+
+/* Destructive */
+body .delete-btn,
+body .confirm-delete-btn,
+body .remove-button {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: rgba(174, 53, 39, .22);
+}
+
+body .delete-btn:hover,
+body .confirm-delete-btn:hover,
+body .remove-button:hover {
+    background: var(--danger);
+    color: #fff;
+    border-color: var(--danger);
+}
+
+/* Dismiss */
+body .cancel-btn,
+body .close-btn,
+body .cancel-payment-button {
+    background: transparent;
+    color: var(--muted);
+    border-color: var(--line-strong);
+}
+
+body .cancel-btn:hover,
+body .close-btn:hover,
+body .cancel-payment-button:hover {
+    background: var(--surface-sunk);
+    color: var(--ink);
+}
+
+body .btn-icon {
+    padding: 9px;
+    width: 36px;
+    height: 36px;
+}
+
+body .actions,
+body .actions-row,
+body .product-actions,
+body .category-actions,
+body .modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    flex-wrap: wrap;
+}
+
+body .modal-actions { justify-content: flex-end; }
+
+body button:disabled,
+body .btn:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+
+/* --------------------------------------------------------------------------
+   7. Forms
+   -------------------------------------------------------------------------- */
+
+body .form-group,
+body .field,
+body .payment-field {
+    margin-bottom: 18px;
+}
+
+body .form-group label,
+body .field label,
+body .payment-field label,
+body .checkbox-label,
+body .remove-image-label {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    margin-bottom: 7px;
+}
+
+body input[type="text"],
+body input[type="email"],
+body input[type="password"],
+body input[type="number"],
+body input[type="search"],
+body input[type="date"],
+body input[type="month"],
+body input[type="tel"],
+body input[type="url"],
+body select,
+body textarea,
+body .price-input {
+    width: 100%;
+    font-family: var(--font-sans);
+    font-size: 14.5px;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-sm);
+    padding: 11px 13px;
+    transition: border-color .16s ease, box-shadow .16s ease;
+    box-shadow: inset 0 1px 2px rgba(60, 40, 25, .04);
+}
+
+body textarea { min-height: 96px; resize: vertical; line-height: 1.55; }
+
+body input:hover:not(:disabled),
+body select:hover:not(:disabled),
+body textarea:hover:not(:disabled) { border-color: var(--muted); }
+
+body input:focus,
+body select:focus,
+body textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: var(--ring);
+}
+
+body input::placeholder,
+body textarea::placeholder { color: #B3A79B; }
+
+body select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%238A7D71' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 13px center;
+    padding-inline-end: 34px;
+}
+
+[dir="rtl"] body select { background-position: left 13px center; }
+
+body input[type="checkbox"],
+body input[type="radio"] {
+    width: 17px;
+    height: 17px;
+    accent-color: var(--accent);
+    cursor: pointer;
+    vertical-align: -3px;
+}
+
+body .checkbox-label,
+body .remove-image-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
+body .month-form,
+body .range-form,
+body .payment-field-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+body .month-form input,
+body .month-form select,
+body .range-form input,
+body .range-form select { width: auto; min-width: 170px; }
+
+/* File / image inputs */
+body input[type="file"] {
+    font-size: 13.5px;
+    color: var(--muted);
+    padding: 10px;
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--r-sm);
+    background: var(--surface-sunk);
+    width: 100%;
+}
+
+body input[type="file"]::file-selector-button {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-xs);
+    padding: 7px 13px;
+    margin-inline-end: 12px;
+    cursor: pointer;
+}
+
+body .image-preview,
+body .current-image-container img,
+body .image-placeholder {
+    border-radius: var(--r-sm);
+    border: 1px solid var(--line);
+    background: var(--surface-sunk);
+}
+
+body .no-current-image,
+body .image-placeholder,
+body .product-image-placeholder,
+body .category-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 13.5px;
+    background: var(--surface-sunk);
+    background-image:
+        repeating-linear-gradient(45deg, rgba(138, 125, 113, .05) 0 8px, transparent 8px 16px);
+}
+
+
+/* --------------------------------------------------------------------------
+   8. Messages
+   -------------------------------------------------------------------------- */
+
+body .success-message,
+body .error-message,
+body .alert,
+body .alert-info,
+body .modal-warning,
+body .payment-modal-error {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 14px;
+    line-height: 1.55;
+    padding: 13px 16px;
+    border-radius: var(--r-sm);
+    border: 1px solid transparent;
+    border-inline-start-width: 3px;
+    margin-bottom: 20px;
+}
+
+body .success-message {
+    background: var(--ok-soft);
+    color: #2F6440;
+    border-color: rgba(60, 122, 78, .2);
+    border-inline-start-color: var(--ok);
+}
+
+body .error-message,
+body .payment-modal-error,
+body .modal-warning {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: rgba(174, 53, 39, .2);
+    border-inline-start-color: var(--danger);
+}
+
+body .alert,
+body .alert-info {
+    background: var(--info-soft);
+    color: var(--info);
+    border-color: rgba(59, 99, 130, .2);
+    border-inline-start-color: var(--info);
+}
+
+
+/* --------------------------------------------------------------------------
+   9. Tables
+   -------------------------------------------------------------------------- */
+
+body .table-wrapper,
+body .products-table,
+body .orders-table,
+body .shifts-table {
+    overflow-x: auto;
+}
+
+body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14.5px;
+    background: var(--surface);
+}
+
+body thead th {
+    text-align: start;
+    font-family: var(--font-sans);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--muted);
+    background: var(--surface-sunk);
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line-strong);
+    white-space: nowrap;
+}
+
+html[lang="ar"] body thead th {
+    letter-spacing: 0;
+    text-transform: none;
+    font-size: 13px;
+}
+
+body tbody td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink-soft);
+    vertical-align: middle;
+}
+
+body tbody tr:last-child td { border-bottom: none; }
+
+body tbody tr { transition: background-color .13s ease; }
+body tbody tr:hover { background: #FDFAF6; }
+
+body table .total,
+body table strong { color: var(--ink); font-weight: 600; }
+
+
+/* --------------------------------------------------------------------------
+   10. Badges & status
+   -------------------------------------------------------------------------- */
+
+body .badge,
+body .status,
+body .status-badge,
+body .table-badge,
+body .available-badge,
+body .order-status,
+body .payment-method,
+body .token {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    line-height: 1;
+    padding: 6px 11px;
+    border-radius: 100px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    text-transform: capitalize;
+}
+
+html[lang="ar"] body .badge,
+html[lang="ar"] body .status,
+html[lang="ar"] body .status-badge { letter-spacing: 0; font-size: 13px; }
+
+/* Neutral default */
+body .badge,
+body .status,
+body .status-badge,
+body .order-status,
+body .payment-method {
+    background: var(--surface-sunk);
+    color: var(--ink-soft);
+    border-color: var(--line-strong);
+}
+
+body .available,
+body .available-badge,
+body .ok,
+body .status.available,
+body .status-badge.available,
+body .order-status.completed,
+body .status.completed,
+body .status-badge.completed,
+body .status.ready,
+body .status-badge.ready {
+    background: var(--ok-soft);
+    color: var(--ok);
+    border-color: rgba(60, 122, 78, .22);
+}
+
+body .occupied,
+body .status.occupied,
+body .status-badge.occupied,
+body .status.preparing,
+body .status-badge.preparing,
+body .order-status.preparing,
+body .highlight {
+    background: var(--amber-soft);
+    color: var(--warn);
+    border-color: rgba(176, 123, 20, .22);
+}
+
+body .reserved,
+body .status.reserved,
+body .status-badge.reserved,
+body .status.confirmed,
+body .status-badge.confirmed,
+body .order-status.confirmed {
+    background: var(--info-soft);
+    color: var(--info);
+    border-color: rgba(59, 99, 130, .22);
+}
+
+body .status.pending,
+body .status-badge.pending,
+body .order-status.pending,
+body .alerts {
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    border-color: rgba(189, 78, 44, .2);
+}
+
+body .inactive,
+body .product-inactive,
+body .category-inactive,
+body .status.cancelled,
+body .status-badge.cancelled,
+body .order-status.cancelled {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: rgba(174, 53, 39, .2);
+}
+
+body .table-badge {
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    border-color: rgba(189, 78, 44, .2);
+    font-size: 13px;
+    padding: 9px 15px;
+}
+
+body .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    background: currentColor;
+}
+
+body .token {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .02em;
+    text-transform: none;
+    background: var(--surface-sunk);
+    color: var(--ink-soft);
+    border-color: var(--line-strong);
+    border-radius: var(--r-xs);
+    padding: 5px 8px;
+}
+
+
+/* --------------------------------------------------------------------------
+   11. Modals
+   -------------------------------------------------------------------------- */
+
+body .modal,
+body .modal-overlay,
+body .delete-modal,
+body .payment-modal-overlay,
+body .payment-modal {
+    background: rgba(36, 29, 24, .5);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+body .modal-box {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg);
+    box-shadow: 0 24px 60px -20px rgba(36, 29, 24, .4);
+    padding: 28px;
+}
+
+body .modal-header,
+body .modal-box h2,
+body .modal-box h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+body .modal-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    margin-bottom: 16px;
+}
+
+body .modal-actions {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+}
+
+
+/* --------------------------------------------------------------------------
+   12. Menu — product & category cards
+   -------------------------------------------------------------------------- */
+
+body .product-card,
+body .category-card {
+    overflow: hidden;
+}
+
+body .product-image,
+body .category-image {
+    background: var(--surface-sunk);
+}
+
+body .product-image img,
+body .category-image img,
+body .product-image-wrapper img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform .4s cubic-bezier(.2, .7, .3, 1);
+}
+
+body .product-card:hover .product-image img,
+body .category-card:hover .category-image img {
+    transform: scale(1.04);
+}
+
+body .product-content,
+body .category-info,
+body .category-details { padding: 16px 18px; }
+
+body .item-name,
+body .product-card h3,
+body .category-name-row,
+body .category-title {
+    font-family: var(--font-display);
+    font-size: 17.5px;
+    font-weight: 600;
+    color: var(--ink);
+    margin: 0 0 5px;
+}
+
+body .product-description,
+body .category-description,
+body .item-notes,
+body .small,
+body .muted-text,
+body .meta,
+body .alert-time,
+body .client-info {
+    color: var(--muted);
+    font-size: 13.5px;
+    line-height: 1.55;
+}
+
+body .product-price,
+body .price,
+body .item-price {
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+body .product-footer,
+body .category-footer,
+body .product-bottom,
+body .product-top {
+    border-top: 1px solid var(--line);
+    padding: 13px 18px;
+    background: #FDFBF8;
+}
+
+body .products-count,
+body .product-count,
+body .order-count,
+body .status-count {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+body .inactive-overlay {
+    background: rgba(250, 246, 240, .82);
+    backdrop-filter: saturate(.25);
+    -webkit-backdrop-filter: saturate(.25);
+    color: var(--ink-soft);
+    font-weight: 600;
+    letter-spacing: .04em;
+}
+
+body .selected-category {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 1px var(--accent), var(--sh-2);
+}
+
+
+/* --------------------------------------------------------------------------
+   13. Order panel & quantity stepper
+   -------------------------------------------------------------------------- */
+
+body .quantity-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: var(--surface-sunk);
+    border: 1px solid var(--line-strong);
+    border-radius: 100px;
+    padding: 3px;
+}
+
+body .quantity-button {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: var(--sh-1);
+    cursor: pointer;
+    transition: background-color .14s ease, color .14s ease;
+}
+
+body .quantity-button:hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+body .quantity {
+    min-width: 30px;
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+body .order-header,
+body .table-header,
+body .category-header,
+body .category-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+body .order-item,
+body .item,
+body .status-row,
+body .total-row,
+body .table-detail {
+    border-bottom: 1px solid var(--line);
+    padding: 13px 0;
+}
+
+body .order-item:last-child,
+body .item:last-child,
+body .info-item:last-child,
+body .table-detail:last-child { border-bottom: none; }
+
+body .order-total,
+body .total-row,
+body .total {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 19px;
+    color: var(--ink);
+}
+
+body .total-row {
+    border-top: 2px solid var(--line-strong);
+    border-bottom: none;
+    padding-top: 16px;
+    margin-top: 6px;
+}
+
+body .notes-box {
+    background: var(--amber-soft);
+    border-color: rgba(176, 123, 20, .22);
+    border-radius: var(--r-sm);
+    padding: 12px 14px;
+    font-size: 13.5px;
+    color: #7A5A12;
+}
+
+
+/* --------------------------------------------------------------------------
+   14. Empty states
+   -------------------------------------------------------------------------- */
+
+body .empty,
+body .empty-menu,
+body .empty-order,
+body .empty-categories,
+body .no-items,
+body .no-products,
+body .empty-state {
+    text-align: center;
+    padding: 54px 28px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px dashed var(--line-strong);
+    border-radius: var(--r);
+}
+
+body .empty-icon,
+body .empty-order-icon,
+body .no-products-icon,
+body .alert-icon,
+body .table-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 24px;
+    margin-bottom: 14px;
+}
+
+body .empty h2,
+body .empty h3,
+body .empty-menu h3,
+body .no-products h3 {
+    margin: 0 0 6px;
+    color: var(--ink);
+}
+
+
+/* --------------------------------------------------------------------------
+   15. QR & invoices
+   -------------------------------------------------------------------------- */
+
+body .qr-container,
+body .qr-code {
+    padding: 22px;
+    text-align: center;
+    background: var(--surface);
+}
+
+body .qr-code svg,
+body .qr-code img {
+    display: block;
+    margin: 0 auto;
+    border-radius: var(--r-xs);
+}
+
+body .camera-scan-container {
+    border-radius: var(--r);
+    overflow: hidden;
+    border: 1px solid var(--line-strong);
+    background: var(--ink);
+}
+
+body .camera-scan-frame {
+    border: 2px solid var(--accent);
+    border-radius: var(--r-sm);
+}
+
+
+/* --------------------------------------------------------------------------
+   16. Pagination
+   -------------------------------------------------------------------------- */
+
+body .pagination {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 26px;
+    font-size: 14px;
+}
+
+body .pagination a,
+body .pagination span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 11px;
+    border-radius: var(--r-xs);
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--ink-soft);
+    text-decoration: none;
+}
+
+body .pagination a:hover { background: var(--surface-sunk); }
+
+body .pagination .active span,
+body .pagination span[aria-current] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+}
+
+
+/* --------------------------------------------------------------------------
+   17. Right-to-left
+   -------------------------------------------------------------------------- */
+
+[dir="rtl"] body,
+[dir="rtl"] body input,
+[dir="rtl"] body textarea,
+[dir="rtl"] body select { text-align: right; }
+
+[dir="rtl"] body .text-right { text-align: left; }
+
+[dir="rtl"] body thead th { text-align: right; }
+
+/* Anything positioned with physical margins in page CSS gets mirrored */
+[dir="rtl"] body .brand { margin-right: 0; margin-left: 20px; }
+
+[dir="rtl"] body .page-header,
+[dir="rtl"] body .order-header,
+[dir="rtl"] body .table-header { flex-direction: row; }
+
+
+/* --------------------------------------------------------------------------
+   18. Responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 860px) {
+    body { font-size: 14.5px; }
+
+    body .page-content { width: 92%; margin-top: 26px; }
+
+    body .card,
+    body .summary-card,
+    body .report-card { padding: 18px; }
+
+    body .card-value,
+    body .value { font-size: 26px; }
+
+    body .section-title { margin-top: 32px; font-size: 20px; }
+
+    body .modal-box { padding: 22px; border-radius: var(--r); }
+
+    body .modal-actions { flex-direction: column-reverse; align-items: stretch; }
+    body .modal-actions > * { width: 100%; }
+}
+
+@media (max-width: 560px) {
+    body .actions,
+    body .actions-row,
+    body .product-actions,
+    body .category-actions { width: 100%; }
+
+    body .month-form,
+    body .range-form { width: 100%; }
+
+    body .month-form input,
+    body .month-form select,
+    body .range-form input,
+    body .range-form select { width: 100%; min-width: 0; }
+}
+
+
+/* --------------------------------------------------------------------------
+   19. Print — invoices and reports leave the screen behind
+   -------------------------------------------------------------------------- */
+
+@media print {
+    body {
+        background: #fff !important;
+        background-image: none !important;
+        color: #000;
+        font-size: 12pt;
+    }
+
+    body .app-nav,
+    body .navbar,
+    body .site-footer,
+    body .actions,
+    body .print-button,
+    body .pdf-button,
+    body .back-link,
+    body .no-print { display: none !important; }
+
+    body .page-content { width: 100%; margin: 0; padding: 0; }
+
+    body .card,
+    body .table-wrapper,
+    body .qr-container {
+        box-shadow: none;
+        border: 1px solid #ccc;
+        break-inside: avoid;
+    }
+}
+
+
+/* --------------------------------------------------------------------------
+   20. Motion preferences
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    body *, body *::before, body *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+
+
+/* --------------------------------------------------------------------------
+   21. Tables page — one card per dining table
+   -------------------------------------------------------------------------- */
+
+body .tables-grid {
+    gap: 18px;
+}
+
+body .table-card {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 20px 16px;
+}
+
+body .table-card .table-header {
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+body .table-card .table-header h2 {
+    font-size: 21px;
+    margin: 0;
+}
+
+body .table-card .table-id {
+    margin: 3px 0 0;
+    font-size: 12.5px;
+    color: var(--muted);
+}
+
+/* Capacity and QR token sit side by side as two small facts */
+body .table-card .table-info {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    background: var(--surface-sunk);
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+body .table-card .info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+    min-width: 0;
+    margin: 0;
+    padding: 12px 15px;
+    border: 0;
+}
+
+body .table-card .info-item + .info-item {
+    border-inline-start: 1px solid var(--line);
+}
+
+body .table-card .info-label {
+    margin: 0;
+    font-size: 11px;
+    line-height: 1;
+}
+
+body .table-card .info-item strong {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.2;
+}
+
+body .table-card .info-item .token {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+body .table-card .actions {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+
+body .table-card .qr-btn,
+body .table-card .edit-btn,
+body .table-card .delete-btn {
+    padding: 9px 14px;
+    font-size: 13.5px;
+}
+
+/* Delete is the rarest action — keep it out of the way */
+body .table-card .delete-btn {
+    margin-inline-start: auto;
+    background: transparent;
+    border-color: transparent;
+    color: var(--danger);
+}
+
+body .table-card .delete-btn:hover {
+    background: var(--danger-soft);
+    border-color: rgba(174, 53, 39, .2);
+    color: var(--danger);
+}
+
+body .header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+body .header > .btn:first-of-type:last-child,
+body .header > a.btn {
+    background: var(--accent);
+    color: #fff;
+    border-color: transparent;
+}
+
+body .header > a.btn:hover { background: var(--accent-dark); }
+
+
+/* --------------------------------------------------------------------------
+   22. Guest menu — a category header is as wide as its products
+   The section is a grid with the same columns as the product grid; the
+   header spans only as many columns as there are products (set inline as
+   --n3 / --n2 by the view), so the item count sits over the last card.
+   -------------------------------------------------------------------------- */
+
+body .menu-page .category {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 20px;
+    margin-bottom: 44px;
+}
+
+body .menu-page .category > .category-header {
+    grid-column: span var(--n3, 3);
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line-strong);
+}
+
+body .menu-page .category > .products {
+    grid-column: 1 / -1;
+}
+
+body .menu-page .category-heading { gap: 13px; min-width: 0; }
+
+body .menu-page .category-image {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    box-shadow: var(--sh-1);
+}
+
+/* The title already has the section divider under it; drop the short rule */
+body .menu-page .category-heading-text {
+    margin: 0;
+    padding: 0;
+}
+
+body .menu-page .category-heading-text::after { display: none; }
+
+body .menu-page .category-title {
+    font-size: 21px;
+    margin: 0;
+}
+
+body .menu-page .category-description {
+    margin: 3px 0 0;
+    font-size: 13.5px;
+}
+
+body .menu-page .products-count {
+    flex-shrink: 0;
+    align-self: flex-end;
+    padding: 5px 11px;
+    border-radius: 100px;
+    background: var(--accent-soft);
+    color: var(--accent-dark);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    body .menu-page .category { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    body .menu-page .category > .category-header { grid-column: span var(--n2, 2); }
+}
+
+@media (max-width: 600px) {
+    body .menu-page .category { grid-template-columns: minmax(0, 1fr); }
+    body .menu-page .category > .category-header { grid-column: 1 / -1; }
+}
+
+
+/* --------------------------------------------------------------------------
+   23. Sign-in form (Breeze components carry their own utility classes)
+   -------------------------------------------------------------------------- */
+
+body .auth-card__body button[type="submit"] {
+    background: var(--accent);
+    color: #fff;
+    border: 0;
+    border-radius: var(--r-sm);
+    padding: 11px 20px;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+body .auth-card__body button[type="submit"]:hover { background: var(--accent-dark); }
+
+body .auth-card__body .flex.items-center.justify-end {
+    gap: 14px;
+}
+
+/* The one summary card a report wants you to read first */
+body .summary-card.highlight {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: #F3EADF;
+}
+body .summary-card.highlight .label { color: #BCA994; }
+body .summary-card.highlight .value { color: #FBF5EE; }
+body .summary-card.highlight::before { background: var(--amber); }

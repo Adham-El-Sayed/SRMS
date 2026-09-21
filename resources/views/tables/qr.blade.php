@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Table {{ $table->number }} QR</title>
+    <title>{{ __('Table') }} {{ $table->number }} {{ __('QR') }}</title>
 
     <style>
         body {
@@ -39,20 +39,20 @@
 
 <div class="qr-container">
 
-    <h1>Table {{ $table->number }}</h1>
+    <h1>{{ __('Table') }} {{ $table->number }}</h1>
 
-    <p>Scan to view the menu</p>
+    <p>{{ __('Scan to view the menu') }}</p>
 
     <div class="qr-code">
         {!! $qr !!}
     </div>
 
     <p>
-        Table {{ $table->number }}
+        {{ __('Table') }} {{ $table->number }}
     </p>
 
     <button onclick="window.print()">
-        Print QR
+        {{ __('Print QR') }}
     </button>
 
 </div>

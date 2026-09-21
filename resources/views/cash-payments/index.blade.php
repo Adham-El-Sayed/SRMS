@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Cash Payments')
+@section('title', __('Cash Payments'))
 
 @section('content')
 
     <div class="header">
         <div>
-            <h1>Cash Payments</h1>
-            <p>Confirm receipt of cash payments for the orders.</p>
+            <h1>{{ __('Cash Payments') }}</h1>
+            <p>{{ __('Confirm receipt of cash payments for the orders.') }}</p>
         </div>
     </div>
 
@@ -26,28 +26,28 @@
                 <div class="order-card">
 
                     <div class="order-header">
-                        <h2>Order #{{ $order->id }}</h2>
+                        <h2>{{ __('Order #') }}{{ $order->id }}</h2>
                         <span class="status {{ $order->status }}">
-                            {{ ucfirst($order->status) }}
+                            {{ __(ucfirst($order->status)) }}
                         </span>
                     </div>
 
                     <div class="info">
                         <p>
-                            <strong>Table:</strong>
-                            {{ $order->table->number ?? 'N/A' }}
+                            <strong>{{ __('Table') }}:</strong>
+                            {{ __($order->table->number ?? 'N/A') }}
                         </p>
 
                         @if ($order->client_name)
-                            <p><strong>Client:</strong> {{ $order->client_name }}</p>
+                            <p><strong>{{ __('Client') }}:</strong> {{ $order->client_name }}</p>
                         @endif
 
                         @if ($order->client_phone)
-                            <p><strong>Phone:</strong> {{ $order->client_phone }}</p>
+                            <p><strong>{{ __('Phone') }}:</strong> {{ $order->client_phone }}</p>
                         @endif
 
                         <p>
-                            <strong>Created:</strong>
+                            <strong>{{ __('Created') }}:</strong>
                             {{ $order->created_at->format('Y-m-d H:i') }}
                         </p>
                     </div>
@@ -56,16 +56,16 @@
                         @foreach ($order->items as $item)
                             <div class="item">
                                 <span>
-                                    {{ $item->quantity }} × {{ $item->product?->name ?? 'Unknown' }}
+                                    {{ $item->quantity }} × {{ __($item->product?->name ?? 'Unknown') }}
                                 </span>
-                                <span>{{ number_format($item->subtotal, 2) }} EGP</span>
+                                <span>{{ number_format($item->subtotal, 2) }} {{ __('EGP') }}</span>
                             </div>
                         @endforeach
                     </div>
 
                     <div class="total">
-                        <span>Total</span>
-                        <span>{{ number_format($order->total, 2) }} EGP</span>
+                        <span>{{ __('Total') }}</span>
+                        <span>{{ number_format($order->total, 2) }} {{ __('EGP') }}</span>
                     </div>
 
                             <div class="actions-row">
@@ -75,13 +75,13 @@
                             target="_blank"
                             class="print-button"
                         >
-                            Print Invoice
+                            {{ __('Print Invoice') }}
                         </a>
 
                         <form method="POST" action="{{ route('cash-payments.confirm', $order) }}">
                             @csrf
                             <button type="submit" class="confirm-button">
-                                Confirm Payment
+                                {{ __('Confirm Payment') }}
                             </button>
                         </form>
 
@@ -96,8 +96,8 @@
     @else
 
         <div class="empty">
-            <h2>No Pending Cash Orders</h2>
-            <p>All cash orders have been confirmed.</p>
+            <h2>{{ __('No Pending Cash Orders') }}</h2>
+            <p>{{ __('All cash orders have been confirmed.') }}</p>
         </div>
 
     @endif

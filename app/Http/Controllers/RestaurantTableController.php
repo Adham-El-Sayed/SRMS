@@ -38,7 +38,7 @@ class RestaurantTableController extends Controller
 
         return redirect()
             ->route('tables.index')
-            ->with('success', 'Table created successfully.');
+            ->with('success', __('Table created successfully.'));
     }
     
     public function edit(RestaurantTable $table): View
@@ -57,7 +57,7 @@ class RestaurantTableController extends Controller
 
     return redirect()
         ->route('tables.index')
-        ->with('success', 'Table updated successfully.');
+        ->with('success', __('Table updated successfully.'));
     }
     
     public function destroy(RestaurantTable $table): RedirectResponse
@@ -66,7 +66,7 @@ class RestaurantTableController extends Controller
 
     return redirect()
         ->route('tables.index')
-        ->with('success', 'Table deleted successfully.');
+        ->with('success', __('Table deleted successfully.'));
     }
     
     public function qr(RestaurantTable $table): View

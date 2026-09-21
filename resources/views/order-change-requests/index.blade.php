@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Waiter Alerts')
+@section('title', __('Waiter Alerts'))
 
 @section('content')
 
     <div class="header">
         <div>
-            <h1>Waiter Alerts</h1>
-            <p>Clients who need a waiter after their edit window expired.</p>
+            <h1>{{ __('Waiter Alerts') }}</h1>
+            <p>{{ __('Clients who need a waiter after their edit window expired.') }}</p>
         </div>
     </div>
 
@@ -26,17 +26,17 @@
                 <div class="alert-card">
 
                     <div class="alert-info">
-                        <strong>Order #{{ $req->order->id }}</strong>
-                        — Table {{ $req->order->table->number ?? 'N/A' }}
+                        <strong>{{ __('Order #') }}{{ $req->order->id }}</strong>
+                        — {{ __('Table') }} {{ $req->order->table->number ?? 'N/A' }}
                         <div class="alert-time">
-                            Requested {{ $req->created_at->diffForHumans() }}
+                            {{ __('Requested') }} {{ $req->created_at->diffForHumans() }}
                         </div>
                     </div>
 
                     <form method="POST" action="{{ route('order-change-requests.resolve', $req) }}">
                         @csrf
                         <button type="submit" class="resolve-button">
-                            Mark as Handled
+                            {{ __('Mark as Handled') }}
                         </button>
                     </form>
 
@@ -49,7 +49,7 @@
     @else
 
         <div class="empty">
-            <h2>No pending alerts</h2>
+            <h2>{{ __('No pending alerts') }}</h2>
         </div>
 
     @endif

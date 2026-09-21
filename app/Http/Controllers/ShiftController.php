@@ -28,7 +28,7 @@ class ShiftController extends Controller
 
         return redirect()
             ->route('shifts.current')
-            ->with('success', 'The shift has been opened successfully.');
+            ->with('success', __('The shift has been opened successfully.'));
     }
 
     public function close(Request $request, Shift $shift)
@@ -46,7 +46,7 @@ class ShiftController extends Controller
 
         return redirect()
             ->route('shifts.current')
-            ->with('success', 'The shift has been closed. The teams:' . $shift->cashDifference());
+            ->with('success', __('The shift has been closed. The teams:') . $shift->cashDifference());
     }
         public function export(Shift $shift)
     {

@@ -22,7 +22,7 @@ class OrderChangeRequestController extends Controller
 
         if ($existing) {
             return response()->json([
-                'message' => 'A waiter has already been notified for this order.',
+                'message' => __('A waiter has already been notified for this order.'),
             ]);
         }
 
@@ -32,7 +32,7 @@ class OrderChangeRequestController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'The waiter has been notified.',
+            'message' => __('The waiter has been notified.'),
         ], 201);
     }
 
@@ -60,7 +60,7 @@ class OrderChangeRequestController extends Controller
 
         return redirect()
             ->route('order-change-requests.index')
-            ->with('success', 'Request marked as handled.');
+            ->with('success', __('Request marked as handled.'));
     }
 
     // Small JSON endpoint the nav badge polls periodically.

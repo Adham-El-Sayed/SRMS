@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Categories')
+@section('title', __('Categories'))
 
 @section('content')
 
 <div class="header">
 
     <div>
-        <h1>Categories</h1>
-        <p>Manage your restaurant menu categories.</p>
+        <h1>{{ __('Categories') }}</h1>
+        <p>{{ __('Manage your restaurant menu categories.') }}</p>
     </div>
 
     <a href="{{ route('categories.create') }}" class="btn">
-        + Add Category
+        {{ __('+ Add Category') }}
     </a>
 
 </div>
@@ -31,12 +31,12 @@
 
     <div class="empty">
 
-        <h2>No Categories</h2>
+        <h2>{{ __('No Categories') }}</h2>
 
-        <p>There are currently no categories.</p>
+        <p>{{ __('There are currently no categories.') }}</p>
 
         <a href="{{ route('categories.create') }}" class="btn">
-            + Add Your First Category
+            {{ __('+ Add Your First Category') }}
         </a>
 
     </div>
@@ -49,10 +49,10 @@
 
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    <th>{{ __('Name') }}</th>
+                    <th>{{ __('Description') }}</th>
+                    <th>{{ __('Status') }}</th>
+                    <th>{{ __('Actions') }}</th>
                 </tr>
             </thead>
 
@@ -77,7 +77,7 @@
 
                             <span class="status {{ $category->is_active ? 'active' : 'inactive' }}">
 
-                                {{ $category->is_active ? 'Active' : 'Inactive' }}
+                                {{ __($category->is_active ? 'Active' : 'Inactive') }}
 
                             </span>
 
@@ -92,7 +92,7 @@
                                     href="{{ route('categories.edit', $category) }}"
                                     class="edit-btn"
                                 >
-                                    Edit
+                                    {{ __('Edit') }}
                                 </a>
 
 
@@ -102,7 +102,7 @@
                                     data-id="{{ $category->id }}"
                                     data-name="{{ $category->name }}"
                                 >
-                                    Delete
+                                    {{ __('Delete') }}
                                 </button>
 
                             </div>
@@ -132,17 +132,17 @@
         </div>
 
 
-        <h2>Delete Category?</h2>
+        <h2>{{ __('Delete Category?') }}</h2>
 
 
         <p>
-            Are you sure you want to delete
+            {{ __('Are you sure you want to delete') }}
             <strong id="categoryName"></strong>?
         </p>
 
 
         <p class="modal-warning">
-            This action cannot be undone.
+            {{ __('This action cannot be undone.') }}
         </p>
 
 
@@ -153,7 +153,7 @@
                 class="cancel-btn"
                 id="cancelDeleteBtn"
             >
-                Cancel
+                {{ __('Cancel') }}
             </button>
 
 
@@ -171,7 +171,7 @@
                     type="submit"
                     class="confirm-delete-btn"
                 >
-                    Yes, Delete
+                    {{ __('Yes, Delete') }}
                 </button>
 
             </form>

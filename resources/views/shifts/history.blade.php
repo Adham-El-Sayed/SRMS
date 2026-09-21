@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Shift History')
+@section('title', __('Shift History'))
 
 @section('content')
 
     <div class="header">
         <div>
-            <h1>Shift History</h1>
-            <p>All closed shifts and their reconciliation details.</p>
+            <h1>{{ __('Shift History') }}</h1>
+            <p>{{ __('All closed shifts and their reconciliation details.') }}</p>
         </div>
     </div>
 
@@ -19,12 +19,12 @@
                 <thead>
                     <tr>
                         <th>#</th>
-                        <th>Staff</th>
-                        <th>Opened</th>
-                        <th>Closed</th>
-                        <th>Cash (System)</th>
-                        <th>Cash (Counted)</th>
-                        <th>Status</th>
+                        <th>{{ __('Staff') }}</th>
+                        <th>{{ __('Opened') }}</th>
+                        <th>{{ __('Closed') }}</th>
+                        <th>{{ __('Cash (System)') }}</th>
+                        <th>{{ __('Cash (Counted)') }}</th>
+                        <th>{{ __('Status') }}</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -32,7 +32,7 @@
                     @foreach($shifts as $shift)
                         <tr>
                             <td>#{{ $shift->id }}</td>
-                            <td>{{ $shift->user->name ?? 'N/A' }}</td>
+                            <td>{{ __($shift->user->name ?? 'N/A') }}</td>
                             <td>{{ $shift->opened_at->format('Y-m-d H:i') }}</td>
                             <td>{{ $shift->closed_at?->format('Y-m-d H:i') }}</td>
                             <td>{{ number_format($shift->systemCashTotal(), 2) }}</td>
@@ -41,15 +41,15 @@
                                 @php $diff = $shift->cashDifference(); @endphp
 
                                 @if($diff == 0)
-                                    <span class="badge ok">Balanced</span>
+                                    <span class="badge ok">{{ __('Balanced') }}</span>
                                 @elseif($diff > 0)
-                                    <span class="badge surplus">Surplus {{ number_format($diff, 2) }}</span>
+                                    <span class="badge surplus">{{ __('Surplus') }} {{ number_format($diff, 2) }}</span>
                                 @else
-                                    <span class="badge shortage">Shortage {{ number_format(abs($diff), 2) }}</span>
+                                    <span class="badge shortage">{{ __('Shortage') }} {{ number_format(abs($diff), 2) }}</span>
                                 @endif
                             </td>
                             <td>
-                                <a href="{{ route('shifts.show', $shift) }}">Details</a>
+                                <a href="{{ route('shifts.show', $shift) }}">{{ __('Details') }}</a>
                             </td>
                         </tr>
                     @endforeach
@@ -65,7 +65,7 @@
     @else
 
         <div class="empty">
-            <h2>No closed shifts yet</h2>
+            <h2>{{ __('No closed shifts yet') }}</h2>
         </div>
 
     @endif

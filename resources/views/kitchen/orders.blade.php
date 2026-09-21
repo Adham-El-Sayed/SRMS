@@ -1,14 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'Kitchen Orders')
+@section('title', __('Kitchen Orders'))
 
 @section('content')
 
     <div class="header">
 
         <div>
-            <h1>Kitchen Orders</h1>
-            <p>Manage and update restaurant orders.</p>
+            <h1>{{ __('Kitchen Orders') }}</h1>
+            <p>{{ __('Manage and update restaurant orders.') }}</p>
         </div>
 
     </div>
@@ -26,11 +26,11 @@
                     <div class="order-header">
 
                         <h2>
-                            Order #{{ $order->id }}
+                            {{ __('Order #') }}{{ $order->id }}
                         </h2>
 
                         <span class="status {{ $order->status }}">
-                            {{ ucfirst($order->status) }}
+                            {{ __(ucfirst($order->status)) }}
                         </span>
 
                     </div>
@@ -40,27 +40,27 @@
                     <div class="info">
 
                         <p>
-                            <strong>Table:</strong>
+                            <strong>{{ __('Table') }}:</strong>
 
                             @if($order->table)
                                 {{ $order->table->number }}
                             @else
-                                N/A
+                                {{ __('N/A') }}
                             @endif
                         </p>
 
                         <p>
-                            <strong>Capacity:</strong>
+                            <strong>{{ __('Capacity') }}:</strong>
 
                             @if($order->table)
                                 {{ $order->table->capacity }}
                             @else
-                                N/A
+                                {{ __('N/A') }}
                             @endif
                         </p>
 
                         <p>
-                            <strong>Created:</strong>
+                            <strong>{{ __('Created') }}:</strong>
                             {{ $order->created_at->format('Y-m-d H:i') }}
                         </p>
 
@@ -70,7 +70,7 @@
                     {{-- Order Items --}}
                     <div class="items">
 
-                        <h3>Items</h3>
+                        <h3>{{ __('Items') }}</h3>
 
                         @forelse($order->items as $item)
 
@@ -79,13 +79,13 @@
                                 <div>
 
                                     <div class="item-name">
-                                        {{ $item->product?->name ?? 'Unknown Product' }}
+                                        {{ __($item->product?->name ?? 'Unknown Product') }}
                                     </div>
 
                                     <div class="item-details">
-                                        Quantity: {{ $item->quantity }}
+                                        {{ __('Quantity') }}: {{ $item->quantity }}
                                         ×
-                                        {{ number_format($item->unit_price, 2) }} EGP
+                                        {{ number_format($item->unit_price, 2) }} {{ __('EGP') }}
                                     </div>
 
                                     @if($item->notes)
@@ -102,7 +102,7 @@
                                 <div class="item-price">
 
                                     {{ number_format($item->subtotal, 2) }}
-                                    EGP
+                                    {{ __('EGP') }}
 
                                 </div>
 
@@ -111,7 +111,7 @@
                         @empty
 
                             <p class="no-items">
-                                No items in this order.
+                                {{ __('No items in this order.') }}
                             </p>
 
                         @endforelse
@@ -122,10 +122,10 @@
                     {{-- Total --}}
                     <div class="total">
 
-                        <span>Total</span>
+                        <span>{{ __('Total') }}</span>
 
                         <span>
-                            {{ number_format($order->total, 2) }} EGP
+                            {{ number_format($order->total, 2) }} {{ __('EGP') }}
                         </span>
 
                     </div>
@@ -142,7 +142,7 @@
                                 data-order-id="{{ $order->id }}"
                                 data-status="confirmed"
                             >
-                                Confirm Order
+                                {{ __('Confirm Order') }}
                             </button>
 
                         @elseif($order->status === 'confirmed')
@@ -153,7 +153,7 @@
                                 data-order-id="{{ $order->id }}"
                                 data-status="preparing"
                             >
-                                Start Preparing
+                                {{ __('Start Preparing') }}
                             </button>
 
                         @elseif($order->status === 'preparing')
@@ -164,7 +164,7 @@
                                 data-order-id="{{ $order->id }}"
                                 data-status="ready"
                             >
-                                Mark as Ready
+                                {{ __('Mark as Ready') }}
                             </button>
 
                         @elseif($order->status === 'ready')
@@ -175,7 +175,7 @@
                                 data-order-id="{{ $order->id }}"
                                 data-status="completed"
                             >
-                                Complete Order
+                                {{ __('Complete Order') }}
                             </button>
 
                         @endif
@@ -192,10 +192,10 @@
 
         <div class="empty">
 
-            <h2>No Active Orders</h2>
+            <h2>{{ __('No Active Orders') }}</h2>
 
             <p>
-                There are currently no orders in the kitchen.
+                {{ __('There are currently no orders in the kitchen.') }}
             </p>
 
         </div>
@@ -475,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     alert(
                         data.message ||
-                        'Failed to update order status.'
+                        __t('Failed to update order status.')
                     );
 
                     this.disabled = false;
@@ -491,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error(error);
 
                 alert(
-                    'Something went wrong while updating the order.'
+                    __t('Something went wrong while updating the order.')
                 );
 
                 this.disabled = false;

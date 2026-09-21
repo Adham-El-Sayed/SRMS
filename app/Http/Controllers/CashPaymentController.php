@@ -26,7 +26,7 @@ class CashPaymentController extends Controller
     public function confirm(Order $order): RedirectResponse
     {
         if ($order->payment_method !== 'cash') {
-            abort(422, 'This order is not a cash order.');
+            abort(422, __('This order is not a cash order.'));
         }
 
         $order->update([
@@ -35,6 +35,6 @@ class CashPaymentController extends Controller
 
         return redirect()
             ->route('cash-payments.index')
-            ->with('success', "The order has been confirmed paid for  #{$order->id}.");
+            ->with('success', __('Order #:id has been confirmed as paid.', ['id' => $order->id]));
     }
 }

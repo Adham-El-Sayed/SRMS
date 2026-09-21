@@ -53,7 +53,7 @@ class MenuManagementController extends Controller
 
         return redirect()
             ->route('menu.management')
-            ->with('success', 'Category created successfully.');
+            ->with('success', __('Category created successfully.'));
     }
 
 
@@ -99,7 +99,7 @@ class MenuManagementController extends Controller
 
     return redirect()
         ->route('menu.management')
-        ->with('success', 'Category updated successfully.');
+        ->with('success', __('Category updated successfully.'));
 }
 
 
@@ -114,7 +114,7 @@ class MenuManagementController extends Controller
     //     if ($category->products()->exists()) {
     //         return redirect()
     //             ->route('menu.management')
-    //             ->with('error', 'Cannot delete this category because it contains products. Deactivate it instead.');
+    //             ->with('error', __('Cannot delete this category because it contains products. Deactivate it instead.'));
     //     }
 
     //     if ($category->image) {
@@ -125,7 +125,7 @@ class MenuManagementController extends Controller
 
     //     return redirect()
     //         ->route('menu.management')
-    //         ->with('success', 'Category deleted successfully.');
+    //         ->with('success', __('Category deleted successfully.'));
     // }
 
 
@@ -158,7 +158,7 @@ class MenuManagementController extends Controller
 
         return redirect()
             ->route('menu.management')
-            ->with('success', 'Product created successfully.');
+            ->with('success', __('Product created successfully.'));
     }
 
 
@@ -206,7 +206,7 @@ class MenuManagementController extends Controller
 
     return redirect()
         ->route('menu.management')
-        ->with('success', 'Product updated successfully.');
+        ->with('success', __('Product updated successfully.'));
 }
 
 
@@ -239,7 +239,7 @@ class MenuManagementController extends Controller
 
 //     return redirect()
 //         ->route('menu.management')
-//         ->with('success', 'Product deleted successfully.');
+//         ->with('success', __('Product deleted successfully.'));
 // }
 
 public function toggleCategory(Category $category)

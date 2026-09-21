@@ -3,13 +3,13 @@
 @section('content')
 <div class="container">
 
-    <h1>Add New Table</h1>
+    <h1>{{ __('Add New Table') }}</h1>
 
     <form action="{{ route('tables.store') }}" method="POST">
         @csrf
 
         <div>
-            <label for="number">Table Number</label>
+            <label for="number">{{ __('Table Number') }}</label>
             <input
                 type="text"
                 id="number"
@@ -25,7 +25,7 @@
         <br>
 
         <div>
-            <label for="capacity">Capacity</label>
+            <label for="capacity">{{ __('Capacity') }}</label>
             <input
                 type="number"
                 id="capacity"
@@ -41,12 +41,12 @@
         <br>
 
         <div>
-            <label for="status">Status</label>
+            <label for="status">{{ __('Status') }}</label>
 
             <select id="status" name="status">
-                <option value="available">Available</option>
-                <option value="occupied">Occupied</option>
-                <option value="reserved">Reserved</option>
+                <option value="available">{{ __('Available') }}</option>
+                <option value="occupied">{{ __('Occupied') }}</option>
+                <option value="reserved">{{ __('Reserved') }}</option>
             </select>
 
             @error('status')
@@ -57,11 +57,11 @@
         <br>
 
         <button type="submit">
-            Save Table
+            {{ __('Save Table') }}
         </button>
 
         <a href="{{ route('tables.index') }}">
-            Cancel
+            {{ __('Cancel') }}
         </a>
 
     </form>

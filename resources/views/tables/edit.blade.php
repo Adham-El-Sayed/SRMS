@@ -3,14 +3,14 @@
 @section('content')
 <div class="container">
 
-    <h1>Edit Table {{ $table->number }}</h1>
+    <h1>{{ __('Edit Table') }} {{ $table->number }}</h1>
 
     <form action="{{ route('tables.update', $table) }}" method="POST">
         @csrf
         @method('PUT')
 
         <div>
-            <label for="number">Table Number</label>
+            <label for="number">{{ __('Table Number') }}</label>
 
             <input
                 type="text"
@@ -27,7 +27,7 @@
         <br>
 
         <div>
-            <label for="capacity">Capacity</label>
+            <label for="capacity">{{ __('Capacity') }}</label>
 
             <input
                 type="number"
@@ -44,7 +44,7 @@
         <br>
 
         <div>
-            <label for="status">Status</label>
+            <label for="status">{{ __('Status') }}</label>
 
             <select id="status" name="status">
 
@@ -52,21 +52,21 @@
                     value="available"
                     @selected(old('status', $table->status->value) === 'available')
                 >
-                    Available
+                    {{ __('Available') }}
                 </option>
 
                 <option
                     value="occupied"
                     @selected(old('status', $table->status->value) === 'occupied')
                 >
-                    Occupied
+                    {{ __('Occupied') }}
                 </option>
 
                 <option
                     value="reserved"
                     @selected(old('status', $table->status->value) === 'reserved')
                 >
-                    Reserved
+                    {{ __('Reserved') }}
                 </option>
 
             </select>
@@ -79,11 +79,11 @@
         <br>
 
         <button type="submit">
-            Update Table
+            {{ __('Update Table') }}
         </button>
 
         <a href="{{ route('tables.index') }}">
-            Cancel
+            {{ __('Cancel') }}
         </a>
 
     </form>

@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Add Product</title>
+    <title>{{ __('Add Product') }}</title>
 </head>
 
 <body>
 
-    <h1>Add Product</h1>
+    <h1>{{ __('Add Product') }}</h1>
 
     @if ($errors->any())
         <div>
@@ -29,7 +29,7 @@
 
         <div>
             <label for="category_id">
-                Category
+                {{ __('Category') }}
             </label>
 
             <select
@@ -38,7 +38,7 @@
                 required
             >
                 <option value="">
-                    Select Category
+                    {{ __('Select Category') }}
                 </option>
 
                 @foreach($categories as $category)
@@ -56,7 +56,7 @@
 
         <div>
             <label for="name">
-                Product Name
+                {{ __('Product Name') }}
             </label>
 
             <input
@@ -72,7 +72,7 @@
 
         <div>
             <label for="description">
-                Description
+                {{ __('Description') }}
             </label>
 
             <textarea
@@ -85,7 +85,7 @@
 
         <div>
             <label for="price">
-                Price
+                {{ __('Price') }}
             </label>
 
             <input
@@ -112,18 +112,18 @@
                     checked
                 >
 
-                Active
+                {{ __('Active') }}
             </label>
         </div>
 
         <br>
 
         <button type="submit">
-            Create Product
+            {{ __('Create Product') }}
         </button>
 
         <a href="{{ route('products.index') }}">
-            Cancel
+            {{ __('Cancel') }}
         </a>
     </form>
 

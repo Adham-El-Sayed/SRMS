@@ -1,68 +1,70 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-2xl mx-auto py-8 px-4">
+
+    <div class="header">
+        <div>
+            <span class="page-kicker">{{ __('Shift') }}</span>
+            <h1>{{ __('Current Shift') }}</h1>
+            @if ($shift)
+                <p>{{ __('Opened') }}: {{ $shift->opened_at->format('Y-m-d H:i') }}</p>
+            @endif
+        </div>
+    </div>
 
     @if (session('success'))
-        <div class="mb-4 p-3 rounded bg-green-900/40 text-green-300">
-            {{ session('success') }}
-        </div>
+        <div class="success-message">{{ session('success') }}</div>
     @endif
 
     @if (! $shift)
-        <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 text-center">
-            <p class="text-slate-300 mb-4">No shift is currently open.</p>
-            <form method="POST" action="{{ route('shifts.open') }}">
+
+        <div class="empty shift-empty">
+            <div class="empty-icon">⏱</div>
+            <h3>{{ __('No shift is currently open.') }}</h3>
+            <form method="POST" action="{{ route('shifts.open') }}" style="margin-top:18px">
                 @csrf
-                <button type="submit"
-                    class="px-6 py-2 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-medium">
-                    Open New Shift
-                </button>
+                <button type="submit" class="primary-btn">{{ __('Open New Shift') }}</button>
             </form>
         </div>
+
     @else
-        <div class="bg-slate-900 border border-slate-700 rounded-xl p-6 mb-6">
-            <h2 class="text-lg font-semibold text-white mb-4">Current Shift</h2>
-            <p class="text-slate-400 text-sm mb-4">
-                Opened: {{ $shift->opened_at->format('Y-m-d H:i') }}
-            </p>
 
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <div class="bg-slate-800 rounded-lg p-4">
-                    <p class="text-slate-400 text-sm">Cash Sales (System)</p>
-                    <p class="text-2xl font-bold text-teal-400">
-                        {{ number_format($shift->systemCashTotal(), 2) }}
-                    </p>
-                </div>
-                <div class="bg-slate-800 rounded-lg p-4">
-                    <p class="text-slate-400 text-sm">Total Visa</p>
-                    <p class="text-2xl font-bold text-purple-400">
-                        {{ number_format($shift->systemVisaTotal(), 2) }}
-                    </p>
-                </div>
+        <div class="summary-grid shift-grid">
+            <div class="summary-card">
+                <div class="label">{{ __('Cash Sales (System)') }}</div>
+                <div class="value">{{ number_format($shift->systemCashTotal(), 2) }} <small class="muted-text">{{ __('EGP') }}</small></div>
             </div>
+            <div class="summary-card">
+                <div class="label">{{ __('Total Visa') }}</div>
+                <div class="value">{{ number_format($shift->systemVisaTotal(), 2) }} <small class="muted-text">{{ __('EGP') }}</small></div>
+            </div>
+        </div>
 
-            <form method="POST" action="{{ route('shifts.close', $shift) }}" class="space-y-4">
+        <div class="card shift-close">
+            <h2 style="margin:0 0 18px;font-size:20px">{{ __('Close Shift') }}</h2>
+
+            <form method="POST" action="{{ route('shifts.close', $shift) }}">
                 @csrf
-                <div>
-                    <label class="block text-sm text-slate-300 mb-1">
-                        Cash You Actually Have
-                    </label>
-                    <input type="number" step="0.01" name="counted_cash" required
-                        class="w-full rounded-lg bg-slate-800 border-slate-700 text-white">
+                <div class="form-group">
+                    <label for="counted_cash">{{ __('Cash You Actually Have') }}</label>
+                    <input type="number" step="0.01" name="counted_cash" id="counted_cash" required>
                 </div>
-                <div>
-                    <label class="block text-sm text-slate-300 mb-1">Notes (optional)</label>
-                    <textarea name="notes" rows="2"
-                        class="w-full rounded-lg bg-slate-800 border-slate-700 text-white"></textarea>
+                <div class="form-group">
+                    <label for="notes">{{ __('Notes (optional)') }}</label>
+                    <textarea name="notes" id="notes" rows="2"></textarea>
                 </div>
-                <button type="submit"
-                    class="px-6 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium">
-                    Close Shift
-                </button>
+                <button type="submit" class="delete-btn">{{ __('Close Shift') }}</button>
             </form>
         </div>
+
     @endif
 
-</div>
 @endsection
+
+@push('styles')
+<style>
+    .shift-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 22px; max-width: 760px; }
+    .shift-close { max-width: 760px; }
+    .shift-empty { max-width: 760px; }
+</style>
+@endpush

@@ -57,7 +57,7 @@ class OrderController extends Controller
             );
 
             return response()->json([
-                'message' => 'Order created successfully.',
+                'message' => __('Order created successfully.'),
                 'order' => $order,
             ], 201);
 
@@ -106,7 +106,7 @@ class OrderController extends Controller
             );
 
             return response()->json([
-                'message' => 'Order status updated successfully.',
+                'message' => __('Order status updated successfully.'),
                 'order' => $order,
             ]);
 
@@ -135,7 +135,7 @@ class OrderController extends Controller
             );
 
             return response()->json([
-                'message' => 'Order updated successfully.',
+                'message' => __('Order updated successfully.'),
                 'order' => $order,
             ]);
 

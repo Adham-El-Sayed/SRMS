@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Restaurant Tables')
+@section('title', __('Restaurant Tables'))
 
 @section('content')
 
     <div class="header">
 
         <div>
-            <h1>Restaurant Tables</h1>
-            <p>Manage your restaurant tables and their availability.</p>
+            <h1>{{ __('Restaurant Tables') }}</h1>
+            <p>{{ __('Manage your restaurant tables and their availability.') }}</p>
         </div>
 
         <a href="{{ route('tables.create') }}" class="btn">
-            + Add Table
+            {{ __('+ Add Table') }}
         </a>
 
     </div>
@@ -38,14 +38,14 @@
                     <div class="table-header">
 
                         <div>
-                            <h2>Table {{ $table->number }}</h2>
+                            <h2>{{ __('Table') }} {{ $table->number }}</h2>
                             <p class="table-id">
-                                Table #{{ $table->id }}
+                                {{ __('ID') }}: {{ $table->id }}
                             </p>
                         </div>
 
                         <span class="status {{ $table->status->value }}">
-                            {{ ucfirst($table->status->value) }}
+                            {{ __(ucfirst($table->status->value)) }}
                         </span>
 
                     </div>
@@ -56,11 +56,11 @@
                         <div class="info-item">
 
                             <span class="info-label">
-                                Capacity
+                                {{ __('Capacity') }}
                             </span>
 
                             <strong>
-                                {{ $table->capacity }} Seats
+                                {{ $table->capacity }} {{ __('Seats') }}
                             </strong>
 
                         </div>
@@ -69,7 +69,7 @@
                         <div class="info-item">
 
                             <span class="info-label">
-                                QR Token
+                                {{ __('QR Token') }}
                             </span>
 
                             <strong class="token">
@@ -87,7 +87,7 @@
                             href="{{ route('tables.qr', $table) }}"
                             class="qr-btn"
                         >
-                            QR Code
+                            {{ __('QR Code') }}
                         </a>
 
 
@@ -95,7 +95,7 @@
                             href="{{ route('tables.edit', $table) }}"
                             class="edit-btn"
                         >
-                            Edit
+                            {{ __('Edit') }}
                         </a>
 
 
@@ -105,7 +105,7 @@
                             data-id="{{ $table->id }}"
                             data-name="Table {{ $table->number }}"
                         >
-                            Delete
+                            {{ __('Delete') }}
                         </button>
 
                     </div>
@@ -120,14 +120,14 @@
 
         <div class="empty">
 
-            <h2>No Tables</h2>
+            <h2>{{ __('No Tables') }}</h2>
 
             <p>
-                There are currently no restaurant tables.
+                {{ __('There are currently no restaurant tables.') }}
             </p>
 
             <a href="{{ route('tables.create') }}" class="btn">
-                + Add Your First Table
+                {{ __('+ Add Your First Table') }}
             </a>
 
         </div>
@@ -144,15 +144,15 @@
                 !
             </div>
 
-            <h2>Delete Table?</h2>
+            <h2>{{ __('Delete Table?') }}</h2>
 
             <p>
-                Are you sure you want to delete
+                {{ __('Are you sure you want to delete') }}
                 <strong id="tableName"></strong>?
             </p>
 
             <p class="modal-warning">
-                This action cannot be undone.
+                {{ __('This action cannot be undone.') }}
             </p>
 
 
@@ -163,7 +163,7 @@
                     class="cancel-btn"
                     onclick="closeDeleteModal()"
                 >
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
 
 
@@ -179,7 +179,7 @@
                         type="submit"
                         class="confirm-delete-btn"
                     >
-                        Yes, Delete
+                        {{ __('Yes, Delete') }}
                     </button>
 
                 </form>
