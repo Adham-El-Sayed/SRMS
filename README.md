@@ -13,7 +13,7 @@ A Laravel web app that runs a restaurant floor end to end: guests scan a QR code
 - [Tech stack](#tech-stack)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Creating the first admin](#creating-the-first-admin)
+- [Accounts and access](#accounts-and-access)
 - [How it works](#how-it-works)
 - [Languages](#languages)
 - [Project structure](#project-structure)
@@ -158,24 +158,42 @@ For development with hot reload, run `composer dev` instead of `php artisan serv
 
 ---
 
-## Creating the first admin
+## Accounts and access
 
-New accounts start **without a role**, so the management pages stay locked until you give one out. Register an account at `/register`, then run:
+Every staff page requires signing in, and what each account may open depends on its role.
+
+| Role | Can open |
+|---|---|
+| **admin** | Everything: menu, tables, payments, shifts, reports and Staff & Access |
+| **kitchen** | The kitchen board and the dashboard |
+| *no role yet* | Nothing — a "waiting for access" page until a manager sets the role |
+
+The navigation only shows what the signed-in account can actually open, and a
+page that isn't theirs is refused by the server as well, not just hidden.
+
+### The first administrator
 
 ```bash
-php artisan tinker
+php artisan srms:admin
 ```
 
-```php
-use Spatie\Permission\Models\Role;
+It asks for a name, email and password and creates an administrator. Pass an
+email of an existing account to promote that account instead:
 
-Role::findOrCreate('admin');
-Role::findOrCreate('kitchen');
-
-App\Models\User::where('email', 'you@example.com')->first()->assignRole('admin');
+```bash
+php artisan srms:admin someone@example.com
 ```
 
-Use `assignRole('kitchen')` for kitchen staff. They can open the dashboard and the kitchen board, and the management pages stay locked.
+### Everyone else
+
+The administrator adds accounts from **Staff & Access** in the navigation: add
+an account, or change anyone's role from the dropdown next to their name. An
+administrator can't remove their own access or delete their own account there,
+so the restaurant can never be left without an administrator.
+
+New accounts made through public sign-up start with no role and can't reach
+anything until a manager gives them one. Once your staff accounts exist, you
+can switch public sign-up off entirely with `APP_REGISTRATION=false` in `.env`.
 
 ---
 

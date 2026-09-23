@@ -15,11 +15,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // The roles the app hands out. An admin assigns them from
+        // Staff & Access; the first one is made with `php artisan srms:admin`.
+        $this->call(RoleSeeder::class);
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Support\Access;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -28,7 +29,8 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Each role lands where it actually works.
+        return redirect()->intended(Access::homeUrlFor($request->user()));
     }
 
     /**

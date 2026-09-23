@@ -13,6 +13,7 @@ use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RestaurantTableController;
 use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StaffPulseController;
 use App\Http\Controllers\TableMenuController;
 use App\Http\Middleware\SetLocale;
@@ -57,6 +58,9 @@ Route::get('/menu', [MenuController::class, 'index'])
 */
 
 Route::middleware('auth')->group(function () {
+    // Signed in, but nobody has said yet what this account may open.
+    Route::view('/no-access', 'auth.no-access')->name('no-access');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -122,6 +126,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/order-change-requests', [OrderChangeRequestController::class, 'index'])->name('order-change-requests.index');
     Route::get('/order-change-requests/board', [OrderChangeRequestController::class, 'board'])->name('order-change-requests.board');
     Route::post('/order-change-requests/{orderChangeRequest}/resolve', [OrderChangeRequestController::class, 'resolve'])->name('order-change-requests.resolve');
+
+    // Staff and what each of them may open
+    Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+    Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
+    Route::patch('/staff/{user}', [StaffController::class, 'updateRole'])->whereNumber('user')->name('staff.role');
+    Route::delete('/staff/{user}', [StaffController::class, 'destroy'])->whereNumber('user')->name('staff.destroy');
 
     // Reports
     Route::get('/reports/sales', [ReportController::class, 'index'])->name('reports.sales');

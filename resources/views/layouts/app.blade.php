@@ -518,6 +518,9 @@
 
                     <a href="{{ route('reports.monthly') }}"
                        class="{{ request()->routeIs('reports.*') ? 'active' : '' }}">{{ __('Reports') }}</a>
+
+                    <a href="{{ route('staff.index') }}"
+                       class="{{ request()->routeIs('staff.*') ? 'active' : '' }}">{{ __('Staff') }}</a>
                 @endif
 
             </div>
