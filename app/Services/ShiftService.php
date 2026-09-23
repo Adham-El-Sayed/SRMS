@@ -46,6 +46,19 @@ class ShiftService
                 throw new InvalidArgumentException(__('This shift is already closed.'));
             }
 
+            // The drawer can only be counted once every order has been settled,
+            // otherwise the shift's figures would never add up.
+            $unpaid = $shift->unpaidOrders()->count();
+
+            if ($unpaid > 0) {
+                throw new InvalidArgumentException(trans_choice(
+                    '{1}One order has not been paid yet. Settle it on the Payments page before closing the shift.'
+                    . '|[2,*]:count orders have not been paid yet. Settle them on the Payments page before closing the shift.',
+                    $unpaid,
+                    ['count' => $unpaid]
+                ));
+            }
+
             // Freeze what the system expected, so a closed shift never changes.
             $shift->update([
                 'status' => 'closed',

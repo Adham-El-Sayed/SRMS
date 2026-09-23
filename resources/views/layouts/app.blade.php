@@ -9,7 +9,9 @@
     // What the navigation shows. A super admin sees the workspace they picked.
     $showAdmin   = $workspace === 'admin';
     $showMoney   = in_array($workspace, ['admin', 'cashier'], true);
-    $showKitchen = in_array($workspace, ['admin', 'kitchen'], true);
+    $showKitchen = in_array($workspace, ['admin', 'kitchen', 'cashier'], true);
+    $showAlerts  = in_array($workspace, ['admin', 'cashier'], true);
+    $offers      = \App\Support\Settings::enabledTypes();
     $i18nFile = lang_path($locale . '.json');
     $i18n = ($locale !== 'en' && is_file($i18nFile)) ? json_decode(file_get_contents($i18nFile), true) : [];
 @endphp
@@ -543,13 +545,15 @@
                     </a>
                 @endif
 
-                @if ($showAdmin)
+                @if ($showAlerts)
                     <a href="{{ route('order-change-requests.index') }}"
                        class="{{ request()->routeIs('order-change-requests.*') ? 'active' : '' }}">
                         {{ __('Alerts') }}
                         <span class="nav-badge" data-pulse="alerts" hidden></span>
                     </a>
+                @endif
 
+                @if ($showAdmin)
                     <span class="nav-divider"></span>
 
                     <a href="{{ route('menu.management') }}"
@@ -566,11 +570,24 @@
                         <span class="nav-badge nav-badge--quiet" data-pulse="payments" hidden></span>
                     </a>
 
+                    @if (count(array_diff($offers, ['dine_in'])) > 0)
+                        <a href="{{ route('counter.create') }}"
+                           class="{{ request()->routeIs('counter.*') ? 'active' : '' }}">{{ __('Counter') }}</a>
+                    @endif
+
+                    @if (in_array('delivery', $offers, true))
+                        <a href="{{ route('delivery.index') }}"
+                           class="{{ request()->routeIs('delivery.*') ? 'active' : '' }}">{{ __('Delivery') }}</a>
+                    @endif
+
                     <a href="{{ route('shifts.current') }}"
                        class="{{ request()->routeIs('shifts.current') ? 'active' : '' }}">{{ __('Shift') }}</a>
 
-                    <a href="{{ route('shifts.history') }}"
-                       class="{{ request()->routeIs('shifts.history') || request()->routeIs('shifts.show') ? 'active' : '' }}">{{ __('Shift History') }}</a>
+                    {{-- The history is a manager's record, not part of a cashier's shift. --}}
+                    @if ($showAdmin)
+                        <a href="{{ route('shifts.history') }}"
+                           class="{{ request()->routeIs('shifts.history') || request()->routeIs('shifts.show') ? 'active' : '' }}">{{ __('Shift History') }}</a>
+                    @endif
                 @endif
 
                 @if ($showAdmin)
@@ -581,6 +598,9 @@
 
                     <a href="{{ route('staff.index') }}"
                        class="{{ request()->routeIs('staff.*') ? 'active' : '' }}">{{ __('Staff') }}</a>
+
+                    <a href="{{ route('settings.edit') }}"
+                       class="{{ request()->routeIs('settings.*') ? 'active' : '' }}">{{ __('Settings') }}</a>
                 @endif
 
             </div>

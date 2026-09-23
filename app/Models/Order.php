@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
+    /** How an order reaches the guest. */
+    public const TYPES = ['dine_in', 'takeaway', 'delivery', 'online'];
+
     /** Orders the kitchen is still working on. */
     public const ACTIVE_STATUSES = ['pending', 'confirmed', 'preparing', 'ready'];
 
@@ -23,6 +26,11 @@ class Order extends Model
 
     protected $fillable = [
         'restaurant_table_id',
+        'order_type',
+        'delivery_address',
+        'delivery_fee',
+        'driver_name',
+        'delivery_status',
         'shift_id',
         'access_token',
         'client_name',
@@ -43,6 +51,7 @@ class Order extends Model
     ];
 
     protected $casts = [
+        'delivery_fee' => 'decimal:2',
         'subtotal' => 'decimal:2',
         'fees' => 'decimal:2',
         'total' => 'decimal:2',
@@ -95,5 +104,21 @@ class Order extends Model
         return is_string($token)
             && $this->access_token !== null
             && hash_equals($this->access_token, $token);
+    }
+
+    public function typeLabel(): string
+    {
+        return \App\Support\Settings::typeLabel($this->order_type ?? 'dine_in');
+    }
+
+    public function isDelivery(): bool
+    {
+        return $this->order_type === 'delivery';
+    }
+
+    /** Takeaway, delivery and online orders have no table. */
+    public function seatsGuests(): bool
+    {
+        return $this->order_type === 'dine_in';
     }
 }

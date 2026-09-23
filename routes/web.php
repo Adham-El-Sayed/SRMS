@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\CashPaymentController;
+use App\Http\Controllers\CounterOrderController;
+use App\Http\Controllers\DeliveryController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KitchenOrderController;
@@ -97,7 +100,7 @@ Route::middleware(['auth', 'role:super-admin|admin|cashier|kitchen'])->group(fun
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:super-admin|admin|kitchen'])->group(function () {
+Route::middleware(['auth', 'role:super-admin|admin|kitchen|cashier'])->group(function () {
     Route::get('/kitchen/orders', [KitchenOrderController::class, 'index'])->name('kitchen.orders');
     Route::get('/kitchen/orders/board', [KitchenOrderController::class, 'board'])->name('kitchen.board');
     Route::patch('/kitchen/orders/{order}/status', [KitchenOrderController::class, 'updateStatus'])
@@ -118,6 +121,20 @@ Route::middleware(['auth', 'role:super-admin|admin|kitchen'])->group(function ()
 */
 
 Route::middleware(['auth', 'role:super-admin|admin|cashier'])->group(function () {
+    // Taking an order at the counter: collection, delivery, or an online one
+    Route::get('/counter', [CounterOrderController::class, 'create'])->name('counter.create');
+    Route::post('/counter', [CounterOrderController::class, 'store'])->name('counter.store');
+
+    // Orders on their way out
+    Route::get('/delivery', [DeliveryController::class, 'index'])->name('delivery.index');
+    Route::get('/delivery/board', [DeliveryController::class, 'board'])->name('delivery.board');
+    Route::patch('/delivery/{order}', [DeliveryController::class, 'update'])->whereNumber('order')->name('delivery.update');
+
+    // Waiter calls and order changes reach whoever is on the floor
+    Route::get('/order-change-requests', [OrderChangeRequestController::class, 'index'])->name('order-change-requests.index');
+    Route::get('/order-change-requests/board', [OrderChangeRequestController::class, 'board'])->name('order-change-requests.board');
+    Route::post('/order-change-requests/{orderChangeRequest}/resolve', [OrderChangeRequestController::class, 'resolve'])->name('order-change-requests.resolve');
+
     Route::get('/cash-payments', [CashPaymentController::class, 'index'])->name('cash-payments.index');
     Route::get('/cash-payments/board', [CashPaymentController::class, 'board'])->name('cash-payments.board');
     Route::post('/cash-payments/{order}/confirm', [CashPaymentController::class, 'confirm'])->name('cash-payments.confirm');
@@ -159,12 +176,12 @@ Route::middleware(['auth', 'role:super-admin|admin'])->group(function () {
     // Payments
     Route::get('/orders/{order}/invoice', [InvoiceController::class, 'show'])->name('orders.invoice');
 
-    // Waiter alerts
-    Route::get('/order-change-requests', [OrderChangeRequestController::class, 'index'])->name('order-change-requests.index');
-    Route::get('/order-change-requests/board', [OrderChangeRequestController::class, 'board'])->name('order-change-requests.board');
-    Route::post('/order-change-requests/{orderChangeRequest}/resolve', [OrderChangeRequestController::class, 'resolve'])->name('order-change-requests.resolve');
 
     // Staff and what each of them may open
+    // How the restaurant serves guests
+    Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
+    Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
     Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
     Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
     Route::patch('/staff/{user}', [StaffController::class, 'updateRole'])->whereNumber('user')->name('staff.role');

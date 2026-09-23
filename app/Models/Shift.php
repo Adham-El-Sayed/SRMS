@@ -64,4 +64,17 @@ class Shift extends Model
 
         return round((float) $this->counted_cash - $this->systemCashTotal(), 2);
     }
+
+    /** Orders in this shift where the money has not been collected yet. */
+    public function unpaidOrders()
+    {
+        return $this->orders()
+            ->where('payment_status', '!=', 'paid')
+            ->where('status', '!=', 'cancelled');
+    }
+
+    public function outstandingTotal(): float
+    {
+        return (float) $this->unpaidOrders()->sum('total');
+    }
 }

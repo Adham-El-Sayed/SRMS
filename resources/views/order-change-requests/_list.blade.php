@@ -9,7 +9,15 @@
 
                 <div class="alert-info">
                     <strong>{{ __('Order #') }}{{ $req->order_id }}</strong>
-                    — {{ __('Table') }} {{ $req->order?->table?->number ?? __('N/A') }}
+
+                    @if ($req->order?->table)
+                        — {{ __('Table') }} {{ $req->order->table->number }}
+                    @elseif ($req->order)
+                        — {{ $req->order->typeLabel() }}{{ $req->order->client_name ? ' · ' . $req->order->client_name : '' }}
+                    @endif
+
+                    <span class="alert-reason reason-{{ $req->reason ?? 'waiter' }}">{{ $req->reasonLabel() }}</span>
+
                     <div class="alert-time">
                         {{ __('Requested') }} {{ $req->created_at->diffForHumans() }}
                     </div>

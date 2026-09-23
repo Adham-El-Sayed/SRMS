@@ -26,6 +26,14 @@
 
 @push('styles')
 <style>
+    .alert-reason {
+        display: inline-block; margin-inline-start: 8px;
+        padding: 3px 9px; border-radius: 100px;
+        font-size: 11.5px; font-weight: 700;
+    }
+    .alert-reason.reason-waiter { background: var(--accent-soft); color: var(--accent-dark); }
+    .alert-reason.reason-edited { background: var(--info-soft); color: var(--info); }
+
 
     .header {
         margin-bottom: 25px;

@@ -24,6 +24,20 @@
 @push('styles')
 
 <style>
+    .order-head-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    /* Where the order is going — readable at a glance across the kitchen */
+    .order-type {
+        display: inline-flex; align-items: center;
+        padding: 4px 10px; border-radius: 100px;
+        font-size: 11.5px; font-weight: 700; letter-spacing: .04em;
+        border: 1px solid transparent; white-space: nowrap;
+    }
+    .order-type.type-dine_in  { background: var(--surface-sunk); color: var(--ink-soft); border-color: var(--line-strong); }
+    .order-type.type-takeaway { background: var(--amber-soft); color: var(--warn); border-color: rgba(176,123,20,.25); }
+    .order-type.type-delivery { background: var(--info-soft); color: var(--info); border-color: rgba(59,99,130,.25); }
+    .order-type.type-online   { background: var(--olive-soft); color: var(--olive); border-color: rgba(94,110,76,.3); }
+
 
     .header {
         margin-bottom: 30px;

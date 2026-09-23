@@ -21,7 +21,7 @@ class StaffPulseController extends Controller
 
         $pulse = [];
 
-        if (in_array($workspace, ['admin', 'kitchen'], true)) {
+        if (in_array($workspace, ['admin', 'kitchen', 'cashier'], true)) {
             $pulse['kitchen'] = Order::active()->count();
             $pulse['latest_order_id'] = (int) Order::max('id');
         }
@@ -32,7 +32,7 @@ class StaffPulseController extends Controller
                 ->count();
         }
 
-        if ($workspace === 'admin') {
+        if (in_array($workspace, ['admin', 'cashier'], true)) {
             $pulse['alerts'] = OrderChangeRequest::where('status', 'pending')->count();
             $pulse['latest_alert_id'] = (int) OrderChangeRequest::where('status', 'pending')->max('id');
         }

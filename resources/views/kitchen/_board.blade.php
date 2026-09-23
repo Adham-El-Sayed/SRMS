@@ -10,9 +10,17 @@
                 {{-- Order Header --}}
                 <div class="order-header">
 
-                    <h2>
-                        {{ __('Order #') }}{{ $order->id }}
-                    </h2>
+                    <div class="order-head-left">
+                        <h2>
+                            {{ __('Order #') }}{{ $order->id }}
+                        </h2>
+
+                        {{-- Where this order is going: the kitchen plates a
+                             delivery differently from a table's plate. --}}
+                        <span class="order-type type-{{ $order->order_type ?? 'dine_in' }}">
+                            {{ $order->typeLabel() }}
+                        </span>
+                    </div>
 
                     <span class="status {{ $order->status }}">
                         {{ __(ucfirst($order->status)) }}
@@ -24,15 +32,25 @@
                 {{-- Order Information --}}
                 <div class="info">
 
-                    <p>
-                        <strong>{{ __('Table') }}:</strong>
-
-                        @if($order->table)
+                    @if ($order->table)
+                        <p>
+                            <strong>{{ __('Table') }}:</strong>
                             {{ $order->table->number }}
-                        @else
-                            {{ __('N/A') }}
-                        @endif
-                    </p>
+                        </p>
+                    @else
+                        <p>
+                            <strong>{{ __('Customer') }}:</strong>
+                            {{ $order->client_name ?: __('No name') }}
+                            @if ($order->client_phone) &middot; {{ $order->client_phone }} @endif
+                        </p>
+                    @endif
+
+                    @if ($order->isDelivery() && $order->delivery_address)
+                        <p>
+                            <strong>{{ __('Delivery address') }}:</strong>
+                            {{ $order->delivery_address }}
+                        </p>
+                    @endif
 
                     <p>
                         <strong>{{ __('Capacity') }}:</strong>

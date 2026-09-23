@@ -28,22 +28,38 @@ class OrderService
     | about a payment is trusted until staff confirm it.
     */
     public function create(
-        RestaurantTable $table,
+        ?RestaurantTable $table,
         array $items,
         ?string $clientName = null,
         ?string $clientPhone = null,
-        string $paymentMethod = 'cash'
+        string $paymentMethod = 'cash',
+        array $service = []
     ): Order {
-        return DB::transaction(function () use ($table, $items, $clientName, $clientPhone, $paymentMethod) {
+        return DB::transaction(function () use ($table, $items, $clientName, $clientPhone, $paymentMethod, $service) {
+
+            // Nothing may be ordered while the restaurant is closed: without an
+            // open shift there is no drawer for the money to land in.
+            $shift = $this->shiftService->currentOpenShift();
+
+            if (! $shift) {
+                throw new InvalidArgumentException(__('The restaurant is not taking orders right now.'));
+            }
 
             $lines = $this->priceLines($items);
 
+            $type = $service['order_type'] ?? 'dine_in';
+            $deliveryFee = $type === 'delivery' ? (float) ($service['delivery_fee'] ?? 0) : 0;
+
             $order = Order::create([
-                'restaurant_table_id' => $table->id,
-                'shift_id' => $this->shiftService->currentOpenShift()?->id,
+                'restaurant_table_id' => $table?->id,
+                'order_type' => $type,
+                'delivery_address' => $service['delivery_address'] ?? null,
+                'delivery_fee' => $deliveryFee,
+                'delivery_status' => $type === 'delivery' ? 'waiting' : null,
+                'shift_id' => $shift->id,
                 'access_token' => Str::random(48),
                 'status' => 'pending',
-                'total' => $lines->sum('subtotal'),
+                'total' => $lines->sum('subtotal') + $deliveryFee,
                 'client_name' => $clientName,
                 'client_phone' => $clientPhone,
                 'payment_method' => $paymentMethod,
@@ -53,7 +69,7 @@ class OrderService
             $order->items()->createMany($lines->all());
 
             // Someone is sitting here now, whatever the table said before.
-            if ($table->status !== TableStatus::Occupied) {
+            if ($table && $table->status !== TableStatus::Occupied) {
                 $table->update(['status' => TableStatus::Occupied]);
             }
 
@@ -88,7 +104,13 @@ class OrderService
 
             $order->items()->delete();
             $order->items()->createMany($lines->all());
-            $order->update(['total' => $lines->sum('subtotal')]);
+            $order->update(['total' => $lines->sum('subtotal') + (float) $order->delivery_fee]);
+
+            // Staff must know the ticket changed after they first saw it.
+            \App\Models\OrderChangeRequest::updateOrCreate(
+                ['order_id' => $order->id, 'reason' => 'edited', 'status' => 'pending'],
+                ['updated_at' => now()]
+            );
 
             return $order->fresh(['table', 'items']);
         });
