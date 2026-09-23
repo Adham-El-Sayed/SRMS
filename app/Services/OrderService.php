@@ -116,6 +116,38 @@ class OrderService
         });
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Staff corrections
+    |--------------------------------------------------------------------------
+    | A cashier fixes a ticket at the counter — a wrong item, one more coffee.
+    | No edit window applies, but a settled bill is history and stays closed,
+    | and a finished order is not re-opened.
+    */
+    public function updateByStaff(Order $order, array $items): Order
+    {
+        return DB::transaction(function () use ($order, $items) {
+
+            $order = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+            if ($order->isPaid()) {
+                throw new InvalidArgumentException(__('This order is already paid and cannot be changed.'));
+            }
+
+            if (! $order->isActive()) {
+                throw new InvalidArgumentException(__('This order is already closed.'));
+            }
+
+            $lines = $this->priceLines($items);
+
+            $order->items()->delete();
+            $order->items()->createMany($lines->all());
+            $order->update(['total' => $lines->sum('subtotal') + (float) $order->delivery_fee]);
+
+            return $order->fresh(['table', 'items']);
+        });
+    }
+
     public function isWithinEditWindow(Order $order): bool
     {
         return $order->created_at

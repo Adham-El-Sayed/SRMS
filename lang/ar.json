@@ -394,7 +394,7 @@
     "This order cannot move from :from to :to.": "الطلب مينفعش يتنقل من «:from» لـ «:to».",
     "This order has already been paid.": "الطلب ده اتدفع قبل كده.",
     "This order is already being prepared and can no longer be changed.": "الطلب بيتحضّر خلاص ومينفعش يتعدّل.",
-    "This order is already closed.": "الطلب ده اتقفل خلاص.",
+    "This order is already closed.": "الطلب ده مقفول خلاص.",
     "This shift is already closed.": "الوردية دي اتقفلت قبل كده.",
     "This table has orders in its history, so it can't be deleted.": "الترابيزة دي عليها طلبات قديمة، فمينفعش تتحذف.",
     "Your session has ended. Taking you to sign in…": "الجلسة خلصت. بنرجّعك لتسجيل الدخول…",
@@ -481,5 +481,11 @@
     "Delivered recently": "اتسلّم مؤخراً",
     "Delivery updated for order #:id.": "بيانات توصيل الطلب رقم :id اتحدّثت.",
     "Changed their order": "عدّل طلبه",
-    "Asked for a waiter": "طلب الجرسون"
+    "Asked for a waiter": "طلب الجرسون",
+    "Edit Order": "تعديل الطلب",
+    "Items on this order": "أصناف الطلب",
+    "Back to Payments": "رجوع للمدفوعات",
+    "This order is already paid and cannot be changed.": "الطلب ده اتدفع خلاص ومينفعش يتعدّل.",
+    "An order must have at least one item.": "الطلب لازم يكون فيه صنف واحد على الأقل.",
+    "Order #:id updated — :total EGP.": "الطلب رقم :id اتعدّل — :total ج.م."
 }

@@ -65,6 +65,10 @@
                         {{ __('Print Invoice') }}
                     </a>
 
+                    <a href="{{ route('orders.edit', $order) }}" class="edit-btn">
+                        {{ __('Edit Order') }}
+                    </a>
+
                     <form method="POST" action="{{ route('cash-payments.confirm', $order) }}">
                         @csrf
                         <button type="submit" class="confirm-button">

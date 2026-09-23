@@ -4,6 +4,7 @@ use App\Http\Controllers\CashPaymentController;
 use App\Http\Controllers\CounterOrderController;
 use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\StaffOrderController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KitchenOrderController;
@@ -138,6 +139,10 @@ Route::middleware(['auth', 'role:super-admin|admin|cashier'])->group(function ()
     Route::get('/cash-payments', [CashPaymentController::class, 'index'])->name('cash-payments.index');
     Route::get('/cash-payments/board', [CashPaymentController::class, 'board'])->name('cash-payments.board');
     Route::post('/cash-payments/{order}/confirm', [CashPaymentController::class, 'confirm'])->name('cash-payments.confirm');
+    // Correcting a ticket before it is paid
+    Route::get('/orders/{order}/edit', [StaffOrderController::class, 'edit'])->whereNumber('order')->name('orders.edit');
+    Route::patch('/orders/{order}', [StaffOrderController::class, 'update'])->whereNumber('order')->name('orders.update');
+
     Route::get('/orders/{order}/invoice', [InvoiceController::class, 'show'])->whereNumber('order')->name('orders.invoice');
 
     Route::get('/shifts/current', [ShiftController::class, 'current'])->name('shifts.current');
@@ -172,9 +177,6 @@ Route::middleware(['auth', 'role:super-admin|admin'])->group(function () {
     Route::patch('/menu-management/products/{product}/toggle', [MenuManagementController::class, 'toggleProduct'])->name('menu.management.products.toggle');
 
     // Shifts
-
-    // Payments
-    Route::get('/orders/{order}/invoice', [InvoiceController::class, 'show'])->name('orders.invoice');
 
 
     // Staff and what each of them may open
