@@ -1574,3 +1574,32 @@ body .summary-card.highlight {
 body .summary-card.highlight .label { color: #BCA994; }
 body .summary-card.highlight .value { color: #FBF5EE; }
 body .summary-card.highlight::before { background: var(--amber); }
+
+
+/* --------------------------------------------------------------------------
+   24. Kitchen board — cancel sits apart from the forward action
+   -------------------------------------------------------------------------- */
+
+body .cancel-order-button {
+    margin-inline-start: auto;
+    background: transparent;
+    color: var(--danger);
+    border-color: transparent;
+}
+
+body .cancel-order-button:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border-color: rgba(174, 53, 39, .2);
+}
+
+body #live-kitchen .actions,
+body #live-payments .actions-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+body #live-kitchen .status-button:not(.cancel-order-button) {
+    flex: 1;
+}

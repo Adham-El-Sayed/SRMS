@@ -2,19 +2,24 @@
 
 namespace App\Exports;
 
+use App\Exports\Concerns\SanitizesCells;
+use Maatwebsite\Excel\Concerns\WithCustomValueBinder;
+use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
 use App\Models\Shift;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 
-class ShiftOrdersExport implements FromCollection, WithHeadings, WithMapping
+class ShiftOrdersExport extends DefaultValueBinder implements WithCustomValueBinder, FromCollection, WithHeadings, WithMapping
 {
+    use SanitizesCells;
+
     public function __construct(protected Shift $shift) {}
 
     public function collection()
     {
         return $this->shift->orders()
-            ->with(['table', 'items.product'])
+            ->with(['table', 'items'])
             ->get();
     }
 
@@ -36,21 +41,11 @@ class ShiftOrdersExport implements FromCollection, WithHeadings, WithMapping
 
        public function map($order): array
     {
-        $items = $order->items->map(function ($item) {
-
-            $line = $item->quantity . 'x ' . ($item->product?->name ?? 'Unknown');
-
-            if ($item->notes) {
-                $line .= ' (' . $item->notes . ')';
-            }
-
-            return $line;
-
-        })->implode(', ');
+        $items = $this->itemLines($order);
 
         return [
             $order->id,
-            $order->table->number ?? 'N/A',
+            $order->table?->number ?? 'N/A',
             $order->client_name,
             $order->client_phone,
             $items,

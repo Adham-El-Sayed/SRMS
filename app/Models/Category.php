@@ -23,4 +23,11 @@ class Category extends Model
     {
     return $this->hasMany(Product::class);
     }
+
+    /** Menu content changed: guests must see it on their next scan. */
+    protected static function booted(): void
+    {
+        static::saved(fn () => \App\Services\MenuService::forget());
+        static::deleted(fn () => \App\Services\MenuService::forget());
+    }
 }

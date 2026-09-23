@@ -100,7 +100,7 @@
             <tbody>
                 @forelse($topProducts as $item)
                     <tr>
-                        <td>{{ __($item->product->name ?? 'Unknown') }}</td>
+                        <td>{{ $item->product_name }}</td>
                         <td>{{ $item->total_quantity }}</td>
                         <td>{{ number_format($item->total_sales, 2) }} {{ __('EGP') }}</td>
                     </tr>

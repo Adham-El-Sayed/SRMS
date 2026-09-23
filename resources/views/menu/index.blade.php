@@ -7,7 +7,7 @@
     <div
         class="menu-page"
         id="menu-app"
-        data-table-id="{{ isset($table) ? $table->id : '' }}"
+        data-table-token="{{ isset($table) ? $table->qr_token : '' }}"
     >
 
         {{-- =========================
@@ -1833,8 +1833,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    const tableId =
-        app.dataset.tableId;
+    const tableToken =
+        app.dataset.tableToken;
 
 
     const addButtons =
@@ -1978,6 +1978,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const EDIT_WINDOW_SECONDS = 150;
 
     let currentOrderId = null;
+
+    // Secret returned once by the server when the order is placed. Every later
+    // request about this order must carry it; it lives only in this page.
+    let currentOrderToken = null;
     let submittedItems = [];
     let countdownInterval = null;
 
@@ -2372,7 +2376,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
 
-                if (!tableId) {
+                if (!tableToken) {
 
                     showMessage(
                         __t('Table information is missing.'),
@@ -2471,8 +2475,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         body:
                             JSON.stringify({
 
-                                restaurant_table_id:
-                                    Number(tableId),
+                                table_token:
+                                    tableToken,
 
                                 items:
                                     items,
@@ -2553,6 +2557,8 @@ document.addEventListener('DOMContentLoaded', function () {
             submitButton.textContent =
                 __t('Submit Order');
 
+
+            currentOrderToken = data.order_token;
 
             startEditWindow(data.order);
 
@@ -2823,9 +2829,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         product_id: item.product_id,
 
-                        name: item.product
-                            ? item.product.name
-                            : __t('Unknown Product'),
+                        name: item.product_name || __t('Unknown Product'),
 
                         price: Number(item.unit_price),
 
@@ -3239,7 +3243,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                         'application/json',
 
                                     'Accept':
-                                        'application/json'
+                                        'application/json',
+
+                                    'X-Order-Token':
+                                        currentOrderToken
 
                                 },
 
@@ -3347,7 +3354,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                         'application/json',
 
                                     'Accept':
-                                        'application/json'
+                                        'application/json',
+
+                                    'X-Order-Token':
+                                        currentOrderToken
 
                                 }
 
@@ -3699,10 +3709,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         div.textContent =
-            value;
+            value == null ? '' : String(value);
 
 
-        return div.innerHTML;
+        // textContent escapes < > & only; the result is also placed inside
+        // value="..." attributes, so quotes must be escaped as well.
+        return div.innerHTML
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
 
     }
 

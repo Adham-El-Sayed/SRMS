@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\ShiftOrdersExport;
 use App\Models\Shift;
 use App\Services\ShiftService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Exports\ShiftOrdersExport;
+use InvalidArgumentException;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ShiftController extends Controller
@@ -19,12 +20,17 @@ class ShiftController extends Controller
 
         return view('shifts.current', [
             'shift' => $shift,
+            'unpaid' => $shift ? $this->shiftService->unpaidOrders($shift) : collect(),
         ]);
     }
 
     public function open()
     {
-        $this->shiftService->open(Auth::user());
+        try {
+            $this->shiftService->open(Auth::user());
+        } catch (InvalidArgumentException $exception) {
+            return redirect()->route('shifts.current')->with('error', $exception->getMessage());
+        }
 
         return redirect()
             ->route('shifts.current')
@@ -34,28 +40,39 @@ class ShiftController extends Controller
     public function close(Request $request, Shift $shift)
     {
         $validated = $request->validate([
-            'counted_cash' => ['required', 'numeric', 'min:0'],
-            'notes' => ['nullable', 'string'],
+            'counted_cash' => ['required', 'numeric', 'min:0', 'max:9999999'],
+            'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $shift = $this->shiftService->close(
-            $shift,
-            $validated['counted_cash'],
-            $validated['notes'] ?? null
-        );
+        try {
+            $shift = $this->shiftService->close(
+                $shift,
+                (float) $validated['counted_cash'],
+                $validated['notes'] ?? null
+            );
+        } catch (InvalidArgumentException $exception) {
+            return redirect()->route('shifts.current')->with('error', $exception->getMessage());
+        }
+
+        $difference = $shift->cashDifference();
+
+        $message = match (true) {
+            $difference > 0 => __('Shift closed. The drawer has :amount EGP more than expected.', ['amount' => number_format($difference, 2)]),
+            $difference < 0 => __('Shift closed. The drawer is :amount EGP short.', ['amount' => number_format(abs($difference), 2)]),
+            default => __('Shift closed. The cash matches exactly.'),
+        };
 
         return redirect()
-            ->route('shifts.current')
-            ->with('success', __('The shift has been closed. The teams:') . $shift->cashDifference());
+            ->route('shifts.show', $shift)
+            ->with('success', $message);
     }
-        public function export(Shift $shift)
+
+    public function export(Shift $shift)
     {
-        return Excel::download(
-            new ShiftOrdersExport($shift),
-            "shift-{$shift->id}.xlsx"
-        );
+        return Excel::download(new ShiftOrdersExport($shift), "shift-{$shift->id}.xlsx");
     }
-        public function history()
+
+    public function history()
     {
         $shifts = Shift::query()
             ->where('status', 'closed')
@@ -63,17 +80,13 @@ class ShiftController extends Controller
             ->latest('closed_at')
             ->paginate(15);
 
-        return view('shifts.history', [
-            'shifts' => $shifts,
-        ]);
+        return view('shifts.history', ['shifts' => $shifts]);
     }
 
     public function show(Shift $shift)
     {
         $shift->load(['user', 'orders.table']);
 
-        return view('shifts.show', [
-            'shift' => $shift,
-        ]);
+        return view('shifts.show', ['shift' => $shift]);
     }
 }

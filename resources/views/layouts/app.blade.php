@@ -2,6 +2,9 @@
     $locale = app()->getLocale();
     $rtl    = $locale === 'ar';
     $isGuestMenu = request()->routeIs('tables.menu');
+    $staffUser = auth()->user();
+    $isAdmin   = $staffUser?->hasRole('admin') ?? false;
+    $isStaff   = $isAdmin || ($staffUser?->hasRole('kitchen') ?? false);
     $i18nFile = lang_path($locale . '.json');
     $i18n = ($locale !== 'en' && is_file($i18nFile)) ? json_decode(file_get_contents($i18nFile), true) : [];
 @endphp
@@ -31,7 +34,7 @@
     {{-- Page-level styles first, so the design system below can govern them --}}
     @stack('styles')
 
-    <link rel="stylesheet" href="{{ asset('css/srms-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/srms-theme.css') }}?v={{ @filemtime(public_path('css/srms-theme.css')) }}">
 
     <style>
         /* ==================================================================
@@ -245,18 +248,101 @@
             flex-shrink: 0;
         }
 
-        #alerts-badge {
-            display: none;
-            min-width: 18px;
-            height: 18px;
-            padding: 0 5px;
+        /* Live counters beside a nav link */
+        .nav-badge {
+            display: inline-block;
+            min-width: 19px;
+            height: 19px;
+            padding: 0 6px;
             border-radius: 100px;
             background: var(--accent);
             color: #fff;
             font-size: 11px;
             font-weight: 700;
-            line-height: 18px;
+            line-height: 19px;
             text-align: center;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .nav-badge[hidden] { display: none; }
+
+        .nav-badge--quiet {
+            background: var(--surface-sunk);
+            color: var(--ink-soft);
+            border: 1px solid var(--line-strong);
+            line-height: 17px;
+        }
+
+        /* Sound on/off. A dot means the browser is still waiting for a click
+           before it will allow sound. */
+        .sound-toggle {
+            position: relative;
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, .14);
+            background: rgba(255, 255, 255, .06);
+            color: #E4D7C8;
+            cursor: pointer;
+            padding: 0;
+        }
+
+        .sound-toggle:hover { background: rgba(255, 255, 255, .12); }
+        .sound-toggle svg { width: 17px; height: 17px; }
+        .sound-toggle .bell-off { display: none; }
+        .sound-toggle.is-off .bell-on { display: none; }
+        .sound-toggle.is-off .bell-off { display: block; }
+        .sound-toggle.is-off { color: #8E7C6B; }
+
+        .sound-toggle.is-locked::after {
+            content: "";
+            position: absolute;
+            top: 5px;
+            inset-inline-end: 5px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--amber);
+            box-shadow: 0 0 0 2px #2A211B;
+        }
+
+        /* Pop-up notices for new orders and waiter calls */
+        .live-toasts {
+            position: fixed;
+            inset-inline-end: 20px;
+            bottom: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .live-toast {
+            pointer-events: auto;
+            display: block;
+            min-width: 240px;
+            max-width: 340px;
+            padding: 14px 18px;
+            border-radius: var(--r);
+            background: var(--ink);
+            color: #FBF5EE;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            box-shadow: 0 18px 40px -14px rgba(36, 29, 24, .6);
+            border-inline-start: 4px solid var(--accent);
+            animation: toast-in .28s cubic-bezier(.2, .7, .3, 1);
+            transition: opacity .5s ease, transform .5s ease;
+        }
+
+        .live-toast.is-leaving { opacity: 0; transform: translateY(8px); }
+
+        @keyframes toast-in {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: none; }
         }
 
         /* --- Guest (QR menu) variant ------------------------------------ */
@@ -363,6 +449,13 @@
                 <div class="topbar__tools">
                     @include('layouts.partials.language-switch')
 
+                    @if ($isStaff)
+                        <button type="button" id="sound-toggle" class="sound-toggle" aria-pressed="true" title="{{ __('Sound on') }}">
+                            <svg class="bell-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                            <svg class="bell-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5"/><path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="m2 2 20 20"/></svg>
+                        </button>
+                    @endif
+
                     @auth
                         <a href="{{ route('profile.edit') }}" class="user-chip">
                             <span class="user-chip__avatar">{{ mb_strtoupper(mb_substr(auth()->user()->name, 0, 1)) }}</span>
@@ -379,45 +472,57 @@
             </div>
         </header>
 
+        @if ($isStaff)
         <nav class="app-nav">
             <div class="app-nav__inner">
 
                 <a href="{{ route('dashboard') }}"
                    class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">{{ __('Dashboard') }}</a>
 
-                <a href="{{ route('tables.index') }}"
-                   class="{{ request()->routeIs('tables.*') ? 'active' : '' }}">{{ __('Tables') }}</a>
+                @if ($isAdmin)
+                    <a href="{{ route('tables.index') }}"
+                       class="{{ request()->routeIs('tables.*') ? 'active' : '' }}">{{ __('Tables') }}</a>
+                @endif
 
                 <a href="{{ route('kitchen.orders') }}"
-                   class="{{ request()->routeIs('kitchen.orders') ? 'active' : '' }}">{{ __('Kitchen') }}</a>
-
-                <a href="{{ route('order-change-requests.index') }}" id="alerts-link"
-                   class="{{ request()->routeIs('order-change-requests.*') ? 'active' : '' }}">
-                    {{ __('Alerts') }}
-                    <span id="alerts-badge"></span>
+                   class="{{ request()->routeIs('kitchen.*') ? 'active' : '' }}">
+                    {{ __('Kitchen') }}
+                    <span class="nav-badge" data-pulse="kitchen" hidden></span>
                 </a>
 
-                <span class="nav-divider"></span>
+                @if ($isAdmin)
+                    <a href="{{ route('order-change-requests.index') }}"
+                       class="{{ request()->routeIs('order-change-requests.*') ? 'active' : '' }}">
+                        {{ __('Alerts') }}
+                        <span class="nav-badge" data-pulse="alerts" hidden></span>
+                    </a>
 
-                <a href="{{ route('menu.management') }}"
-                   class="{{ request()->routeIs('menu.management*') ? 'active' : '' }}">{{ __('Menu Management') }}</a>
+                    <span class="nav-divider"></span>
 
-                <a href="{{ route('cash-payments.index') }}"
-                   class="{{ request()->routeIs('cash-payments.*') ? 'active' : '' }}">{{ __('Cash Payments') }}</a>
+                    <a href="{{ route('menu.management') }}"
+                       class="{{ request()->routeIs('menu.management*') ? 'active' : '' }}">{{ __('Menu Management') }}</a>
 
-                <span class="nav-divider"></span>
+                    <a href="{{ route('cash-payments.index') }}"
+                       class="{{ request()->routeIs('cash-payments.*') ? 'active' : '' }}">
+                        {{ __('Payments') }}
+                        <span class="nav-badge nav-badge--quiet" data-pulse="payments" hidden></span>
+                    </a>
 
-                <a href="{{ route('shifts.current') }}"
-                   class="{{ request()->routeIs('shifts.current') ? 'active' : '' }}">{{ __('Shift') }}</a>
+                    <span class="nav-divider"></span>
 
-                <a href="{{ route('shifts.history') }}"
-                   class="{{ request()->routeIs('shifts.history') || request()->routeIs('shifts.show') ? 'active' : '' }}">{{ __('Shift History') }}</a>
+                    <a href="{{ route('shifts.current') }}"
+                       class="{{ request()->routeIs('shifts.current') ? 'active' : '' }}">{{ __('Shift') }}</a>
 
-                <a href="{{ route('reports.monthly') }}"
-                   class="{{ request()->routeIs('reports.*') ? 'active' : '' }}">{{ __('Reports') }}</a>
+                    <a href="{{ route('shifts.history') }}"
+                       class="{{ request()->routeIs('shifts.history') || request()->routeIs('shifts.show') ? 'active' : '' }}">{{ __('Shift History') }}</a>
+
+                    <a href="{{ route('reports.monthly') }}"
+                       class="{{ request()->routeIs('reports.*') ? 'active' : '' }}">{{ __('Reports') }}</a>
+                @endif
 
             </div>
         </nav>
+        @endif
 
     @endif
 
@@ -453,31 +558,27 @@
 
     @stack('scripts')
 
-    @auth
-    <script>
-        (function () {
-            var badge = document.getElementById('alerts-badge');
-            if (!badge) return;
+    @if ($isStaff)
+        <div id="live-toasts" class="live-toasts" aria-live="polite"></div>
 
-            function poll() {
-                fetch('{{ route('order-change-requests.pending-count') }}')
-                    .then(function (res) { return res.json(); })
-                    .then(function (data) {
-                        if (data.count > 0) {
-                            badge.textContent = data.count;
-                            badge.style.display = 'inline-block';
-                        } else {
-                            badge.style.display = 'none';
-                        }
-                    })
-                    .catch(function () {});
-            }
-
-            poll();
-            setInterval(poll, 15000);
-        })();
-    </script>
-    @endauth
+        <script>
+            window.SRMS_LIVE = {
+                pulseUrl: @json(route('staff.pulse')),
+                kitchenUrl: @json(route('kitchen.orders')),
+                alertsUrl: @json($isAdmin ? route('order-change-requests.index') : null),
+                loginUrl: @json(route('login')),
+                text: {
+                    newOrder: @json(__('New order received')),
+                    newAlert: @json(__('A table is calling the waiter')),
+                    signedOut: @json(__('Your session has ended. Taking you to sign in…')),
+                    soundOn: @json(__('Sound on — click to mute')),
+                    soundOff: @json(__('Sound off — click to turn on')),
+                    soundLocked: @json(__('Click anywhere once so the browser allows sound'))
+                }
+            };
+        </script>
+        <script src="{{ asset('js/srms-live.js') }}?v={{ @filemtime(public_path('js/srms-live.js')) }}" defer></script>
+    @endif
 
 </body>
 

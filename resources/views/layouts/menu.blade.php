@@ -23,7 +23,7 @@
     {{-- Page-level styles first, so the design system below can govern them --}}
     @stack('styles')
 
-    <link rel="stylesheet" href="{{ asset('css/srms-theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/srms-theme.css') }}?v={{ @filemtime(public_path('css/srms-theme.css')) }}">
 
     <style>
         /* ==================================================================

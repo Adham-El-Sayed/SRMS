@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,44 +14,22 @@ class MonthlyReportController extends Controller
 {
     protected function buildData(int $month, int $year): array
     {
-        $orders = Order::query()
-            ->whereMonth('created_at', $month)
-            ->whereYear('created_at', $year);
+        $start = Carbon::create($year, $month, 1)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
 
-        $totalOrders = (clone $orders)->count();
+        $orders = Order::query()->whereBetween('created_at', [$start, $end]);
 
-        $completedOrders = (clone $orders)
-            ->where('status', 'completed')
-            ->count();
+        // Money counts once it is confirmed received, and never for a cancelled order.
+        $paid = (clone $orders)->where('payment_status', 'paid')->where('status', '!=', 'cancelled');
 
-        $cancelledOrders = (clone $orders)
-            ->where('status', 'cancelled')
-            ->count();
-
-        $paidOrders = (clone $orders)->where('payment_status', 'paid');
-
-        $totalRevenue = (clone $paidOrders)->sum('total');
-
-        $cashRevenue = (clone $paidOrders)
-            ->where('payment_method', 'cash')
-            ->sum('total');
-
-        $visaRevenue = (clone $paidOrders)
-            ->where('payment_method', 'card')
-            ->sum('total');
-
-        $averageOrderValue = $completedOrders > 0
-            ? $totalRevenue / $completedOrders
-            : 0;
+        $paidCount = (clone $paid)->count();
+        $totalRevenue = (float) (clone $paid)->sum('total');
 
         $topProducts = OrderItem::query()
-            ->whereHas('order', function ($query) use ($month, $year) {
-                $query->whereMonth('created_at', $month)
-                    ->whereYear('created_at', $year);
-            })
-            ->selectRaw('product_id, SUM(quantity) as total_quantity, SUM(subtotal) as total_sales')
-            ->groupBy('product_id')
-            ->with('product')
+            ->whereHas('order', fn ($q) => $q->whereBetween('created_at', [$start, $end])->where('status', '!=', 'cancelled'))
+            // Grouped by the name on the order, so renamed or deleted products still count.
+            ->selectRaw('product_name, SUM(quantity) as total_quantity, SUM(subtotal) as total_sales')
+            ->groupBy('product_name')
             ->orderByDesc('total_quantity')
             ->take(5)
             ->get();
@@ -58,35 +37,47 @@ class MonthlyReportController extends Controller
         return [
             'month' => $month,
             'year' => $year,
-            'monthName' => \Carbon\Carbon::create($year, $month, 1)->format('F Y'),
-            'totalOrders' => $totalOrders,
-            'completedOrders' => $completedOrders,
-            'cancelledOrders' => $cancelledOrders,
+            'monthName' => $start->format('F Y'),
+            'totalOrders' => (clone $orders)->count(),
+            'completedOrders' => (clone $orders)->where('status', 'completed')->count(),
+            'cancelledOrders' => (clone $orders)->where('status', 'cancelled')->count(),
             'totalRevenue' => $totalRevenue,
-            'cashRevenue' => $cashRevenue,
-            'visaRevenue' => $visaRevenue,
-            'averageOrderValue' => $averageOrderValue,
+            'cashRevenue' => (float) (clone $paid)->where('payment_method', 'cash')->sum('total'),
+            'visaRevenue' => (float) (clone $paid)->where('payment_method', 'card')->sum('total'),
+            'averageOrderValue' => $paidCount > 0 ? $totalRevenue / $paidCount : 0,
             'topProducts' => $topProducts,
+        ];
+    }
+
+    protected function period(Request $request): array
+    {
+        $validated = $request->validate([
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:2000,2100'],
+        ]);
+
+        return [
+            (int) ($validated['month'] ?? now()->month),
+            (int) ($validated['year'] ?? now()->year),
         ];
     }
 
     public function index(Request $request): View
     {
-        $month = (int) $request->input('month', now()->month);
-        $year = (int) $request->input('year', now()->year);
+        [$month, $year] = $this->period($request);
 
         return view('reports.monthly', $this->buildData($month, $year));
     }
 
     public function pdf(Request $request): Response
     {
-        $month = (int) $request->input('month', now()->month);
-        $year = (int) $request->input('year', now()->year);
+        [$month, $year] = $this->period($request);
 
         $data = $this->buildData($month, $year);
 
-        $pdf = Pdf::loadView('reports.monthly-pdf', $data);
+        // PDFs stay in English: the PDF library can't lay out Arabic.
+        $pdf = $this->inEnglish(fn () => Pdf::loadView('reports.monthly-pdf', $data));
 
-        return $pdf->stream("monthly-report-{$data['year']}-{$data['month']}.pdf");
+        return $pdf->stream("monthly-report-{$year}-{$month}.pdf");
     }
 }

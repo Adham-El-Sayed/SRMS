@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Shift #' . $shift->id)
+@section('title', __('Shift #') . $shift->id)
 
 @section('content')
 
@@ -23,6 +23,10 @@
             ⬇ {{ __('Export to Excel') }}
         </a>
     </div>
+
+    @if (session('success'))
+        <div class="success-message">{{ session('success') }}</div>
+    @endif
 
     <div class="summary-grid">
 

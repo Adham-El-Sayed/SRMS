@@ -16,6 +16,17 @@
         <div class="success-message">{{ session('success') }}</div>
     @endif
 
+    @if (session('error'))
+        <div class="error-message">{{ session('error') }}</div>
+    @endif
+
+    @if ($shift && $unpaid->isNotEmpty())
+        <div class="alert">
+            {{ trans_choice('{1} One order from this shift is still unpaid (:total EGP). Confirm it under Payments before closing, or it will stay outside this shift\'s totals.|[2,*] :count orders from this shift are still unpaid (:total EGP). Confirm them under Payments before closing, or they will stay outside this shift\'s totals.', $unpaid->count(), ['count' => $unpaid->count(), 'total' => number_format($unpaid->sum('total'), 2)]) }}
+            <a href="{{ route('cash-payments.index') }}">{{ __('Payments') }}</a>
+        </div>
+    @endif
+
     @if (! $shift)
 
         <div class="empty shift-empty">

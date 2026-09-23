@@ -104,7 +104,7 @@
             @foreach($order->items as $item)
                 <tr>
                     <td>
-                        {{ __($item->product?->name ?? 'Unknown Product') }}
+                        {{ $item->product_name }}
                         @if($item->notes)
                             <br><small>({{ $item->notes }})</small>
                         @endif
