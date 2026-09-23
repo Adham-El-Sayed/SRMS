@@ -27,7 +27,7 @@
     "Cancel": "إلغاء",
     "Delete": "حذف",
     "Edit": "تعديل",
-    "Add": "إضافة",
+    "Add": "أضف",
     "Back": "رجوع",
     "Search": "بحث",
     "Print": "طباعة",
@@ -487,5 +487,10 @@
     "Back to Payments": "رجوع للمدفوعات",
     "This order is already paid and cannot be changed.": "الطلب ده اتدفع خلاص ومينفعش يتعدّل.",
     "An order must have at least one item.": "الطلب لازم يكون فيه صنف واحد على الأقل.",
-    "Order #:id updated — :total EGP.": "الطلب رقم :id اتعدّل — :total ج.م."
+    "Order #:id updated — :total EGP.": "الطلب رقم :id اتعدّل — :total ج.م.",
+    "What would you like today?": "تحب تاكل إيه النهارده؟",
+    "You are at table :number. Order from your phone and the kitchen starts right away.": "إنت على ترابيزة :number. اطلب من موبايلك والمطبخ هيبدأ على طول.",
+    "Have a look at what we serve.": "اتفرج على اللي بنقدمه.",
+    "View your order": "شوف طلبك",
+    "Added": "اتضاف"
 }

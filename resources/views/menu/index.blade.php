@@ -4,473 +4,184 @@
 
 @section('content')
 
-    <div
-        class="menu-page"
-        id="menu-app"
-        data-table-token="{{ isset($table) ? $table->qr_token : '' }}"
-    >
+<div class="menu-app" id="menu-app"
+     data-table-id="{{ isset($table) ? $table->id : '' }}"
+     data-table-token="{{ isset($table) ? $table->qr_token : '' }}">
 
-        {{-- =========================
-             Page Header
-        ========================== --}}
+    {{-- ===== Welcome ===== --}}
+    <header class="menu-hero">
+        <p class="menu-hero__kicker">{{ __('Restaurant Menu') }}</p>
+        <h1 class="menu-hero__title">{{ __('What would you like today?') }}</h1>
 
-        <div class="page-header">
+        @isset($table)
+            <p class="menu-hero__note">
+                {{ __('You are at table :number. Order from your phone and the kitchen starts right away.', ['number' => $table->number]) }}
+            </p>
+        @else
+            <p class="menu-hero__note">{{ __('Have a look at what we serve.') }}</p>
+        @endisset
+    </header>
 
-            <div>
-                <h1>{{ __('Restaurant Menu') }}</h1>
+    {{-- ===== Jump to a section ===== --}}
+    @if ($menu->count() > 1)
+        <nav class="menu-tabs" aria-label="{{ __('Categories') }}">
+            @foreach ($menu as $category)
+                <a href="#category-{{ $category->id }}" class="menu-tab">{{ $category->name }}</a>
+            @endforeach
+        </nav>
+    @endif
 
-                <p>
-                    {{ __('Choose your favorite items and create your order.') }}
-                </p>
+    {{-- ===== The menu ===== --}}
+    @forelse ($menu as $category)
+        <section class="menu-section" id="category-{{ $category->id }}">
+
+            <div class="menu-section__head">
+                @if ($category->image)
+                    <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" class="menu-section__image" loading="lazy">
+                @endif
+
+                <div>
+                    <h2 class="menu-section__title">{{ $category->name }}</h2>
+                    @if ($category->description)
+                        <p class="menu-section__note">{{ $category->description }}</p>
+                    @endif
+                </div>
             </div>
 
-            @if(isset($table))
-
-                <div class="table-badge">
-                    {{ __('Table #') }}{{ $table->number }}
-                </div>
-
-            @endif
-
-        </div>
-
-
-        {{-- =========================
-             Table Information
-        ========================== --}}
-
-        @if(isset($table))
-
-            <div class="table-info">
-
-                <div class="table-info-main">
-
-                    <div class="table-icon">
-                        {{ __('T') }}
-                    </div>
-
-                    <div>
-
-                        <h2>
-                            {{ __('Table') }} {{ $table->number }}
-                        </h2>
-
-                        <p>
-                            {{ __('Ready to take your order') }}
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <div class="table-details">
-
-                    <div class="table-detail">
-
-                        <span>
-                            {{ __('Capacity') }}
-                        </span>
-
-                        <strong>
-                            {{ $table->capacity }} {{ __('Guests') }}
-                        </strong>
-
-                    </div>
-
-
-                    <div class="table-detail">
-
-                        <span>
-                            {{ __('Status') }}
-                        </span>
-
-                        <strong
-                            class="table-status {{ $table->status->value ?? $table->status }}"
-                        >
-                            {{ __(ucfirst($table->status->value ?? $table->status)) }}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        @endif
-
-
-        {{-- =========================
-             Menu
-        ========================== --}}
-
-        @forelse($menu as $category)
-
-            @php $shown = max($category->products->count(), 1); @endphp
-
-            <section class="category" style="--n3: {{ min($shown, 3) }}; --n2: {{ min($shown, 2) }};">
-
-                {{-- Category Header --}}
-
-                <div class="category-header">
-
-                    <div class="category-heading">
-
-                        {{-- Category Image --}}
-
-                        @if($category->image)
-
-                            <img
-                                src="{{ asset('storage/' . $category->image) }}"
-                                alt="{{ $category->name }}"
-                                class="category-image"
-                            >
-
-                        @else
-
-                            <div class="category-image category-image-placeholder">
-                                🍽
-                            </div>
-
-                        @endif
-
-
-                        <div class="category-heading-text">
-
-                            <h2 class="category-title">
-                                {{ $category->name }}
-                            </h2>
-
-
-                            @if($category->description)
-
-                                <p class="category-description">
-                                    {{ $category->description }}
-                                </p>
-
+            <div class="dish-grid">
+                @forelse ($category->products as $product)
+                    <article class="dish">
+                        <div class="dish__image">
+                            @if ($product->image)
+                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" loading="lazy">
+                            @else
+                                <div class="dish__image-placeholder">🍽</div>
                             @endif
-
                         </div>
 
-                    </div>
+                        <div class="dish__body">
+                            <h3 class="dish__name">{{ $product->name }}</h3>
+                            <p class="dish__note">{{ $product->description ?? '' }}</p>
 
+                            <div class="dish__foot">
+                                <span class="dish__price">{{ number_format($product->price, 2) }} <small>{{ __('EGP') }}</small></span>
 
-                    <span class="products-count">
-
-                        {{ $category->products->count() }}
-
-                        {{ __($category->products->count() === 1 ? 'Item' : 'Items') }}
-
-                    </span>
-
-                </div>
-
-
-                {{-- Products --}}
-
-                <div class="products">
-
-                    @forelse($category->products as $product)
-
-                        <div
-                            class="product-card"
-                            data-product-id="{{ $product->id }}"
-                            data-product-name="{{ $product->name }}"
-                            data-product-price="{{ $product->price }}"
-                        >
-
-                            {{-- Product Image --}}
-
-                            <div class="product-image-wrapper">
-
-                                @if($product->image)
-
-                                    <img
-                                        src="{{ asset('storage/' . $product->image) }}"
-                                        alt="{{ $product->name }}"
-                                        class="product-image"
-                                        loading="lazy"
-                                    >
-
-                                @else
-
-                                    <div class="product-image product-image-placeholder">
-                                        🍽
-                                    </div>
-
-                                @endif
-
-
-                                <span class="available-badge">
-                                    {{ __('Available') }}
-                                </span>
-
-                            </div>
-
-
-                            {{-- Product Content --}}
-
-                            <div class="product-content">
-
-                                <h3>
-                                    {{ $product->name }}
-                                </h3>
-
-
-                                <p class="product-description">
-
-                                    {{ __($product->description ?? 'No description available.') }}
-
-                                </p>
-
-                            </div>
-
-
-                            {{-- Product Footer --}}
-
-                            <div class="product-footer">
-
-                                <div class="price">
-
-                                    {{ number_format($product->price, 2) }}
-
-                                    <span>
-                                        {{ __('EGP') }}
-                                    </span>
-
-                                </div>
-
-
-                                @if(isset($table))
-
-                                    <button
-                                        type="button"
-                                        class="add-button"
-                                        data-product-id="{{ $product->id }}"
-                                        data-product-name="{{ $product->name }}"
-                                        data-product-price="{{ $product->price }}"
-                                    >
-                                        {{ __('+ Add') }}
+                                @isset($table)
+                                    <button type="button" class="add-button"
+                                            data-product-id="{{ $product->id }}"
+                                            data-product-name="{{ $product->name }}"
+                                            data-product-price="{{ $product->price }}"
+                                            aria-label="{{ __('Add') }} {{ $product->name }}">
+                                        {{ __('Add') }}
                                     </button>
-
-                                @endif
-
+                                @endisset
                             </div>
-
                         </div>
+                    </article>
+                @empty
+                    <p class="muted-text">{{ __('No products available in this category.') }}</p>
+                @endforelse
+            </div>
+        </section>
+    @empty
+        <div class="empty">
+            <div class="empty-icon">🍽</div>
+            <h2>{{ __('No Menu Available') }}</h2>
+            <p>{{ __('There are currently no menu items available.') }}</p>
+        </div>
+    @endforelse
 
-                    @empty
+</div>
 
-                        <div class="no-products">
+@isset($table)
 
-                            <p>
-                                {{ __('No products available in this category.') }}
-                            </p>
+    {{-- ===== The bar that follows you down the page ===== --}}
+    <div class="cart-bar" id="cart-bar" hidden>
+        <button type="button" class="cart-bar__button" id="open-order">
+            <span class="cart-bar__count" id="cart-bar-count">0</span>
+            <span class="cart-bar__label">{{ __('View your order') }}</span>
+            <span class="cart-bar__total" id="cart-bar-total">0.00 {{ __('EGP') }}</span>
+        </button>
+    </div>
 
-                        </div>
+    {{-- ===== Your order ===== --}}
+    <div class="sheet" id="order-sheet" hidden>
+        <div class="sheet__box" role="dialog" aria-modal="true" aria-labelledby="order-sheet-title">
 
-                    @endforelse
-
+            <div class="sheet__head">
+                <div>
+                    <h2 id="order-sheet-title">{{ __('Your Order') }}</h2>
+                    <p class="muted-text">{{ __('Review your items before submitting.') }}</p>
                 </div>
 
-            </section>
+                <span class="order-count" id="order-count">0 {{ __('Items') }}</span>
 
-        @empty
-
-            {{-- Empty Menu --}}
-
-            <div class="empty-menu">
-
-                <div class="empty-icon">
-                    🍽
-                </div>
-
-                <h2>
-                    {{ __('No Menu Available') }}
-                </h2>
-
-                <p>
-                    {{ __('There are currently no menu items available.') }}
-                </p>
-
+                <button type="button" class="sheet__close" data-close-sheet aria-label="{{ __('Close') }}">&times;</button>
             </div>
 
-        @endforelse
+            <div class="sheet__body">
+                <div id="order-items"></div>
+            </div>
 
-
-        {{-- =========================
-             Order
-        ========================== --}}
-
-        @if(isset($table))
-
-            <div class="order-box" id="order-box">
-
-                <div class="order-header">
-
-                    <div>
-
-                        <h2>
-                            {{ __('Your Order') }}
-                        </h2>
-
-                        <p>
-                            {{ __('Review your items before submitting.') }}
-                        </p>
-
-                    </div>
-
-
-                    <span
-                        class="order-count"
-                        id="order-count"
-                    >
-                        0 {{ __('Items') }}
-                    </span>
-
-                </div>
-
-
-                {{-- Order Items --}}
-
-                <div id="order-items">
-
-                    <div class="empty-order">
-
-                        <div class="empty-order-icon">
-                            🛒
-                        </div>
-
-                        <p>
-                            {{ __('Your order is empty.') }}
-                        </p>
-
-                        <span>
-                            {{ __('Add items from the menu above.') }}
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                {{-- Total --}}
-
+            <div class="sheet__foot">
                 <div class="order-total">
-
-                    <span>
-                        {{ __('Total') }}
-                    </span>
-
-                    <span id="order-total">
-                        0.00 {{ __('EGP') }}
-                    </span>
-
+                    <span>{{ __('Total') }}</span>
+                    <span id="order-total">0.00 {{ __('EGP') }}</span>
                 </div>
 
-
-                {{-- Client Info --}}
-
-                <div class="client-info">
-
-                    <input
-                        type="text"
-                        id="client-name"
-                        placeholder="{{ __('Name (optional)') }}"
-                    >
-
-                    <input
-                        type="tel"
-                        id="client-phone"
-                        placeholder="{{ __('Phone Number (optional)') }}"
-                    >
-
+                <div class="who">
+                    <input type="text" id="client-name" placeholder="{{ __('Name (optional)') }}" maxlength="100">
+                    <input type="tel" id="client-phone" placeholder="{{ __('Phone Number (optional)') }}" maxlength="20">
                 </div>
 
-
-                {{-- Payment Method --}}
-
-                <div class="payment-method">
-
-                    <label>
-                        <input type="radio" name="payment_method" value="cash" checked>
-                        {{ __('cash') }}
-                    </label>
-
-                    <label>
-                        <input type="radio" name="payment_method" value="card">
-                        {{ __('Visa') }}
-                    </label>
-
+                <div class="pay-choice">
+                    <label><input type="radio" name="payment_method" value="cash" checked> {{ __('Cash') }}</label>
+                    <label><input type="radio" name="payment_method" value="card"> {{ __('Visa') }}</label>
                 </div>
 
-
-                {{-- Submit --}}
-
-                <button
-                    type="button"
-                    id="submit-order"
-                    class="submit-button"
-                    disabled
-                >
-                    {{ __('Submit Order') }}
-                </button>
-
-
-                {{-- Message --}}
+                <button type="button" id="submit-order" class="submit-button" disabled>{{ __('Submit Order') }}</button>
 
                 <div id="message"></div>
-
             </div>
+        </div>
+    </div>
 
+    {{-- ===== After it is sent: the edit window ===== --}}
+    <div class="sheet" id="submitted-order-panel" style="display:none;">
+        <div class="sheet__box" role="dialog" aria-modal="true">
 
-            {{-- =========================
-                 Submitted Order (Edit Window)
-            ========================== --}}
-
-            <div class="order-box" id="submitted-order-panel" style="display:none;">
-
-                <div class="order-header">
-                    <div>
-                        <h2>{{ __('Order #') }}<span id="submitted-order-id"></span></h2>
-                        <p id="edit-window-status">
-                            {{ __('You can still edit this order for') }}
-                            <strong><span id="edit-timer">2:30</span></strong>
-                        </p>
-                    </div>
+            <div class="sheet__head">
+                <div>
+                    <h2>{{ __('Order #') }}<span id="submitted-order-id"></span></h2>
+                    <p class="muted-text" id="edit-window-status">
+                        {{ __('You can still edit this order for') }}
+                        <strong><span id="edit-timer">2:30</span></strong>
+                    </p>
                 </div>
 
-                <div id="submitted-order-items"></div>
+                <button type="button" class="sheet__close" data-close-sheet aria-label="{{ __('Close') }}">&times;</button>
+            </div>
 
+            <div class="sheet__body">
+                <div id="submitted-order-items"></div>
+            </div>
+
+            <div class="sheet__foot">
                 <div class="order-total">
                     <span>{{ __('Total') }}</span>
                     <span id="submitted-order-total">0.00 {{ __('EGP') }}</span>
                 </div>
 
-                <button type="button" id="save-changes-button" class="submit-button">
-                    {{ __('Save Changes') }}
-                </button>
-
-                <button
-                    type="button"
-                    id="request-help-button"
-                    class="submit-button"
-                    style="display:none; background:#dc2626;"
-                >
-                    {{ __('Request Waiter') }}
-                </button>
+                <button type="button" id="save-changes-button" class="submit-button">{{ __('Save Changes') }}</button>
+                <button type="button" id="request-help-button" class="submit-button call-waiter" style="display:none;">{{ __('Request Waiter') }}</button>
 
                 <div id="submitted-message"></div>
-
             </div>
-
-        @endif
-
+        </div>
     </div>
 
+@endisset
 
-    {{-- =========================
-         Fake Visa Payment Modal
     ========================== --}}
 
     @if(isset($table))
@@ -538,1287 +249,412 @@
 
     @endif
 
+
 @endsection
 
-
-{{-- =========================================================
-     STYLES
-========================================================= --}}
-
 @push('styles')
-
 <style>
+    /* ==================================================================
+       The guest menu. Read on a phone, at a table, usually one-handed:
+       generous tap targets, the order always one thumb away, and nothing
+       between the food and the guest.
+       ================================================================== */
 
-    /* =========================
-       Base
-    ========================== */
+    .menu-app { padding-bottom: 96px; }
 
-    .menu-page {
-        width: 100%;
-        max-width: 1200px;
-        margin: 0 auto;
+    /* ---------- welcome ---------- */
+
+    .menu-hero { padding: 28px 0 22px; }
+
+    .menu-hero__kicker {
+        margin: 0 0 8px;
+        font-size: 11.5px; font-weight: 700;
+        letter-spacing: .14em; text-transform: uppercase;
+        color: var(--accent);
     }
 
+    html[lang="ar"] .menu-hero__kicker { letter-spacing: 0; text-transform: none; font-size: 13px; }
 
-    /* =========================
-       Page Header
-    ========================== */
-
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 20px;
-        margin-bottom: 30px;
+    .menu-hero__title {
+        margin: 0 0 10px;
+        font-size: clamp(28px, 6vw, 40px);
+        line-height: 1.12;
     }
 
+    .menu-hero__note { margin: 0; color: var(--muted); font-size: 15px; max-width: 46ch; line-height: 1.6; }
 
-    .page-header h1 {
-        margin: 0;
-        font-size: 32px;
-        line-height: 1.2;
-        color: #1f2937;
+    /* ---------- section jump ---------- */
+
+    .menu-tabs {
+        position: sticky; top: 0; z-index: 30;
+        display: flex; gap: 8px;
+        margin: 0 -16px 26px; padding: 12px 16px;
+        overflow-x: auto; scrollbar-width: none;
+        background: rgba(250, 246, 240, .94);
+        backdrop-filter: saturate(1.6) blur(10px);
+        -webkit-backdrop-filter: saturate(1.6) blur(10px);
+        border-bottom: 1px solid var(--line);
     }
 
+    .menu-tabs::-webkit-scrollbar { display: none; }
 
-    .page-header p {
-        margin: 8px 0 0;
-        color: #6b7280;
-        line-height: 1.6;
+    .menu-tab {
+        padding: 8px 15px; border-radius: 100px;
+        background: var(--surface); border: 1px solid var(--line-strong);
+        color: var(--ink-soft); text-decoration: none;
+        font-size: 13.5px; font-weight: 600; white-space: nowrap;
+        transition: background-color .16s ease, color .16s ease, border-color .16s ease;
     }
 
+    .menu-tab:hover { border-color: var(--accent); color: var(--accent-dark); }
 
-    .table-badge {
-        background: #eff6ff;
-        color: #2563eb;
-        padding: 10px 16px;
-        border-radius: 10px;
-        font-weight: bold;
-        white-space: nowrap;
+    /* ---------- a course ---------- */
+
+    .menu-section { margin-bottom: 44px; scroll-margin-top: 72px; }
+
+    .menu-section__head {
+        display: flex; align-items: center; gap: 14px;
+        margin-bottom: 18px; padding-bottom: 14px;
+        border-bottom: 1px solid var(--line-strong);
     }
 
-
-    /* =========================
-       Table Information
-    ========================== */
-
-    .table-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 25px;
-
-        background: white;
-
-        padding: 22px;
-
-        border-radius: 16px;
-
-        margin-bottom: 35px;
-
-        box-shadow:
-            0 4px 15px rgba(0, 0, 0, 0.08);
+    .menu-section__image {
+        width: 54px; height: 54px; flex-shrink: 0;
+        object-fit: cover; border-radius: 12px;
+        border: 1px solid var(--line); box-shadow: var(--sh-1);
     }
 
+    .menu-section__title { margin: 0; font-size: 22px; }
+    .menu-section__note { margin: 3px 0 0; color: var(--muted); font-size: 13.5px; }
 
-    .table-info-main {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
+    /* ---------- a dish ---------- */
 
-
-    .table-icon {
-        width: 52px;
-        height: 52px;
-
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
-        border-radius: 14px;
-
-        background: #eff6ff;
-
-        color: #2563eb;
-
-        font-size: 20px;
-        font-weight: bold;
-
-        flex-shrink: 0;
-    }
-
-
-    .table-info h2 {
-        margin: 0;
-
-        font-size: 20px;
-
-        color: #1f2937;
-    }
-
-
-    .table-info p {
-        margin: 5px 0 0;
-
-        color: #6b7280;
-
-        line-height: 1.5;
-    }
-
-
-    .table-details {
-        display: flex;
-        gap: 35px;
-    }
-
-
-    .table-detail {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-
-    .table-detail span {
-        color: #6b7280;
-
-        font-size: 13px;
-    }
-
-
-    .table-detail strong {
-        color: #1f2937;
-    }
-
-
-    .table-status.available {
-        color: #15803d;
-    }
-
-
-    .table-status.occupied {
-        color: #dc2626;
-    }
-
-
-    .table-status.reserved {
-        color: #d97706;
-    }
-
-
-    /* =========================
-       Categories
-    ========================== */
-
-    .category {
-        margin-bottom: 40px;
-    }
-
-
-    .category-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-
-        gap: 20px;
-
-        margin-bottom: 20px;
-    }
-
-
-    .category-heading {
-        display: flex;
-        align-items: center;
-
-        gap: 15px;
-
-        min-width: 0;
-    }
-
-
-    .category-image {
-        width: 64px;
-        height: 64px;
-
-        object-fit: cover;
-
-        border-radius: 14px;
-
-        flex-shrink: 0;
-    }
-
-
-    .category-image-placeholder {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
-        background: #eff6ff;
-
-        color: #2563eb;
-
-        font-size: 26px;
-    }
-
-
-    .category-heading-text {
-        min-width: 0;
-    }
-
-
-    .category-title {
-        margin: 0;
-
-        font-size: 25px;
-
-        line-height: 1.3;
-
-        color: #1f2937;
-    }
-
-
-    .category-description {
-        margin: 7px 0 0;
-
-        color: #6b7280;
-
-        line-height: 1.5;
-    }
-
-
-    .products-count {
-        background: #f3f4f6;
-
-        color: #4b5563;
-
-        padding: 7px 12px;
-
-        border-radius: 20px;
-
-        font-size: 13px;
-
-        font-weight: bold;
-
-        white-space: nowrap;
-    }
-
-
-    /* =========================
-       Products Grid
-    ========================== */
-
-    .products {
+    .dish-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 20px;
-        align-items: stretch;
+        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+        gap: 16px;
     }
 
-
-    /* =========================
-       Product Card
-    ========================== */
-
-    .product-card {
-        background: white;
-
-        padding: 12px;
-
-        border-radius: 16px;
-
-        box-shadow:
-            0 4px 15px rgba(0, 0, 0, 0.08);
-
-        display: flex;
-        flex-direction: column;
-
-        min-height: 0;
-
+    .dish {
+        display: flex; flex-direction: column;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r);
         overflow: hidden;
-
-        transition:
-            transform 0.2s ease,
-            box-shadow 0.2s ease;
-    }
-
-
-    .product-card:hover {
-        transform: translateY(-4px);
-
-        box-shadow:
-            0 10px 25px rgba(0, 0, 0, 0.10);
-    }
-
-
-    /* =========================
-       Product Image
-    ========================== */
-
-    .product-image-wrapper {
-        position: relative;
-
-        width: 100%;
-        height: 190px;
-
-        overflow: hidden;
-
-        border-radius: 13px;
-
-        background: #f8fafc;
-    }
-
-
-    .product-image {
-        width: 100%;
-        height: 100%;
-
-        display: block;
-
-        object-fit: cover;
-
-        transition:
-            transform 0.3s ease;
-    }
-
-
-    .product-card:hover .product-image {
-        transform: scale(1.04);
-    }
-
-
-    .product-image-placeholder {
-        display: flex;
-
-        justify-content: center;
-        align-items: center;
-
-        font-size: 45px;
-
-        color: #64748b;
-
-        background: #f8fafc;
-    }
-
-
-    .product-image-wrapper .available-badge {
-        position: absolute;
-
-        top: 12px;
-        right: 12px;
-
-        z-index: 2;
-    }
-
-
-    .available-badge {
-        background: #dcfce7;
-
-        color: #15803d;
-
-        padding: 5px 10px;
-
-        border-radius: 20px;
-
-        font-size: 12px;
-
-        font-weight: bold;
-
-        white-space: nowrap;
-    }
-
-
-    /* =========================
-       Product Content
-    ========================== */
-
-    .product-content {
-        flex: 1;
-
-        padding:
-            16px 8px 0;
-    }
-
-
-    .product-content h3 {
-        margin: 0;
-
-        font-size: 19px;
-
-        line-height: 1.4;
-
-        color: #1f2937;
-    }
-
-
-    .product-description {
-        margin: 8px 0 0;
-
-        color: #6b7280;
-
-        line-height: 1.6;
-
-        font-size: 14px;
-
-        display: -webkit-box;
-
-        -webkit-line-clamp: 3;
-        line-clamp: 3;
-        -webkit-box-orient: vertical;
-
-        overflow: hidden;
-    }
-
-
-    /* =========================
-       Product Footer
-    ========================== */
-
-    .product-footer {
-        display: flex;
-
-        justify-content: space-between;
-        align-items: center;
-
-        gap: 15px;
-
-        padding:
-            0 8px 8px;
-
-        margin-top: 18px;
-    }
-
-
-    .price {
-        color: #1f2937;
-
-        font-size: 20px;
-
-        font-weight: bold;
-
-        white-space: nowrap;
-    }
-
-
-    .price span {
-        color: #6b7280;
-
-        font-size: 13px;
-
-        font-weight: normal;
-    }
-
-
-    .add-button {
-        border: none;
-
-        background: #2563eb;
-
-        color: white;
-
-        padding: 10px 16px;
-
-        border-radius: 9px;
-
-        cursor: pointer;
-
-        font-weight: bold;
-
-        transition:
-            background 0.2s ease,
-            transform 0.2s ease;
-    }
-
-
-    .add-button:hover {
-        background: #1d4ed8;
-
-        transform: translateY(-1px);
-    }
-
-
-    .add-button:active {
-        transform: translateY(0);
-    }
-
-
-    /* =========================
-       No Products
-    ========================== */
-
-    .no-products {
-        grid-column: 1 / -1;
-
-        padding: 25px;
-
-        text-align: center;
-
-        background: white;
-
-        border-radius: 14px;
-
-        color: #6b7280;
-    }
-
-
-    /* =========================
-       Order Box
-    ========================== */
-
-    .order-box {
-        background: white;
-
-        margin-top: 40px;
-
-        padding: 25px;
-
-        border-radius: 16px;
-
-        box-shadow:
-            0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-
-
-    .order-header {
-        display: flex;
-
-        justify-content: space-between;
-
-        align-items: flex-start;
-
-        gap: 20px;
-
-        margin-bottom: 20px;
-    }
-
-
-    .order-header h2 {
-        margin: 0;
-
-        font-size: 24px;
-
-        color: #1f2937;
-    }
-
-
-    .order-header p {
-        margin: 7px 0 0;
-
-        color: #6b7280;
-    }
-
-
-    .order-count {
-        background: #eff6ff;
-
-        color: #2563eb;
-
-        padding: 7px 12px;
-
-        border-radius: 20px;
-
-        font-size: 13px;
-
-        font-weight: bold;
-
-        white-space: nowrap;
-    }
-
-
-    /* =========================
-       Empty Order
-    ========================== */
-
-    .empty-order {
-        text-align: center;
-
-        padding: 35px 20px;
-
-        color: #6b7280;
-    }
-
-
-    .empty-order-icon {
-        font-size: 35px;
-
-        margin-bottom: 10px;
-    }
-
-
-    .empty-order p {
-        margin: 0;
-
-        font-weight: bold;
-
-        color: #4b5563;
-    }
-
-
-    .empty-order span {
-        display: block;
-
-        margin-top: 5px;
-
-        font-size: 14px;
-    }
-
-
-    /* =========================
-       Order Item
-    ========================== */
-
-    .order-item {
-        display: flex;
-        flex-wrap: wrap;
-
-        justify-content: space-between;
-
-        align-items: center;
-
-        gap: 20px;
-
-        padding: 16px 0;
-
-        border-bottom:
-            1px solid #e5e7eb;
-    }
-
-
-    .order-item-info {
-        flex: 1;
-
-        min-width: 0;
-    }
-
-
-    .order-item-name {
-        font-weight: bold;
-
-        color: #1f2937;
-
-        word-break: break-word;
-    }
-
-
-    .order-item-price {
-        margin-top: 5px;
-
-        color: #6b7280;
-
-        font-size: 13px;
+        box-shadow: var(--sh-1);
+        transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
     }
 
+    .dish:hover { box-shadow: var(--sh-3); border-color: var(--line-strong); transform: translateY(-2px); }
 
-    /* =========================
-       Quantity Controls
-    ========================== */
+    .dish__image { aspect-ratio: 4 / 3; background: var(--surface-sunk); overflow: hidden; }
+    .dish__image img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s cubic-bezier(.2,.7,.3,1); }
+    .dish:hover .dish__image img { transform: scale(1.04); }
 
-    .quantity-controls {
-        display: flex;
-
-        align-items: center;
-
-        gap: 10px;
-    }
-
-
-    .quantity-button {
-        width: 32px;
-        height: 32px;
-
-        border: none;
-
-        border-radius: 8px;
-
-        background: #f1f5f9;
-
-        color: #1f2937;
-
-        cursor: pointer;
-
-        font-size: 18px;
-
-        font-weight: bold;
-
-        transition:
-            background 0.2s ease;
-    }
-
-
-    .quantity-button:hover {
-        background: #e2e8f0;
-    }
-
-
-    .quantity {
-        min-width: 25px;
-
-        text-align: center;
-
-        font-weight: bold;
-    }
-
-
-    /* =========================
-       Item Notes
-    ========================== */
-
-    .item-notes {
-        flex-basis: 100%;
-
-        margin-top: 4px;
-
-        padding: 6px 10px;
-
-        border: 1px solid #e5e7eb;
-
-        border-radius: 6px;
-
-        font-size: 13px;
-    }
-
-
-    /* =========================
-       Subtotal
-    ========================== */
-
-    .item-subtotal {
-        min-width: 110px;
-
-        text-align: right;
-
-        color: #1f2937;
-    }
-
-
-    /* =========================
-       Remove
-    ========================== */
-
-    .remove-button {
-        border: none;
-
-        background: #fee2e2;
-
-        color: #dc2626;
-
-        padding: 8px 12px;
-
-        border-radius: 8px;
-
-        cursor: pointer;
-
-        font-weight: bold;
-
-        transition:
-            background 0.2s ease;
-    }
-
-
-    .remove-button:hover {
-        background: #fecaca;
-    }
-
-
-    /* =========================
-       Order Total
-    ========================== */
-
-    .order-total {
-        display: flex;
-
-        justify-content: space-between;
-
-        align-items: center;
-
-        margin-top: 20px;
-
-        padding-top: 18px;
-
-        border-top:
-            2px solid #e5e7eb;
-
-        font-size: 20px;
-
-        font-weight: bold;
-
-        color: #1f2937;
-    }
-
-
-    /* =========================
-       Client Info
-    ========================== */
-
-    .client-info {
-        display: flex;
-
-        gap: 12px;
-
-        margin-top: 20px;
-    }
-
-
-    .client-info input {
-        flex: 1;
-
-        padding: 10px 12px;
-
-        border: 1px solid #e5e7eb;
-
-        border-radius: 8px;
-    }
-
-
-    /* =========================
-       Payment Method
-    ========================== */
-
-    .payment-method {
-        display: flex;
-
-        gap: 20px;
-
-        margin-top: 14px;
-
-        align-items: center;
-    }
-
-
-    .payment-method label {
-        display: flex;
-
-        align-items: center;
-
-        gap: 6px;
-
-        font-weight: 500;
-
-        color: #1f2937;
-
-        cursor: pointer;
-    }
-
-
-    /* =========================
-       Submit Button
-    ========================== */
-
-    .submit-button {
-        width: 100%;
-
-        margin-top: 20px;
-
-        padding: 14px;
-
-        border: none;
-
-        border-radius: 10px;
-
-        background: #16a34a;
-
-        color: white;
-
-        font-size: 16px;
-
-        font-weight: bold;
-
-        cursor: pointer;
-
-        transition:
-            background 0.2s ease,
-            transform 0.2s ease;
-    }
-
-
-    .submit-button:hover:not(:disabled) {
-        background: #15803d;
-
-        transform: translateY(-1px);
-    }
-
-
-    .submit-button:disabled {
-        opacity: 0.6;
-
-        cursor: not-allowed;
-    }
-
-
-    /* =========================
-       Messages
-    ========================== */
-
-    #message,
-    #submitted-message {
-        display: none;
-
-        margin-top: 18px;
-
-        padding: 13px 16px;
-
-        border-radius: 10px;
-
-        font-weight: 500;
-    }
-
-
-    #message.success,
-    #submitted-message.success {
-        display: block;
-
-        background: #dcfce7;
-
-        color: #166534;
-    }
-
-
-    #message.error,
-    #submitted-message.error {
-        display: block;
-
-        background: #fee2e2;
-
-        color: #991b1b;
-    }
-
-
-    /* =========================
-       Empty Menu
-    ========================== */
-
-    .empty-menu {
-        background: white;
-
-        padding: 60px 30px;
-
-        border-radius: 16px;
-
-        text-align: center;
-
-        color: #6b7280;
-
-        box-shadow:
-            0 4px 15px rgba(0, 0, 0, 0.08);
+    .dish__image-placeholder {
+        width: 100%; height: 100%;
+        display: grid; place-items: center;
+        font-size: 30px; color: var(--muted);
+        background-image: repeating-linear-gradient(45deg, rgba(138,125,113,.05) 0 8px, transparent 8px 16px);
     }
 
+    .dish__body { display: flex; flex-direction: column; flex: 1; padding: 14px 16px 16px; }
+    .dish__name { margin: 0 0 4px; font-size: 16.5px; }
+    .dish__note { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
 
-    .empty-icon {
-        font-size: 45px;
+    .dish__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; }
+    .dish__price { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--accent); }
+    .dish__price small { font-size: 11.5px; font-weight: 600; color: var(--muted); }
 
-        margin-bottom: 15px;
-    }
-
-
-    .empty-menu h2 {
-        margin: 0;
-
-        color: #1f2937;
-    }
-
-
-    .empty-menu p {
-        margin: 10px 0 0;
-    }
-
-
-    /* =========================
-       Fake Visa Payment Modal
-    ========================== */
-
-    .payment-modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.6);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        padding: 20px;
-    }
-
-    .payment-modal {
-        background: white;
-        border-radius: 16px;
-        padding: 28px;
-        width: 100%;
-        max-width: 380px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-    }
-
-    .payment-modal h2 {
-        margin: 0 0 6px;
-        font-size: 20px;
-        color: #1f2937;
-    }
-
-    .payment-modal-amount {
-        margin: 0 0 20px;
-        color: #6b7280;
-        font-size: 14px;
-    }
-
-    .payment-modal-amount strong {
-        color: #1f2937;
-        font-size: 17px;
-    }
-
-    .payment-field {
-        margin-bottom: 14px;
-    }
-
-    .payment-field label {
-        display: block;
-        font-size: 13px;
-        color: #4b5563;
-        margin-bottom: 6px;
-        font-weight: 500;
-    }
-
-    .payment-field input {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 14px;
-    }
-
-    .payment-field-row {
-        display: flex;
-        gap: 12px;
-    }
-
-    .payment-field-row .payment-field {
-        flex: 1;
-    }
-
-    .payment-modal-error {
-        display: none;
-        background: #fee2e2;
-        color: #991b1b;
-        padding: 10px 12px;
-        border-radius: 8px;
-        font-size: 13px;
-        margin-bottom: 14px;
-    }
-
-    .payment-modal-error.visible {
-        display: block;
-    }
+    .add-button { padding: 9px 16px; font-size: 13.5px; border-radius: 100px; }
 
-    .cancel-payment-button {
-        width: 100%;
-        margin-top: 10px;
-        padding: 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        background: white;
-        color: #4b5563;
-        font-weight: bold;
-        font-size: 15px;
-        cursor: pointer;
-    }
-
-    .cancel-payment-button:hover {
-        background: #f9fafb;
-    }
-
-
-    .scan-card-button {
-        width: 100%;
-        margin-bottom: 16px;
-        padding: 11px;
-        border: 1px dashed #2563eb;
-        border-radius: 8px;
-        background: #eff6ff;
-        color: #2563eb;
-        font-weight: bold;
-        font-size: 14px;
-        cursor: pointer;
-    }
-
-    .scan-card-button:hover {
-        background: #dbeafe;
-    }
-
-    .camera-scan-container {
-        position: relative;
-        margin-bottom: 16px;
-        border-radius: 12px;
-        overflow: hidden;
-        background: #000;
-        text-align: center;
-    }
-
-    .camera-scan-container video {
-        width: 100%;
-        display: block;
-        max-height: 220px;
-        object-fit: cover;
-    }
+    /* ---------- the bar that follows you ---------- */
 
-    .camera-scan-frame {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 85%;
-        height: 55%;
-        border: 2px solid #22c55e;
-        border-radius: 10px;
+    .cart-bar {
+        position: fixed; inset-inline: 0; bottom: 0; z-index: 60;
+        padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+        background: linear-gradient(to top, var(--paper) 62%, rgba(250,246,240,0));
         pointer-events: none;
     }
 
-    #camera-scan-status {
-        color: white;
-        font-size: 13px;
-        margin: 8px 0;
+    .cart-bar[hidden] { display: none; }
+
+    .cart-bar__button {
+        pointer-events: auto;
+        display: flex; align-items: center; gap: 12px;
+        width: min(100%, 560px); margin: 0 auto;
+        padding: 14px 18px; border: 0; border-radius: 100px;
+        background: var(--accent); color: #fff;
+        font-family: inherit; font-size: 15px; font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 10px 28px -10px rgba(189, 78, 44, .85);
+        transition: background-color .16s ease, transform .08s ease;
     }
 
-    .camera-scan-container .cancel-payment-button {
-        margin: 0 0 10px;
-        width: 90%;
+    .cart-bar__button:hover { background: var(--accent-dark); }
+    .cart-bar__button:active { transform: translateY(1px); }
+
+    .cart-bar__count {
+        display: grid; place-items: center;
+        min-width: 26px; height: 26px; padding: 0 7px;
+        border-radius: 100px; background: rgba(255,255,255,.22);
+        font-size: 13px; font-weight: 700;
     }
 
+    .cart-bar__label { flex: 1; text-align: start; }
+    .cart-bar__total { font-variant-numeric: tabular-nums; }
 
-    /* =========================
-       Responsive
-    ========================== */
+    /* ---------- sheets ---------- */
 
-    @media (max-width: 768px) {
-
-        .page-header,
-        .table-info,
-        .category-header,
-        .order-header {
-            flex-direction: column;
-
-            align-items: flex-start;
-        }
-
-
-        .table-details {
-            width: 100%;
-
-            justify-content: space-between;
-
-            gap: 15px;
-        }
-
-
-        .products {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-
-        .order-item {
-            flex-wrap: wrap;
-        }
-
-
-        .order-item-info {
-            min-width: 100%;
-        }
-
-
-        .item-subtotal {
-            min-width: auto;
-
-            text-align: left;
-        }
-
+    .sheet {
+        position: fixed; inset: 0; z-index: 70;
+        background: rgba(36, 29, 24, .5);
+        backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+        display: flex; align-items: flex-end; justify-content: center;
+        padding: 0;
     }
 
+    .sheet[hidden] { display: none; }
 
-    @media (max-width: 600px) {
-
-        .products {
-            grid-template-columns: 1fr;
-        }
-
+    .sheet__box {
+        display: flex; flex-direction: column;
+        width: min(100%, 560px); max-height: 92vh;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg) var(--r-lg) 0 0;
+        box-shadow: 0 -20px 60px -24px rgba(36,29,24,.5);
+        animation: sheet-up .22s cubic-bezier(.2,.7,.3,1);
     }
 
+    @keyframes sheet-up { from { transform: translateY(14px); opacity: .6; } to { transform: none; opacity: 1; } }
 
-    @media (max-width: 500px) {
-
-        .page-header h1 {
-            font-size: 27px;
-        }
-
-
-        .category-heading {
-            align-items: flex-start;
-        }
-
-
-        .category-image {
-            width: 54px;
-            height: 54px;
-        }
-
-
-        .category-title {
-            font-size: 21px;
-        }
-
-
-        .category-description {
-            font-size: 14px;
-        }
-
-
-        .product-image-wrapper {
-            height: 200px;
-        }
-
-
-        .product-footer {
-            align-items: flex-start;
-
-            flex-direction: column;
-        }
-
-
-        .add-button {
-            width: 100%;
-        }
-
-
-        .quantity-controls {
-            order: 3;
-        }
-
-
-        .remove-button {
-            margin-left: auto;
-        }
-
-
-        .table-details {
-            flex-direction: column;
-        }
-
-
-        .order-box {
-            padding: 20px 16px;
-        }
-
-        .client-info {
-            flex-direction: column;
-        }
-
+    .sheet__head {
+        display: flex; align-items: flex-start; gap: 12px;
+        padding: 20px 20px 14px; border-bottom: 1px solid var(--line);
     }
 
+    .sheet__head h2 { margin: 0; font-size: 20px; }
+    .sheet__head .muted-text { margin: 3px 0 0; font-size: 13px; }
+    .sheet__head .order-count { margin-inline-start: auto; }
+
+    .sheet__close {
+        background: transparent; border: 0; cursor: pointer;
+        font-size: 26px; line-height: 1; color: var(--muted);
+        padding: 0 4px; margin-inline-start: 4px;
+    }
+
+    .sheet__close:hover { color: var(--ink); }
+
+    .sheet__body { flex: 1; overflow-y: auto; padding: 4px 20px; -webkit-overflow-scrolling: touch; }
+    .sheet__foot { padding: 14px 20px calc(20px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: #FDFBF8; }
+
+    /* ---------- lines inside a sheet ---------- */
+
+    .order-item {
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        padding: 14px 0; border-bottom: 1px solid var(--line);
+    }
+
+    .order-item-info { flex: 1; min-width: 45%; }
+    .order-item-name { font-weight: 600; font-size: 14.5px; }
+    .order-item-price { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+    .item-subtotal { font-family: var(--font-display); font-size: 15px; min-width: 88px; text-align: end; }
+    .item-notes { flex-basis: 100%; margin-top: 4px; font-size: 13px; padding: 9px 11px; }
+
+    /* Removing a line is a small, quiet control — not a button competing
+       with the order itself. */
+    .sheet .remove-button {
+        order: 5;
+        width: 30px; height: 30px; padding: 0;
+        display: inline-grid; place-items: center;
+        font-size: 0; line-height: 0;
+        border-radius: 50%;
+        background: transparent; border-color: transparent;
+        color: var(--muted);
+    }
+
+    .sheet .remove-button::before { content: "\00d7"; font-size: 19px; line-height: 1; }
+    .sheet .remove-button:hover { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
+
+    .order-item .quantity-controls { order: 2; }
+    .item-subtotal { order: 3; }
+
+    .empty-order { text-align: center; padding: 36px 10px; color: var(--muted); }
+    .empty-order-icon { font-size: 30px; margin-bottom: 8px; }
+    .empty-order p { margin: 0 0 4px; color: var(--ink); font-weight: 600; }
+    .empty-order span { font-size: 13.5px; }
+
+    .order-total {
+        display: flex; align-items: center; justify-content: space-between;
+        font-family: var(--font-display); font-size: 19px; font-weight: 600;
+        margin-bottom: 14px;
+    }
+
+    .who { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .who input { width: 100%; }
+
+    .pay-choice { display: flex; gap: 10px; margin-bottom: 14px; }
+
+    .pay-choice label {
+        flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+        padding: 11px 12px; border-radius: var(--r-sm);
+        border: 1px solid var(--line-strong); background: var(--surface);
+        font-size: 14px; font-weight: 600; cursor: pointer;
+        transition: border-color .16s ease, background-color .16s ease;
+    }
+
+    .pay-choice label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-dark); }
+
+    .submit-button { width: 100%; padding: 14px; font-size: 15px; }
+    .submit-button.call-waiter { background: var(--accent); margin-top: 10px; }
+
+    #message:not(:empty), #submitted-message:not(:empty) { margin-top: 12px; }
+
+    /* ---------- the visa form ---------- */
+
+    .payment-modal-overlay {
+        position: fixed; inset: 0; z-index: 80;
+        align-items: center; justify-content: center; padding: 18px;
+        background: rgba(36, 29, 24, .55);
+        backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    }
+
+    .payment-modal {
+        width: min(100%, 420px); max-height: 92vh; overflow-y: auto;
+        background: var(--surface); border-radius: var(--r-lg);
+        box-shadow: 0 24px 60px -20px rgba(36,29,24,.45);
+        padding: 24px;
+    }
+
+    .payment-modal h2 { margin: 0 0 4px; font-size: 21px; }
+    .payment-modal-amount { font-family: var(--font-display); font-size: 26px; color: var(--accent); margin-bottom: 16px; }
+    .payment-field { margin-bottom: 14px; }
+    .payment-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .payment-modal .payment-modal-error { display: none; }
+    .payment-modal .payment-modal-error.visible { display: flex; }
+
+    .scan-card-button { width: 100%; margin-bottom: 16px; }
+    .camera-scan-container { margin-bottom: 16px; }
+    .camera-scan-container video { width: 100%; border-radius: var(--r-sm); display: block; }
+    .camera-scan-frame { position: relative; margin-top: -60px; height: 60px; }
+
+    .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .modal-actions button { flex: 1; }
+
+    /* ---------- phones ---------- */
+
+    @media (max-width: 620px) {
+        .dish-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+        .dish__body { padding: 12px 13px 14px; }
+        .dish__name { font-size: 15px; }
+        .dish__note { display: none; }
+        .dish__foot { flex-direction: column; align-items: stretch; gap: 8px; }
+        .add-button { width: 100%; justify-content: center; }
+        .menu-section__image { width: 44px; height: 44px; }
+        .who { grid-template-columns: 1fr; }
+    }
+
+    @media (min-width: 900px) {
+        .sheet { align-items: center; padding: 20px; }
+        .sheet__box { border-radius: var(--r-lg); max-height: 86vh; }
+    }
 </style>
-
 @endpush
 
-
-{{-- =========================================================
-     JAVASCRIPT
-========================================================= --}}
-
 @push('scripts')
+
+{{-- The cart bar and the two sheets. The ordering logic lives in the script
+     below; this only decides what is on screen. --}}
+<script>
+(function () {
+    var app = document.getElementById('menu-app');
+    if (!app || !app.dataset.tableId) return;
+
+    var bar = document.getElementById('cart-bar');
+    var barCount = document.getElementById('cart-bar-count');
+    var barTotal = document.getElementById('cart-bar-total');
+    var orderSheet = document.getElementById('order-sheet');
+    var submittedSheet = document.getElementById('submitted-order-panel');
+    var openButton = document.getElementById('open-order');
+    var orderItems = document.getElementById('order-items');
+    var orderTotal = document.getElementById('order-total');
+
+    function openSheet(sheet) {
+        if (!sheet) return;
+        if (sheet === submittedSheet) sheet.style.display = 'flex';
+        else sheet.hidden = false;
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSheet(sheet) {
+        if (!sheet) return;
+        if (sheet === submittedSheet) sheet.style.display = 'none';
+        else sheet.hidden = true;
+        document.body.style.overflow = '';
+    }
+
+    openButton.addEventListener('click', function () {
+        // Once an order is in, the bar reopens that order rather than a new one.
+        openSheet(submittedSheet.dataset.live === 'yes' ? submittedSheet : orderSheet);
+    });
+
+    document.addEventListener('click', function (event) {
+        if (event.target.closest('[data-close-sheet]')) {
+            closeSheet(event.target.closest('.sheet'));
+        } else if (event.target === orderSheet || event.target === submittedSheet) {
+            closeSheet(event.target);
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') return;
+        closeSheet(orderSheet);
+        if (submittedSheet.style.display !== 'none') closeSheet(submittedSheet);
+    });
+
+    /* Adding from the menu should feel immediate: the bar updates and the
+       button confirms, without the sheet jumping in front of the food. */
+    document.querySelectorAll('.add-button').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var original = button.textContent;
+            button.textContent = @json(__('Added'));
+            button.classList.add('is-added');
+            setTimeout(function () {
+                button.textContent = original;
+                button.classList.remove('is-added');
+            }, 900);
+        });
+    });
+
+    /* The order panel is rendered by the script below; mirror its numbers
+       onto the bar whenever they change. */
+    function syncBar() {
+        var count = orderItems ? orderItems.querySelectorAll('.order-item').length : 0;
+        var quantities = orderItems ? orderItems.querySelectorAll('.order-item .quantity') : [];
+        var total = 0;
+
+        for (var i = 0; i < quantities.length; i++) total += Number(quantities[i].textContent) || 0;
+
+        barCount.textContent = total || count;
+        barTotal.textContent = orderTotal ? orderTotal.textContent : '';
+        bar.hidden = count === 0 && submittedSheet.dataset.live !== 'yes';
+    }
+
+    new MutationObserver(syncBar).observe(orderItems, { childList: true, subtree: true, characterData: true });
+    new MutationObserver(function () {
+        var live = submittedSheet.style.display !== 'none';
+        if (live) {
+            submittedSheet.dataset.live = 'yes';
+            closeSheet(orderSheet);
+            openSheet(submittedSheet);
+        }
+        syncBar();
+    }).observe(submittedSheet, { attributes: true, attributeFilter: ['style'] });
+
+    syncBar();
+})();
+</script>
+
 
 <script>
 
