@@ -27,8 +27,14 @@
             cursor: pointer;
         }
 
+        .menu-link {
+            font-size: 12px;
+            word-break: break-all;
+        }
+        .menu-link a { color: #BD4E2C; }
         @media print {
-            button {
+            button,
+            .menu-link {
                 display: none;
             }
         }
@@ -49,6 +55,12 @@
 
     <p>
         {{ __('Table') }} {{ $table->number }}
+    </p>
+
+    {{-- The same address the code points at, so it can be opened or tested
+         by hand. Left out of the printed sheet. --}}
+    <p class="menu-link">
+        <a href="{{ route('tables.menu', $table->qr_token) }}">{{ route('tables.menu', $table->qr_token) }}</a>
     </p>
 
     <button onclick="window.print()">
