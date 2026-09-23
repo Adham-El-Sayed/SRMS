@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderChangeRequest;
+use App\Support\Access;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -16,17 +17,24 @@ class StaffPulseController extends Controller
 {
     public function __invoke(Request $request): JsonResponse
     {
-        $isAdmin = $request->user()->hasRole('admin');
+        $workspace = Access::workspaceFor($request->user(), $request);
 
-        $pulse = [
-            'kitchen' => Order::active()->count(),
-            'latest_order_id' => (int) Order::max('id'),
-        ];
+        $pulse = [];
 
-        if ($isAdmin) {
+        if (in_array($workspace, ['admin', 'kitchen'], true)) {
+            $pulse['kitchen'] = Order::active()->count();
+            $pulse['latest_order_id'] = (int) Order::max('id');
+        }
+
+        if (in_array($workspace, ['admin', 'cashier'], true)) {
+            $pulse['payments'] = Order::where('payment_status', 'pending')
+                ->where('status', '!=', 'cancelled')
+                ->count();
+        }
+
+        if ($workspace === 'admin') {
             $pulse['alerts'] = OrderChangeRequest::where('status', 'pending')->count();
             $pulse['latest_alert_id'] = (int) OrderChangeRequest::where('status', 'pending')->max('id');
-            $pulse['payments'] = Order::where('payment_status', 'pending')->where('status', '!=', 'cancelled')->count();
         }
 
         return response()

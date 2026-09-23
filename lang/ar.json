@@ -425,5 +425,14 @@
     "Not allowed": "غير مسموح",
     "This page is not part of your job": "الصفحة دي مش من شغلك",
     "Your account does not have access to this page. If you think it should, ask a manager.": "حسابك مالوش صلاحية على الصفحة دي. لو تفتكر إنها المفروض تكون من شغلك، كلّم المدير.",
-    "Back to my pages": "رجوع لصفحاتي"
+    "Back to my pages": "رجوع لصفحاتي",
+    "Workspace": "مساحة العمل",
+    "Super-admin": "سوبر أدمن",
+    "Super admin": "سوبر أدمن",
+    "Cashier": "كاشير",
+    "Everything, and can switch between the admin, cashier and kitchen views.": "كل حاجة، وبيقدر يبدّل بين واجهة المدير والكاشير والمطبخ.",
+    "Menu, tables, payments, shifts, reports and staff.": "المنيو والترابيزات والمدفوعات والورديات والتقارير والموظفين.",
+    "Payments and shifts — the money side.": "المدفوعات والورديات — الجزء المالي.",
+    "The kitchen board only.": "شاشة المطبخ بس.",
+    "Only a super admin can change a super admin.": "السوبر أدمن بس هو اللي يقدر يعدّل على سوبر أدمن."
 }

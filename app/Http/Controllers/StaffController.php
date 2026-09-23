@@ -20,12 +20,30 @@ use Spatie\Permission\Models\Role;
  */
 class StaffController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         return view('staff.index', [
             'users' => User::orderBy('name')->with('roles')->get(),
-            'roles' => Access::ROLES,
+            'roles' => $this->assignableRoles($request),
         ]);
+    }
+
+    /** Only a super admin may hand out the super-admin role. */
+    private function assignableRoles(Request $request): array
+    {
+        return Access::isSuperAdmin($request->user())
+            ? Access::ROLES
+            : array_values(array_diff(Access::ROLES, ['super-admin']));
+    }
+
+    /** An ordinary admin may not touch a super admin's account. */
+    private function guardTarget(Request $request, User $user): ?RedirectResponse
+    {
+        if (Access::isSuperAdmin($user) && ! Access::isSuperAdmin($request->user())) {
+            return back()->with('error', __('Only a super admin can change a super admin.'));
+        }
+
+        return null;
     }
 
     public function store(Request $request): RedirectResponse
@@ -34,7 +52,7 @@ class StaffController extends Controller
             'name' => ['required', 'string', 'max:100'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'role' => ['nullable', Rule::in(Access::ROLES)],
+            'role' => ['nullable', Rule::in($this->assignableRoles($request))],
         ]);
 
         $user = User::create([
@@ -54,11 +72,17 @@ class StaffController extends Controller
 
     public function updateRole(Request $request, User $user): RedirectResponse
     {
+        if ($blocked = $this->guardTarget($request, $user)) {
+            return $blocked;
+        }
+
         $data = $request->validate([
-            'role' => ['nullable', Rule::in(Access::ROLES)],
+            'role' => ['nullable', Rule::in($this->assignableRoles($request))],
         ]);
 
-        if ($user->is($request->user()) && ($data['role'] ?? null) !== 'admin') {
+        $keepsOwnAccess = in_array($data['role'] ?? null, ['super-admin', 'admin'], true);
+
+        if ($user->is($request->user()) && ! $keepsOwnAccess) {
             return back()->with('error', __('You cannot take away your own admin access.'));
         }
 
@@ -74,6 +98,10 @@ class StaffController extends Controller
 
     public function destroy(Request $request, User $user): RedirectResponse
     {
+        if ($blocked = $this->guardTarget($request, $user)) {
+            return $blocked;
+        }
+
         if ($user->is($request->user())) {
             return back()->with('error', __('You cannot delete your own account here.'));
         }

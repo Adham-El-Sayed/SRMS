@@ -2,9 +2,14 @@
     $locale = app()->getLocale();
     $rtl    = $locale === 'ar';
     $isGuestMenu = request()->routeIs('tables.menu');
-    $staffUser = auth()->user();
-    $isAdmin   = $staffUser?->hasRole('admin') ?? false;
-    $isStaff   = $isAdmin || ($staffUser?->hasRole('kitchen') ?? false);
+    $staffUser  = auth()->user();
+    $isSuper    = \App\Support\Access::isSuperAdmin($staffUser);
+    $workspace  = \App\Support\Access::workspaceFor($staffUser);
+    $isStaff    = $workspace !== 'none';
+    // What the navigation shows. A super admin sees the workspace they picked.
+    $showAdmin   = $workspace === 'admin';
+    $showMoney   = in_array($workspace, ['admin', 'cashier'], true);
+    $showKitchen = in_array($workspace, ['admin', 'kitchen'], true);
     $i18nFile = lang_path($locale . '.json');
     $i18n = ($locale !== 'en' && is_file($i18nFile)) ? json_decode(file_get_contents($i18nFile), true) : [];
 @endphp
@@ -138,6 +143,38 @@
         .lang-switch a.is-on {
             background: #F3EADF;
             color: #241D18;
+        }
+
+        /* Which side of the business a super admin is working on */
+        .workspace-switch {
+            display: inline-flex;
+            padding: 3px;
+            border-radius: 100px;
+            background: rgba(255, 255, 255, .07);
+            border: 1px solid rgba(255, 255, 255, .09);
+        }
+
+        .workspace-switch a {
+            padding: 5px 13px;
+            border-radius: 100px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #BCA994;
+            text-decoration: none;
+            line-height: 1.4;
+            white-space: nowrap;
+            transition: background-color .16s ease, color .16s ease;
+        }
+
+        .workspace-switch a:hover { color: #F3EADF; }
+
+        .workspace-switch a.is-on {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        @media (max-width: 860px) {
+            .workspace-switch a { padding: 5px 9px; font-size: 11.5px; }
         }
 
         .user-chip {
@@ -447,6 +484,18 @@
                 </a>
 
                 <div class="topbar__tools">
+                    @if ($isSuper)
+                        {{-- A super admin works one side at a time and can move between them. --}}
+                        <div class="workspace-switch" role="group" aria-label="{{ __('Workspace') }}">
+                            @foreach (\App\Support\Access::WORKSPACES as $option)
+                                <a href="{{ route('workspace.switch', $option) }}"
+                                   class="{{ $workspace === $option ? 'is-on' : '' }}">
+                                    {{ \App\Support\Access::workspaceLabel($option) }}
+                                </a>
+                            @endforeach
+                        </div>
+                    @endif
+
                     @include('layouts.partials.language-switch')
 
                     @if ($isStaff)
@@ -476,21 +525,25 @@
         <nav class="app-nav">
             <div class="app-nav__inner">
 
-                <a href="{{ route('dashboard') }}"
-                   class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">{{ __('Dashboard') }}</a>
+                @if ($showAdmin)
+                    <a href="{{ route('dashboard') }}"
+                       class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">{{ __('Dashboard') }}</a>
+                @endif
 
-                @if ($isAdmin)
+                @if ($showAdmin)
                     <a href="{{ route('tables.index') }}"
                        class="{{ request()->routeIs('tables.*') ? 'active' : '' }}">{{ __('Tables') }}</a>
                 @endif
 
-                <a href="{{ route('kitchen.orders') }}"
-                   class="{{ request()->routeIs('kitchen.*') ? 'active' : '' }}">
-                    {{ __('Kitchen') }}
-                    <span class="nav-badge" data-pulse="kitchen" hidden></span>
-                </a>
+                @if ($showKitchen)
+                    <a href="{{ route('kitchen.orders') }}"
+                       class="{{ request()->routeIs('kitchen.*') ? 'active' : '' }}">
+                        {{ __('Kitchen') }}
+                        <span class="nav-badge" data-pulse="kitchen" hidden></span>
+                    </a>
+                @endif
 
-                @if ($isAdmin)
+                @if ($showAdmin)
                     <a href="{{ route('order-change-requests.index') }}"
                        class="{{ request()->routeIs('order-change-requests.*') ? 'active' : '' }}">
                         {{ __('Alerts') }}
@@ -502,19 +555,26 @@
                     <a href="{{ route('menu.management') }}"
                        class="{{ request()->routeIs('menu.management*') ? 'active' : '' }}">{{ __('Menu Management') }}</a>
 
+                @endif
+
+                @if ($showMoney)
+                    @if ($showAdmin)<span class="nav-divider"></span>@endif
+
                     <a href="{{ route('cash-payments.index') }}"
                        class="{{ request()->routeIs('cash-payments.*') ? 'active' : '' }}">
                         {{ __('Payments') }}
                         <span class="nav-badge nav-badge--quiet" data-pulse="payments" hidden></span>
                     </a>
 
-                    <span class="nav-divider"></span>
-
                     <a href="{{ route('shifts.current') }}"
                        class="{{ request()->routeIs('shifts.current') ? 'active' : '' }}">{{ __('Shift') }}</a>
 
                     <a href="{{ route('shifts.history') }}"
                        class="{{ request()->routeIs('shifts.history') || request()->routeIs('shifts.show') ? 'active' : '' }}">{{ __('Shift History') }}</a>
+                @endif
+
+                @if ($showAdmin)
+                    <span class="nav-divider"></span>
 
                     <a href="{{ route('reports.monthly') }}"
                        class="{{ request()->routeIs('reports.*') ? 'active' : '' }}">{{ __('Reports') }}</a>
@@ -568,7 +628,7 @@
             window.SRMS_LIVE = {
                 pulseUrl: @json(route('staff.pulse')),
                 kitchenUrl: @json(route('kitchen.orders')),
-                alertsUrl: @json($isAdmin ? route('order-change-requests.index') : null),
+                alertsUrl: @json($showAdmin ? route("order-change-requests.index") : null),
                 loginUrl: @json(route('login')),
                 text: {
                     newOrder: @json(__('New order received')),

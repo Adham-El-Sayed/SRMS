@@ -96,7 +96,7 @@ A Laravel web app that runs a restaurant floor end to end: guests scan a QR code
 | Backend | Laravel 13, PHP 8.3+ |
 | Database | MySQL / MariaDB |
 | Auth | Laravel Breeze |
-| Roles | spatie/laravel-permission (`admin`, `kitchen`) |
+| Roles | spatie/laravel-permission (`super-admin`, `admin`, `cashier`, `kitchen`) |
 | QR codes | simplesoftwareio/simple-qrcode |
 | PDF reports | barryvdh/laravel-dompdf |
 | Excel exports | maatwebsite/excel |
@@ -164,12 +164,23 @@ Every staff page requires signing in, and what each account may open depends on 
 
 | Role | Can open |
 |---|---|
-| **admin** | Everything: menu, tables, payments, shifts, reports and Staff & Access |
-| **kitchen** | The kitchen board and the dashboard |
+| **super-admin** | Everything, and switches between the admin, cashier and kitchen views |
+| **admin** | Menu, tables, alerts, payments, shifts, reports and staff |
+| **cashier** | Payments and shifts — the money side |
+| **kitchen** | The kitchen board |
 | *no role yet* | Nothing — a "waiting for access" page until a manager sets the role |
 
 The navigation only shows what the signed-in account can actually open, and a
 page that isn't theirs is refused by the server as well, not just hidden.
+Signing in lands each account where it works: the kitchen on its board, the
+cashier on payments, an admin on the dashboard.
+
+### The super admin's workspace switcher
+
+A super admin may do everything, which would mean every page at once. So the
+top bar offers **Admin / Cashier / Kitchen**: picking one decides what the
+navigation shows and where signing in lands. It is a convenience, not a
+restriction — a super admin is never refused a page, whichever view is active.
 
 ### The first administrator
 
@@ -177,11 +188,14 @@ page that isn't theirs is refused by the server as well, not just hidden.
 php artisan srms:admin
 ```
 
-It asks for a name, email and password and creates an administrator. Pass an
-email of an existing account to promote that account instead:
+It asks for a name, email and password and creates a **super admin** — the
+owner account. Pass an email to promote an existing account instead, and
+`--role` to make any other kind of account:
 
 ```bash
-php artisan srms:admin someone@example.com
+php artisan srms:admin someone@example.com            # make them super admin
+php artisan srms:admin chef@example.com --role=kitchen
+php artisan srms:admin till@example.com --role=cashier
 ```
 
 ### Everyone else
@@ -189,7 +203,8 @@ php artisan srms:admin someone@example.com
 The administrator adds accounts from **Staff & Access** in the navigation: add
 an account, or change anyone's role from the dropdown next to their name. An
 administrator can't remove their own access or delete their own account there,
-so the restaurant can never be left without an administrator.
+so the restaurant can never be left without an administrator. Only a super
+admin can create another super admin, or change one.
 
 New accounts made through public sign-up start with no role and can't reach
 anything until a manager gives them one. Once your staff accounts exist, you

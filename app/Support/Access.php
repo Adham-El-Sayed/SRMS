@@ -3,46 +3,105 @@
 namespace App\Support;
 
 use App\Models\User;
+use Illuminate\Http\Request;
 
 /**
- * Where each kind of account belongs, in one place, so sign-in, the
- * "no access yet" page and the navigation all agree.
+ * Who may open what, in one place, so sign-in, the navigation, the role
+ * middleware and the "waiting for access" page all agree.
+ *
+ * A super admin may do everything. Because that means every page at once,
+ * they also pick a workspace — admin, cashier or kitchen — which decides
+ * what the navigation shows and where signing in lands them. The workspace
+ * is a convenience, not a restriction: a super admin is never refused a page.
  */
 class Access
 {
-    /** Roles an admin can hand out, in the order they appear in the UI. */
-    public const ROLES = ['admin', 'kitchen'];
+    /** Roles an administrator can hand out, in the order they appear in the UI. */
+    public const ROLES = ['super-admin', 'admin', 'cashier', 'kitchen'];
 
-    /** The first page an account should see after signing in. */
-    public static function homeRouteFor(?User $user): string
+    /** Workspaces a super admin can switch between. */
+    public const WORKSPACES = ['admin', 'cashier', 'kitchen'];
+
+    public const SESSION_KEY = 'workspace';
+
+    public static function isSuperAdmin(?User $user): bool
+    {
+        return (bool) $user?->hasRole('super-admin');
+    }
+
+    /**
+     * The workspace whose navigation this account sees. Ordinary accounts get
+     * the one that matches their role; a super admin gets the one they chose.
+     */
+    public static function workspaceFor(?User $user, ?Request $request = null): string
     {
         if (! $user) {
-            return 'login';
+            return 'none';
         }
 
-        if ($user->hasRole('admin')) {
-            return 'dashboard';
+        if (self::isSuperAdmin($user)) {
+            $chosen = ($request ?? request())->session()->get(self::SESSION_KEY);
+
+            return in_array($chosen, self::WORKSPACES, true) ? $chosen : 'admin';
         }
 
-        if ($user->hasRole('kitchen')) {
-            return 'kitchen.orders';
+        foreach (self::WORKSPACES as $workspace) {
+            if ($user->hasRole($workspace)) {
+                return $workspace;
+            }
         }
 
-        return 'no-access';
+        return 'none';
     }
 
-    public static function homeUrlFor(?User $user): string
+    /** The first page an account should see after signing in. */
+    public static function homeRouteFor(?User $user, ?Request $request = null): string
     {
-        return route(self::homeRouteFor($user));
+        return match (self::workspaceFor($user, $request)) {
+            'admin' => 'dashboard',
+            'cashier' => 'cash-payments.index',
+            'kitchen' => 'kitchen.orders',
+            default => $user ? 'no-access' : 'login',
+        };
     }
 
-    /** A plain-language description of what a role may open. */
+    public static function homeUrlFor(?User $user, ?Request $request = null): string
+    {
+        return route(self::homeRouteFor($user, $request));
+    }
+
+    /** What a role may open, in plain language. */
     public static function describe(string $role): string
     {
         return match ($role) {
-            'admin' => __('Everything: menu, tables, payments, shifts and reports.'),
-            'kitchen' => __('The kitchen board and the dashboard only.'),
+            'super-admin' => __('Everything, and can switch between the admin, cashier and kitchen views.'),
+            'admin' => __('Menu, tables, payments, shifts, reports and staff.'),
+            'cashier' => __('Payments and shifts — the money side.'),
+            'kitchen' => __('The kitchen board only.'),
             default => __('No access yet.'),
+        };
+    }
+
+    /** The name of a role as staff would say it. */
+    public static function roleLabel(string $role): string
+    {
+        return match ($role) {
+            'super-admin' => __('Super admin'),
+            'admin' => __('Admin'),
+            'cashier' => __('Cashier'),
+            'kitchen' => __('Kitchen'),
+            default => __('No access yet'),
+        };
+    }
+
+    /** The name of a workspace as staff would say it. */
+    public static function workspaceLabel(string $workspace): string
+    {
+        return match ($workspace) {
+            'admin' => __('Admin'),
+            'cashier' => __('Cashier'),
+            'kitchen' => __('Kitchen'),
+            default => __('No access yet'),
         };
     }
 }

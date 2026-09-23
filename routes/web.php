@@ -61,6 +61,17 @@ Route::middleware('auth')->group(function () {
     // Signed in, but nobody has said yet what this account may open.
     Route::view('/no-access', 'auth.no-access')->name('no-access');
 
+    // A super admin chooses which side of the business they're working on.
+    Route::get('/workspace/{workspace}', function (Request $request, string $workspace) {
+        abort_unless(\App\Support\Access::isSuperAdmin($request->user()), 403);
+
+        if (in_array($workspace, \App\Support\Access::WORKSPACES, true)) {
+            $request->session()->put(\App\Support\Access::SESSION_KEY, $workspace);
+        }
+
+        return redirect()->to(\App\Support\Access::homeUrlFor($request->user(), $request));
+    })->name('workspace.switch');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -74,17 +85,24 @@ Route::middleware('auth')->group(function () {
 | dashboard, so an account registered by a stranger is useless to them.
 */
 
-Route::middleware(['auth', 'role:admin|kitchen'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::middleware(['auth', 'role:super-admin|admin|cashier|kitchen'])->group(function () {
+    // Badge counts and "new order" detection, for whichever badges the
+    // signed-in account is allowed to see.
+    Route::get('/staff/pulse', StaffPulseController::class)->name('staff.pulse');
+});
 
+/*
+|--------------------------------------------------------------------------
+| The kitchen: kitchen staff, admin, super admin
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:super-admin|admin|kitchen'])->group(function () {
     Route::get('/kitchen/orders', [KitchenOrderController::class, 'index'])->name('kitchen.orders');
     Route::get('/kitchen/orders/board', [KitchenOrderController::class, 'board'])->name('kitchen.board');
     Route::patch('/kitchen/orders/{order}/status', [KitchenOrderController::class, 'updateStatus'])
         ->whereNumber('order')
         ->name('kitchen.orders.status');
-
-    // Badge counts and "new order" detection for the navigation bar.
-    Route::get('/staff/pulse', StaffPulseController::class)->name('staff.pulse');
 });
 
 /*
@@ -93,7 +111,35 @@ Route::middleware(['auth', 'role:admin|kitchen'])->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'role:admin'])->group(function () {
+/*
+|--------------------------------------------------------------------------
+| The money: cashier, admin, super admin
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:super-admin|admin|cashier'])->group(function () {
+    Route::get('/cash-payments', [CashPaymentController::class, 'index'])->name('cash-payments.index');
+    Route::get('/cash-payments/board', [CashPaymentController::class, 'board'])->name('cash-payments.board');
+    Route::post('/cash-payments/{order}/confirm', [CashPaymentController::class, 'confirm'])->name('cash-payments.confirm');
+    Route::get('/orders/{order}/invoice', [InvoiceController::class, 'show'])->whereNumber('order')->name('orders.invoice');
+
+    Route::get('/shifts/current', [ShiftController::class, 'current'])->name('shifts.current');
+    Route::post('/shifts/open', [ShiftController::class, 'open'])->name('shifts.open');
+    Route::post('/shifts/{shift}/close', [ShiftController::class, 'close'])->name('shifts.close');
+    Route::get('/shifts/history', [ShiftController::class, 'history'])->name('shifts.history');
+    Route::get('/shifts/{shift}', [ShiftController::class, 'show'])->whereNumber('shift')->name('shifts.show');
+    Route::get('/shifts/{shift}/export', [ShiftController::class, 'export'])->whereNumber('shift')->name('shifts.export');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Running the restaurant: admin and super admin
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'role:super-admin|admin'])->group(function () {
+
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Tables and their QR codes
     Route::resource('tables', RestaurantTableController::class)->except(['show']);
@@ -109,17 +155,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::patch('/menu-management/products/{product}/toggle', [MenuManagementController::class, 'toggleProduct'])->name('menu.management.products.toggle');
 
     // Shifts
-    Route::get('/shifts/current', [ShiftController::class, 'current'])->name('shifts.current');
-    Route::post('/shifts/open', [ShiftController::class, 'open'])->name('shifts.open');
-    Route::post('/shifts/{shift}/close', [ShiftController::class, 'close'])->name('shifts.close');
-    Route::get('/shifts/history', [ShiftController::class, 'history'])->name('shifts.history');
-    Route::get('/shifts/{shift}', [ShiftController::class, 'show'])->whereNumber('shift')->name('shifts.show');
-    Route::get('/shifts/{shift}/export', [ShiftController::class, 'export'])->whereNumber('shift')->name('shifts.export');
 
     // Payments
-    Route::get('/cash-payments', [CashPaymentController::class, 'index'])->name('cash-payments.index');
-    Route::get('/cash-payments/board', [CashPaymentController::class, 'board'])->name('cash-payments.board');
-    Route::post('/cash-payments/{order}/confirm', [CashPaymentController::class, 'confirm'])->name('cash-payments.confirm');
     Route::get('/orders/{order}/invoice', [InvoiceController::class, 'show'])->name('orders.invoice');
 
     // Waiter alerts

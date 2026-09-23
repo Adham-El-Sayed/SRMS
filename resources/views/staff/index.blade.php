@@ -47,7 +47,12 @@
             </thead>
             <tbody>
                 @foreach ($users as $user)
-                    @php $role = $user->roles->first()?->name; @endphp
+                    @php
+                        $role = $user->roles->first()?->name;
+                        // Your own row, and a super admin's row when you are not one.
+                        $locked = $user->is(auth()->user())
+                            || (\App\Support\Access::isSuperAdmin($user) && ! \App\Support\Access::isSuperAdmin(auth()->user()));
+                    @endphp
                     <tr>
                         <td>
                             <strong>{{ $user->name }}</strong>
@@ -63,14 +68,16 @@
                                 @csrf
                                 @method('PATCH')
 
-                                <select name="role" onchange="this.form.submit()"
-                                        @disabled($user->is(auth()->user()))>
+                                <select name="role" onchange="this.form.submit()" @disabled($locked)>
                                     <option value="">{{ __('No access yet') }}</option>
                                     @foreach ($roles as $option)
                                         <option value="{{ $option }}" @selected($role === $option)>
-                                            {{ __(ucfirst($option)) }}
+                                            {{ \App\Support\Access::roleLabel($option) }}
                                         </option>
                                     @endforeach
+                                    @if ($role && ! in_array($role, $roles, true))
+                                        <option value="{{ $role }}" selected>{{ __('Super admin') }}</option>
+                                    @endif
                                 </select>
 
                                 <noscript><button type="submit" class="btn">{{ __('Save') }}</button></noscript>
@@ -80,7 +87,7 @@
                         </td>
 
                         <td>
-                            @unless ($user->is(auth()->user()))
+                            @unless ($locked)
                                 <form method="POST" action="{{ route('staff.destroy', $user) }}"
                                       onsubmit="return confirm('{{ __('Delete this account?') }}')">
                                     @csrf
@@ -129,7 +136,7 @@
                     <select id="role" name="role">
                         <option value="">{{ __('No access yet') }}</option>
                         @foreach ($roles as $option)
-                            <option value="{{ $option }}">{{ __(ucfirst($option)) }}</option>
+                            <option value="{{ $option }}">{{ \App\Support\Access::roleLabel($option) }}</option>
                         @endforeach
                     </select>
                 </div>

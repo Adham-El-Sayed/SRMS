@@ -16,7 +16,9 @@ use Spatie\Permission\Models\Role;
  */
 class MakeAdmin extends Command
 {
-    protected $signature = 'srms:admin {email? : The account to create or promote}';
+    protected $signature = 'srms:admin
+                            {email? : The account to create or promote}
+                            {--role=super-admin : super-admin, admin, cashier or kitchen}';
 
     protected $description = 'Create the first administrator account (or promote an existing one)';
 
@@ -26,13 +28,19 @@ class MakeAdmin extends Command
             Role::findOrCreate($role);
         }
 
+        if (! in_array($this->option('role'), Access::ROLES, true)) {
+            $this->error('Unknown role. Use one of: ' . implode(', ', Access::ROLES));
+
+            return self::FAILURE;
+        }
+
         $email = $this->argument('email') ?: $this->ask('Email address');
 
         $user = User::where('email', $email)->first();
 
         if ($user) {
-            $user->syncRoles(['admin']);
-            $this->info("{$user->name} ({$email}) is now an administrator.");
+            $user->syncRoles([$this->option('role')]);
+            $this->info("{$user->name} ({$email}) now has the role {$this->option('role')}.");
 
             return self::SUCCESS;
         }
@@ -64,9 +72,9 @@ class MakeAdmin extends Command
             'email_verified_at' => now(),
         ]);
 
-        $user->assignRole('admin');
+        $user->assignRole($this->option('role'));
 
-        $this->info("Administrator {$name} ({$email}) created. You can sign in now.");
+        $this->info("{$name} ({$email}) created with the role {$this->option('role')}. You can sign in now.");
 
         return self::SUCCESS;
     }
