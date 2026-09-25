@@ -29,6 +29,21 @@
         </div>
     @endunless
 
+    {{-- ===== Finding a dish ===== --}}
+    @if ($menu->count() > 0)
+        <div class="menu-search">
+            <svg class="menu-search__icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M13.5 13.5 17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <input type="search" id="dish-search" autocomplete="off"
+                   placeholder="{{ __('Search the menu') }}"
+                   aria-label="{{ __('Search the menu') }}">
+            <button type="button" class="menu-search__clear" id="clear-search" hidden
+                    aria-label="{{ __('Clear') }}">&times;</button>
+        </div>
+    @endif
+
     {{-- ===== Jump to a section ===== --}}
     @if ($menu->count() > 1)
         <nav class="menu-tabs" aria-label="{{ __('Categories') }}">
@@ -57,7 +72,9 @@
 
             <div class="dish-grid">
                 @forelse ($category->products as $product)
-                    <article class="dish {{ $product->isSoldOut() ? 'is-sold-out' : '' }}">
+                    <article class="dish {{ $product->isSoldOut() ? 'is-sold-out' : '' }}"
+                             data-name="{{ Str::lower($product->name) }}"
+                             data-dish="{{ $product->id }}">
                         <div class="dish__image">
                             @if ($product->image)
                                 <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" loading="lazy">
@@ -87,6 +104,17 @@
                                             aria-label="{{ __('Add') }} {{ $product->name }}">
                                         {{ __('Add') }}
                                     </button>
+
+                                    {{-- Once it is in the order, the card itself
+                                         counts it: no need to open the basket to
+                                         ask for a second one. --}}
+                                    <div class="dish__stepper" data-stepper="{{ $product->id }}" hidden>
+                                        <button type="button" class="quantity-button" data-step="-1" data-product-id="{{ $product->id }}"
+                                                aria-label="{{ __('Remove') }}">&minus;</button>
+                                        <span class="quantity" data-qty="{{ $product->id }}">0</span>
+                                        <button type="button" class="quantity-button" data-step="1" data-product-id="{{ $product->id }}"
+                                                aria-label="{{ __('Add') }}">+</button>
+                                    </div>
                                 @endif
                             </div>
                         </div>
@@ -104,27 +132,50 @@
         </div>
     @endforelse
 
+    <p class="no-match" id="no-match" hidden>{{ __('Nothing on the menu matches that.') }}</p>
+
 </div>
 
 
-{{-- ===== The bar that follows you down the page ===== --}}
-<div class="cart-bar" id="cart-bar" hidden>
-    <button type="button" class="cart-bar__button" id="open-order">
-        <span class="cart-bar__count" id="cart-bar-count">0</span>
-        <span class="cart-bar__label">{{ __('View your order') }}</span>
-        <span class="cart-bar__total" id="cart-bar-total">0.00 {{ __('EGP') }}</span>
-    </button>
+{{-- ===== The bars that follow you down the page ===== --}}
+<div class="bottom-bars">
+
+    {{-- A live order stays reachable here for as long as it is cooking, so
+         closing the panel never loses it. --}}
+    <div class="track-bar" id="track-bar" hidden>
+        <button type="button" class="track-bar__button" id="open-tracking">
+            <span class="track-bar__dot"></span>
+            <span class="track-bar__text">
+                <strong id="track-bar-id">{{ __('Order #') }}</strong>
+                <span id="track-bar-status">{{ __('Received') }}</span>
+            </span>
+            <span class="track-bar__cta">{{ __('Follow it') }}</span>
+        </button>
+    </div>
+
+    <div class="cart-bar" id="cart-bar" hidden>
+        <button type="button" class="cart-bar__button" id="open-order">
+            <span class="cart-bar__count" id="cart-bar-count">0</span>
+            <span class="cart-bar__label">{{ __('View your order') }}</span>
+            <span class="cart-bar__total" id="cart-bar-total">0.00 {{ __('EGP') }}</span>
+        </button>
+    </div>
+
 </div>
 
 
-{{-- ===== Your order, and how to get it ===== --}}
+{{-- ===== Your order: items first, then how to get it ===== --}}
 <div class="sheet" id="order-sheet" hidden>
-    <div class="sheet__box" role="dialog" aria-modal="true" aria-labelledby="order-sheet-title">
+    <div class="sheet__box" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
 
         <div class="sheet__head">
+            <button type="button" class="sheet__back" id="step-back" hidden aria-label="{{ __('Back') }}">
+                <span class="sheet__back-arrow">&#8592;</span>
+            </button>
+
             <div>
-                <h2 id="order-sheet-title">{{ __('Your Order') }}</h2>
-                <p class="muted-text">{{ __('Review your items before submitting.') }}</p>
+                <h2 id="sheet-title">{{ __('Your Order') }}</h2>
+                <p class="muted-text" id="sheet-sub">{{ __('Review your items before submitting.') }}</p>
             </div>
 
             <span class="order-count" id="order-count">0 {{ __('Items') }}</span>
@@ -133,10 +184,18 @@
         </div>
 
         <div class="sheet__body">
-            <div id="order-items"></div>
 
-            {{-- How it reaches them --}}
-            <div class="checkout">
+            {{-- Step one --}}
+            <div id="step-items">
+                <div id="order-items"></div>
+
+                <button type="button" class="add-more" data-close-sheet>
+                    + {{ __('Add something else') }}
+                </button>
+            </div>
+
+            {{-- Step two --}}
+            <div id="step-details" hidden>
 
                 <h3 class="checkout__title">{{ __('How would you like it?') }}</h3>
 
@@ -206,7 +265,8 @@
                 <span id="order-total">0.00 {{ __('EGP') }}</span>
             </div>
 
-            <button type="button" id="submit-order" class="submit-button" disabled>{{ __('Place Order') }}</button>
+            <button type="button" id="to-details" class="submit-button" disabled>{{ __('Continue') }}</button>
+            <button type="button" id="submit-order" class="submit-button" hidden>{{ __('Place Order') }}</button>
 
             <div id="message"></div>
         </div>
@@ -256,17 +316,17 @@
 <link rel="stylesheet" href="{{ asset('css/srms-menu.css') }}?v={{ @filemtime(public_path('css/srms-menu.css')) }}">
 <style>
     /* ==================================================================
-       What the online page adds on top of the shared guest menu: the
-       closed notice, the checkout block, and the little progress line a
-       customer watches while their food is being cooked.
+       What the online page adds on top of the shared guest menu: finding a
+       dish, counting it on its own card, a two-step basket, and the bar
+       that keeps a live order one tap away.
        ================================================================== */
 
-    .online-app { padding-bottom: 96px; }
+    .online-app { padding-bottom: 120px; }
 
     .closed-note {
         display: flex; flex-direction: column; gap: 4px;
-        margin: 0 0 26px; padding: 15px 18px;
-        border-radius: var(--r-md);
+        margin: 0 0 22px; padding: 15px 18px;
+        border-radius: var(--r-md, 13px);
         background: var(--amber-soft);
         border: 1px solid rgba(176, 123, 20, .25);
         color: var(--warn);
@@ -276,18 +336,177 @@
     .closed-note strong { font-size: 15px; }
     .closed-note span { color: var(--ink-soft); }
 
-    /* ---------- checkout ---------- */
+    /* ---------- finding a dish ---------- */
 
-    .checkout {
-        margin-top: 22px; padding-top: 20px;
-        border-top: 1px solid var(--line-strong);
+    .menu-search { position: relative; margin-bottom: 18px; }
+
+    .menu-search__icon {
+        position: absolute; inset-inline-start: 16px; top: 50%;
+        transform: translateY(-50%);
+        width: 18px; height: 18px;
+        color: var(--muted); pointer-events: none;
     }
+
+    /* The design system styles every input and loads after this page, so a
+       rule of equal weight would lose the tie. These name one more thing. */
+    body .menu-search input[type="search"] {
+        width: 100%;
+        padding: 13px 46px;
+        border-radius: 100px;
+        border: 1.5px solid var(--line-strong);
+        background: var(--surface);
+        font-family: var(--font-sans); font-size: 15px; color: var(--ink);
+        box-shadow: none;
+        -webkit-appearance: none;
+    }
+
+    body .menu-search input[type="search"]::-webkit-search-cancel-button { display: none; }
+
+    body .menu-search input[type="search"]:focus {
+        outline: none; border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .menu-search__clear {
+        position: absolute; inset-inline-end: 8px; top: 50%;
+        transform: translateY(-50%);
+        width: 30px; height: 30px; padding: 0;
+        display: grid; place-items: center;
+        border: none; border-radius: 50%;
+        background: var(--surface-sunk); color: var(--muted);
+        font-size: 18px; line-height: 1; cursor: pointer;
+    }
+
+    .menu-search__clear:hover { background: var(--line); color: var(--ink); }
+    body .menu-search__clear[hidden] { display: none; }
+
+    .no-match { text-align: center; padding: 40px 10px; color: var(--muted); }
+
+    /* ---------- counting a dish on its own card ---------- */
+
+    .dish__stepper {
+        display: inline-flex; align-items: center; justify-content: center; gap: 14px;
+        padding: 3px; border-radius: 100px;
+        background: var(--accent-soft);
+        border: 1px solid rgba(189, 78, 44, .22);
+    }
+
+    .dish__stepper[hidden] { display: none; }
+
+    /* The design system gives these a display of their own, which would
+       otherwise beat the hidden attribute. */
+    body .dish .add-button[hidden],
+    body .sheet .submit-button[hidden],
+    body .sheet .order-count[hidden],
+    body .sheet .sheet__back[hidden] { display: none; }
+
+    .dish__stepper .quantity-button {
+        width: 30px; height: 30px; padding: 0;
+        display: grid; place-items: center;
+        border-radius: 50%; border: none;
+        background: var(--surface); color: var(--accent-dark);
+        font-size: 17px; font-weight: 700; line-height: 1; cursor: pointer;
+    }
+
+    .dish__stepper .quantity-button:hover { background: var(--accent); color: #fff; }
+    .dish__stepper .quantity { min-width: 22px; text-align: center; font-weight: 700; font-size: 14.5px; }
+
+    .dish.is-chosen { border-color: var(--accent); }
+
+    /* ---------- the bars at the bottom ---------- */
+
+    .bottom-bars {
+        position: fixed; inset-inline: 0; bottom: 0; z-index: 60;
+        display: flex; flex-direction: column; gap: 8px;
+        padding: 0 16px calc(14px + env(safe-area-inset-bottom));
+        pointer-events: none;
+    }
+
+    .bottom-bars > * { pointer-events: auto; }
+
+    /* The shared stylesheet pins the cart bar itself; inside this stack it
+       simply sits in the flow. */
+    .bottom-bars .cart-bar {
+        position: static; padding: 0; margin: 0 auto; width: 100%;
+        max-width: 560px; background: none; border: none; box-shadow: none;
+        backdrop-filter: none; -webkit-backdrop-filter: none;
+    }
+
+    .track-bar { width: 100%; max-width: 560px; margin: 0 auto; }
+    .track-bar[hidden] { display: none; }
+
+    .track-bar__button {
+        width: 100%;
+        display: flex; align-items: center; gap: 11px;
+        padding: 12px 16px;
+        border: none; border-radius: 100px;
+        background: var(--ink); color: #F3EADF;
+        font: inherit; font-size: 14px; cursor: pointer;
+        box-shadow: 0 10px 26px -12px rgba(36, 29, 24, .7);
+        text-align: start;
+    }
+
+    .track-bar__dot {
+        width: 9px; height: 9px; flex-shrink: 0;
+        border-radius: 50%; background: #7FB08C;
+        box-shadow: 0 0 0 4px rgba(127, 176, 140, .22);
+        animation: track-pulse 1.8s ease-in-out infinite;
+    }
+
+    @keyframes track-pulse {
+        50% { box-shadow: 0 0 0 7px rgba(127, 176, 140, .08); }
+    }
+
+    .track-bar__text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+    .track-bar__text strong { font-size: 14px; }
+    .track-bar__text span { font-size: 12.5px; color: #BCA994; }
+
+    .track-bar__cta {
+        margin-inline-start: auto; flex-shrink: 0;
+        padding: 6px 13px; border-radius: 100px;
+        background: rgba(255, 255, 255, .12);
+        font-size: 12.5px; font-weight: 600;
+    }
+
+    /* ---------- a line in the basket ---------- */
+
+    .sheet .order-item { flex-wrap: nowrap; gap: 12px; }
+    .sheet .order-item-info { min-width: 0; }
+    .sheet .order-item-name { overflow-wrap: anywhere; }
+    .sheet .item-subtotal { min-width: 78px; }
+
+    .add-more {
+        width: 100%; margin-top: 14px; padding: 12px;
+        border-radius: var(--r-sm, 9px);
+        border: 1.5px dashed var(--line-strong);
+        background: transparent; color: var(--ink-soft);
+        font: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+
+    .add-more:hover { border-color: var(--accent); color: var(--accent-dark); }
+
+    /* ---------- going back a step ---------- */
+
+    .sheet__back {
+        width: 34px; height: 34px; padding: 0; flex-shrink: 0;
+        display: grid; place-items: center;
+        border: 1px solid var(--line-strong); border-radius: 50%;
+        background: var(--surface); color: var(--ink-soft);
+        font-size: 16px; line-height: 1; cursor: pointer;
+        margin-inline-end: 4px;
+    }
+
+    .sheet__back[hidden] { display: none; }
+    .sheet__back:hover { border-color: var(--accent); color: var(--accent-dark); }
+    html[dir="rtl"] .sheet__back-arrow { display: inline-block; transform: scaleX(-1); }
+
+    /* ---------- telling us how to reach you ---------- */
 
     .checkout__title { margin: 0 0 14px; font-size: 16px; }
 
     .choice-grid {
         display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 10px; margin-bottom: 18px;
+        gap: 10px; margin-bottom: 20px;
     }
 
     .choice { display: block; cursor: pointer; }
@@ -296,7 +515,7 @@
     .choice__box {
         display: flex; flex-direction: column; gap: 3px;
         padding: 13px 15px; height: 100%;
-        border-radius: var(--r-md);
+        border-radius: var(--r-md, 13px);
         background: var(--surface);
         border: 1.5px solid var(--line-strong);
         transition: border-color .16s ease, background-color .16s ease;
@@ -312,32 +531,34 @@
 
     .choice input:focus-visible + .choice__box { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-    .field { margin-bottom: 14px; }
+    .field { margin-bottom: 15px; }
 
     .field label {
         display: block; margin-bottom: 6px;
         font-size: 13px; font-weight: 600; color: var(--ink-soft);
     }
 
-    .field input, .field textarea {
+    body .sheet .field input, body .sheet .field textarea {
         width: 100%; padding: 12px 14px;
-        border-radius: var(--r-sm);
+        border-radius: var(--r-sm, 9px);
         border: 1.5px solid var(--line-strong);
         background: var(--surface);
-        font: inherit; font-size: 15px; color: var(--ink);
+        font-family: var(--font-sans); font-size: 15px; color: var(--ink);
     }
 
-    .field input:focus, .field textarea:focus {
+    body .sheet .field input:focus, body .sheet .field textarea:focus {
         outline: none; border-color: var(--accent);
         box-shadow: 0 0 0 3px var(--accent-soft);
     }
 
-    .field textarea { resize: vertical; line-height: 1.55; }
-    .field.has-error input, .field.has-error textarea { border-color: var(--danger); }
+    /* Three lines is plenty for an address; the system's 96px minimum makes
+       the step taller than the phone. */
+    body .sheet .field textarea { min-height: 84px; resize: vertical; line-height: 1.55; }
+    body .sheet .field.has-error input, body .sheet .field.has-error textarea { border-color: var(--danger); }
 
     .pay-note {
-        margin: 4px 0 0; padding: 11px 14px;
-        border-radius: var(--r-sm);
+        margin: 2px 0 0; padding: 11px 14px;
+        border-radius: var(--r-sm, 9px);
         background: var(--surface-sunk);
         color: var(--ink-soft); font-size: 13.5px;
     }
@@ -348,7 +569,7 @@
     #fee-row[hidden] { display: none; }
 
     .order-total--grand {
-        margin-top: 4px; padding-top: 12px;
+        margin-top: 2px; padding-top: 12px;
         border-top: 1px solid var(--line-strong);
         font-family: var(--font-display); font-size: 19px;
     }
@@ -398,6 +619,7 @@
 
     @media (max-width: 620px) {
         .choice-grid { grid-template-columns: 1fr; }
+        .track-bar__cta { padding: 6px 11px; font-size: 12px; }
     }
 </style>
 @endpush
@@ -426,6 +648,7 @@
     let cart    = [];
     let tracked = null;     // { id, token }
     let poll    = null;
+    let step    = 'items';
 
     /* ---------- the bits of the page we talk to ---------- */
 
@@ -434,11 +657,17 @@
     const barTotal     = document.getElementById('cart-bar-total');
     const sheet        = document.getElementById('order-sheet');
     const sheetItems   = document.getElementById('order-items');
+    const sheetTitle   = document.getElementById('sheet-title');
+    const sheetSub     = document.getElementById('sheet-sub');
+    const stepItems    = document.getElementById('step-items');
+    const stepDetails  = document.getElementById('step-details');
+    const backButton   = document.getElementById('step-back');
     const countChip    = document.getElementById('order-count');
     const subtotalEl   = document.getElementById('order-subtotal');
     const feeRow       = document.getElementById('fee-row');
     const feeEl        = document.getElementById('order-fee');
     const totalEl      = document.getElementById('order-total');
+    const continueBtn  = document.getElementById('to-details');
     const submitButton = document.getElementById('submit-order');
     const message      = document.getElementById('message');
     const nameInput    = document.getElementById('client-name');
@@ -446,6 +675,13 @@
     const addressField = document.getElementById('address-field');
     const addressInput = document.getElementById('delivery-address');
 
+    const search       = document.getElementById('dish-search');
+    const clearSearch  = document.getElementById('clear-search');
+    const noMatch      = document.getElementById('no-match');
+
+    const trackBar     = document.getElementById('track-bar');
+    const trackBarId   = document.getElementById('track-bar-id');
+    const trackBarWhat = document.getElementById('track-bar-status');
     const tracking     = document.getElementById('tracking-sheet');
     const trackedId    = document.getElementById('tracked-id');
     const trackedNote  = document.getElementById('tracked-note');
@@ -495,17 +731,61 @@
 
     function openSheet(el) {
         el.hidden = false;
-        el.classList.add('is-open');
         document.body.style.overflow = 'hidden';
     }
 
     function closeSheet(el) {
-        el.classList.remove('is-open');
         el.hidden = true;
         document.body.style.overflow = '';
     }
 
+    /* ---------- which step of the basket we are on ---------- */
+
+    function showStep(which) {
+        step = which;
+
+        const onDetails = which === 'details';
+
+        stepItems.hidden    = onDetails;
+        stepDetails.hidden  = !onDetails;
+        backButton.hidden   = !onDetails;
+        continueBtn.hidden  = onDetails;
+        submitButton.hidden = !onDetails;
+        countChip.hidden    = onDetails;
+
+        sheetTitle.textContent = onDetails ? __t('Almost done') : __t('Your Order');
+        sheetSub.textContent   = onDetails
+            ? __t('Tell us who you are and how to reach you.')
+            : __t('Review your items before submitting.');
+
+        sheet.querySelector('.sheet__body').scrollTop = 0;
+        hush();
+    }
+
     /* ---------- the cart ---------- */
+
+    function quantityOf(productId) {
+        const found = cart.find(function (item) { return item.product_id === productId; });
+        return found ? found.quantity : 0;
+    }
+
+    /* Each dish card shows either an Add button or its own counter. */
+    function paintCards() {
+        document.querySelectorAll('.dish[data-dish]').forEach(function (card) {
+            const id = parseInt(card.dataset.dish, 10);
+            const quantity = quantityOf(id);
+            const stepper = card.querySelector('[data-stepper]');
+            const add = card.querySelector('.add-button');
+            const number = card.querySelector('[data-qty]');
+
+            if (!stepper || !add) return;
+
+            stepper.hidden = quantity === 0;
+            add.hidden = quantity > 0;
+            card.classList.toggle('is-chosen', quantity > 0);
+            if (number) number.textContent = quantity;
+        });
+    }
 
     function render() {
         const wantsDelivery = DELIVERY_OFFERED && chosenFulfilment() === 'delivery';
@@ -548,9 +828,9 @@
         const pieces   = cart.reduce(function (sum, item) { return sum + item.quantity; }, 0);
         const subtotal = cart.reduce(function (sum, item) { return sum + item.price * item.quantity; }, 0);
 
-        barCount.textContent  = pieces;
-        barTotal.textContent  = money(subtotal + fee);
-        countChip.textContent = pieces + ' ' + __t('Items');
+        barCount.textContent   = pieces;
+        barTotal.textContent   = money(subtotal + fee);
+        countChip.textContent  = pieces + ' ' + __t('Items');
         subtotalEl.textContent = money(subtotal);
         feeEl.textContent      = money(fee);
         totalEl.textContent    = money(subtotal + fee);
@@ -558,14 +838,21 @@
         if (feeRow) feeRow.hidden = !wantsDelivery;
 
         bar.hidden = cart.length === 0;
+        continueBtn.disabled = cart.length === 0;
         submitButton.disabled = cart.length === 0;
+
+        paintCards();
     }
 
-    function add(product) {
-        const found = cart.find(function (item) { return item.product_id === product.id; });
+    function bump(productId, by, seed) {
+        const found = cart.find(function (item) { return item.product_id === productId; });
 
-        if (found) found.quantity += 1;
-        else cart.push({ product_id: product.id, name: product.name, price: product.price, quantity: 1 });
+        if (found) {
+            found.quantity += by;
+            if (found.quantity < 1) cart.splice(cart.indexOf(found), 1);
+        } else if (by > 0 && seed) {
+            cart.push({ product_id: productId, name: seed.name, price: seed.price, quantity: by });
+        }
 
         render();
     }
@@ -573,20 +860,57 @@
     /* ---------- adding from the menu ---------- */
 
     document.addEventListener('click', function (event) {
-        const button = event.target.closest('.add-button');
-        if (!button || !IS_OPEN) return;
+        if (!IS_OPEN) return;
 
-        add({
-            id: parseInt(button.dataset.productId, 10),
-            name: button.dataset.productName,
-            price: parseFloat(button.dataset.productPrice)
-        });
+        const add = event.target.closest('.dish .add-button');
 
-        button.textContent = __t('Added');
-        setTimeout(function () { button.textContent = __t('Add'); }, 900);
+        if (add) {
+            bump(parseInt(add.dataset.productId, 10), 1, {
+                name: add.dataset.productName,
+                price: parseFloat(add.dataset.productPrice)
+            });
+            return;
+        }
+
+        const stepper = event.target.closest('.dish__stepper .quantity-button');
+
+        if (stepper) {
+            bump(parseInt(stepper.dataset.productId, 10), parseInt(stepper.dataset.step, 10));
+        }
     });
 
-    /* ---------- changing what is in it ---------- */
+    /* ---------- searching the menu ---------- */
+
+    if (search) {
+        const filter = function () {
+            const needle = search.value.trim().toLowerCase();
+            let shown = 0;
+
+            document.querySelectorAll('.dish[data-name]').forEach(function (card) {
+                const hit = !needle || card.dataset.name.indexOf(needle) !== -1;
+                card.hidden = !hit;
+                if (hit) shown++;
+            });
+
+            // A course with nothing left in it steps aside too.
+            document.querySelectorAll('.menu-section').forEach(function (section) {
+                section.hidden = !section.querySelector('.dish:not([hidden])');
+            });
+
+            noMatch.hidden = shown > 0;
+            clearSearch.hidden = needle === '';
+        };
+
+        search.addEventListener('input', filter);
+
+        clearSearch.addEventListener('click', function () {
+            search.value = '';
+            filter();
+            search.focus();
+        });
+    }
+
+    /* ---------- changing what is in the basket ---------- */
 
     sheetItems.addEventListener('click', function (event) {
         const button = event.target.closest('[data-action]');
@@ -612,9 +936,16 @@
     });
 
     document.getElementById('open-order').addEventListener('click', function () {
-        hush();
+        showStep('items');
         openSheet(sheet);
     });
+
+    continueBtn.addEventListener('click', function () {
+        if (!cart.length) return;
+        showStep('details');
+    });
+
+    backButton.addEventListener('click', function () { showStep('items'); });
 
     document.querySelectorAll('[data-close-sheet]').forEach(function (button) {
         button.addEventListener('click', function () {
@@ -626,6 +957,12 @@
         el.addEventListener('click', function (event) {
             if (event.target === el) closeSheet(el);
         });
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') return;
+        if (!sheet.hidden) closeSheet(sheet);
+        else if (!tracking.hidden) closeSheet(tracking);
     });
 
     /* ---------- placing it ---------- */
@@ -682,10 +1019,12 @@
             cart = [];
             render();
             closeSheet(sheet);
+            showStep('items');
 
             tracked = { id: data.order.id, token: data.order_token };
             keep(tracked);
             showTracking(data.order);
+            openSheet(tracking);
             watch();
 
         } catch (error) {
@@ -709,10 +1048,24 @@
         cancelled: __t('This order was cancelled. Please call the restaurant.')
     };
 
+    const SHORT = {
+        pending:   __t('Received'),
+        confirmed: __t('Confirmed'),
+        preparing: __t('Preparing'),
+        ready:     __t('Ready'),
+        completed: __t('Completed'),
+        cancelled: __t('Cancelled')
+    };
+
+    /* Fills the panel and the bar. The bar is what survives a closed panel. */
     function showTracking(order) {
         trackedId.textContent = order.id;
         trackedNote.textContent = WORDS[order.status] || '';
         trackedTotal.textContent = money(parseFloat(order.total));
+
+        trackBarId.textContent = __t('Order #') + order.id;
+        trackBarWhat.textContent = SHORT[order.status] || '';
+        trackBar.hidden = false;
 
         let html = '';
 
@@ -744,13 +1097,16 @@
 
         const reached = STEPS.indexOf(order.status);
 
-        tracking.querySelectorAll('.track li').forEach(function (step, index) {
-            step.classList.toggle('is-done', reached > index || order.status === 'completed');
-            step.classList.toggle('is-now', reached === index);
+        tracking.querySelectorAll('.track li').forEach(function (li, index) {
+            li.classList.toggle('is-done', reached > index || order.status === 'completed');
+            li.classList.toggle('is-now', reached === index);
         });
-
-        openSheet(tracking);
     }
+
+    document.getElementById('open-tracking').addEventListener('click', function () {
+        openSheet(tracking);
+        refreshTracked();
+    });
 
     async function refreshTracked() {
         if (!tracked) return;
@@ -764,7 +1120,7 @@
 
             const data = await response.json();
 
-            if (!tracking.hidden) showTracking(data.order);
+            showTracking(data.order);
 
             // Once it is out of the kitchen there is nothing left to watch.
             if (['completed', 'cancelled'].indexOf(data.order.status) !== -1) stopWatching();
@@ -786,6 +1142,7 @@
         stopWatching();
         tracked = null;
         keep(null);
+        trackBar.hidden = true;
         closeSheet(tracking);
     }
 
@@ -807,6 +1164,7 @@
 
             if (['completed', 'cancelled'].indexOf(data.order.status) !== -1) { forget(); return; }
 
+            // The bar appears; the panel opens only when they ask for it.
             showTracking(data.order);
             watch();
         }).catch(function () { /* nothing to show, the menu is still there */ });

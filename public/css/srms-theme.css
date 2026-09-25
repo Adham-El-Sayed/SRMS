@@ -67,6 +67,11 @@ html[lang="ar"] {
    2. Base
    -------------------------------------------------------------------------- */
 
+/* Padding and borders count inside an element's width. Without this, every
+   field written as width:100% with padding is wider than the card holding
+   it, and spills over the edge. */
+*, *::before, *::after { box-sizing: border-box; }
+
 body {
     margin: 0;
     font-family: var(--font-sans);

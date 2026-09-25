@@ -571,5 +571,13 @@
     "Payment": "الدفع",
     "Phone Number": "رقم الموبايل",
     "Your order is empty": "طلبك فاضي",
-    "Add something from the menu to get started.": "ضيف حاجة من المنيو عشان تبدأ."
+    "Add something from the menu to get started.": "ضيف حاجة من المنيو عشان تبدأ.",
+    "Search the menu": "دوّر في المنيو",
+    "Clear": "مسح",
+    "Nothing on the menu matches that.": "مفيش حاجة في المنيو بتطابق ده.",
+    "Add something else": "ضيف حاجة تانية",
+    "Continue": "كمّل",
+    "Almost done": "فاضل شوية",
+    "Tell us who you are and how to reach you.": "قولنا انت مين ونوصلك إزاي.",
+    "Follow it": "تابعه"
 }
