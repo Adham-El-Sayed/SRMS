@@ -141,7 +141,7 @@
         <tbody>
             @forelse($topProducts as $item)
                 <tr>
-                    <td>{{ $item->product_name }}</td>
+                    <td>{{ \App\Support\Bilingual::lead($item->product_name) }}</td>
                     <td class="text-right">{{ $item->total_quantity }}</td>
                     <td class="text-right">{{ number_format($item->total_sales, 2) }} EGP</td>
                 </tr>

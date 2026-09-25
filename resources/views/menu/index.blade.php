@@ -64,7 +64,8 @@
                     <article class="dish {{ $product->isSoldOut() ? 'is-sold-out' : '' }}"
                              data-filter-item
                              data-name="{{ $product->name }}"
-                             data-category="{{ $category->id }}">
+                             data-category="{{ $category->id }}"
+                             data-dish="{{ $product->id }}">
                         <div class="dish__image">
                             @if ($product->image)
                                 <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" loading="lazy">
@@ -99,6 +100,7 @@
                                         <button type="button" class="add-button"
                                                 data-product-id="{{ $product->id }}"
                                                 data-product-name="{{ $product->name }}"
+                                                data-product-label="{{ \App\Support\Bilingual::lead($product->name) }}"
                                                 data-product-price="{{ $product->price }}"
                                                 aria-label="{{ __('Add') }} {{ $product->name }}">
                                             {{ __('Add') }}
@@ -153,6 +155,8 @@
 
             <div class="sheet__body">
                 <div id="order-items"></div>
+
+                @include('partials.goes-with', ['pairs' => $pairs ?? []])
             </div>
 
             <div class="sheet__foot">
@@ -341,16 +345,17 @@
 
     /* Adding from the menu should feel immediate: the bar updates and the
        button confirms, without the sheet jumping in front of the food. */
-    document.querySelectorAll('.add-button').forEach(function (button) {
-        button.addEventListener('click', function () {
-            var original = button.textContent;
-            button.textContent = @json(__('Added'));
-            button.classList.add('is-added');
-            setTimeout(function () {
-                button.textContent = original;
-                button.classList.remove('is-added');
-            }, 900);
-        });
+    document.addEventListener('click', function (event) {
+        var button = event.target.closest('.add-button');
+        if (!button || button.classList.contains('goes-with__add')) return;
+
+        var original = button.textContent;
+        button.textContent = @json(__('Added'));
+        button.classList.add('is-added');
+        setTimeout(function () {
+            button.textContent = original;
+            button.classList.remove('is-added');
+        }, 900);
     });
 
     /* The order panel is rendered by the script below; mirror its numbers
@@ -398,10 +403,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const tableToken =
         app.dataset.tableToken;
-
-
-    const addButtons =
-        document.querySelectorAll('.add-button');
 
 
     const orderItemsContainer =
@@ -553,20 +554,25 @@ document.addEventListener('DOMContentLoaded', function () {
        Add Product
     ========================== */
 
-    addButtons.forEach(function (button) {
+    /* Delegated, so a dish suggested inside the basket adds itself the same
+       way a dish on the menu does. */
+    document.addEventListener('click', function (event) {
 
-        button.addEventListener('click', function () {
+        const button = event.target.closest('.add-button');
+
+        if (button) {
 
             const productId =
-                Number(this.dataset.productId);
+                Number(button.dataset.productId);
 
 
             const productName =
-                this.dataset.productName;
+                button.dataset.productLabel ||
+                button.dataset.productName;
 
 
             const productPrice =
-                Number(this.dataset.productPrice);
+                Number(button.dataset.productPrice);
 
 
             const existingItem =
@@ -604,7 +610,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             renderOrder();
 
-        });
+        }
 
     });
 
@@ -806,6 +812,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         attachOrderButtons();
+
+
+        if (window.SRMSGoesWith) {
+
+            SRMSGoesWith.render(
+
+                document.getElementById('goes-with'),
+
+                orderItems.map(
+                    function (item) {
+                        return item.product_id;
+                    }
+                )
+
+            );
+
+        }
 
     }
 

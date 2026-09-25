@@ -100,7 +100,7 @@
             <tbody>
                 @forelse($topProducts as $item)
                     <tr>
-                        <td>{{ $item->product_name }}</td>
+                        <td>{{ \App\Support\Bilingual::lead($item->product_name) }}</td>
                         <td>{{ $item->total_quantity }}</td>
                         <td>{{ number_format($item->total_sales, 2) }} {{ __('EGP') }}</td>
                     </tr>

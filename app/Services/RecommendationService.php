@@ -26,6 +26,9 @@ class RecommendationService
     /** Below this, a dish has not been ordered enough to call it popular. */
     public const MIN_SOLD = 3;
 
+    /** And two dishes have to meet this often before they count as a pair. */
+    public const MIN_TOGETHER = 4;
+
     private const TTL_SECONDS = 900;
 
     /**
@@ -98,43 +101,124 @@ class RecommendationService
     }
 
     /**
-     * The handful of dishes the whole restaurant orders most, for the strip at
-     * the top of the menu. Returns products in selling order.
+     * The handful of dishes for the strip at the top of the menu: the leader
+     * of each course, best-selling first.
+     *
+     * Not simply the top sellers overall — almost every basket has a drink in
+     * it, so a plain count fills the strip with water and tea. One per course
+     * is both true and worth reading: a pizza, a pasta, something to start.
+     *
+     * @param  \Illuminate\Support\Collection|null  $menu  the menu, if the page already has it
      */
-    public function popular(int $limit = 6): \Illuminate\Support\Collection
+    public function popular(int $limit = 6, $menu = null): \Illuminate\Support\Collection
     {
-        $sold = $this->sold();
+        $menu ??= (new MenuService())->getMenu();
 
-        if (empty($sold)) {
+        $best = $this->bestPerCategory($menu);
+
+        if (empty($best)) {
             return collect();
         }
 
-        arsort($sold);
-
-        $ids = collect($sold)
-            ->filter(fn ($count) => $count >= self::MIN_SOLD)
-            ->keys()
-            ->take($limit * 2)      // room to drop whatever is unavailable
-            ->all();
-
-        if (empty($ids)) {
-            return collect();
-        }
+        arsort($best);
 
         return Product::query()
             ->with('category')
-            ->whereIn('id', $ids)
+            ->whereIn('id', array_keys($best))
             ->where('is_active', true)
             ->get()
             ->filter(fn (Product $product) => $product->isOrderable() && $product->category?->is_active)
-            ->sortByDesc(fn (Product $product) => $sold[$product->id] ?? 0)
+            ->sortByDesc(fn (Product $product) => $best[$product->id] ?? 0)
             ->take($limit)
             ->values();
+    }
+
+    /**
+     * What people put in the same basket.
+     *
+     * For every dish, the two or three things most often ordered alongside
+     * it — worked out from real baskets, not from what the kitchen would
+     * like to sell. A pair has to have happened a few times before it counts,
+     * so one odd order never turns into a suggestion.
+     *
+     * The whole map is small enough to hand to the page in one go, which
+     * saves asking the server again every time something is added.
+     *
+     * @return array<int,int[]>  product id => the ids that go with it
+     */
+    public function pairs(int $each = 3): array
+    {
+        return Cache::remember('menu.pairs.' . self::WINDOW_DAYS, self::TTL_SECONDS, function () use ($each) {
+            $baskets = OrderItem::query()
+                ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                ->where('orders.status', '!=', 'cancelled')
+                ->where('orders.created_at', '>=', now()->subDays(self::WINDOW_DAYS))
+                ->whereNotNull('order_items.product_id')
+                ->get(['order_items.order_id', 'order_items.product_id'])
+                ->groupBy('order_id')
+                ->map(fn ($lines) => $lines->pluck('product_id')->unique()->values()->all())
+                ->filter(fn (array $ids) => count($ids) > 1);
+
+            $together = [];
+
+            foreach ($baskets as $ids) {
+                foreach ($ids as $one) {
+                    foreach ($ids as $other) {
+                        if ($one === $other) {
+                            continue;
+                        }
+
+                        $together[$one][$other] = ($together[$one][$other] ?? 0) + 1;
+                    }
+                }
+            }
+
+            // Only what is still on the menu and can be ordered today.
+            $orderable = Product::query()
+                ->with('category')
+                ->where('is_active', true)
+                ->whereNull('sold_out_at')
+                ->get()
+                ->filter(fn (Product $product) => $product->category?->is_active)
+                ->pluck('id')
+                ->flip();
+
+            $map = [];
+
+            foreach ($together as $product => $counts) {
+                if (! $orderable->has($product)) {
+                    continue;
+                }
+
+                arsort($counts);
+
+                $picked = [];
+
+                foreach ($counts as $other => $times) {
+                    if ($times < self::MIN_TOGETHER || ! $orderable->has($other)) {
+                        continue;
+                    }
+
+                    $picked[] = (int) $other;
+
+                    if (count($picked) >= $each) {
+                        break;
+                    }
+                }
+
+                if ($picked) {
+                    $map[(int) $product] = $picked;
+                }
+            }
+
+            return $map;
+        });
     }
 
     /** Called when an order is placed, so the numbers do not go stale. */
     public static function forget(): void
     {
         Cache::forget('menu.sold.' . self::WINDOW_DAYS);
+        Cache::forget('menu.pairs.' . self::WINDOW_DAYS);
     }
 }

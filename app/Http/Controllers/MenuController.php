@@ -20,7 +20,8 @@ class MenuController extends Controller
         return view('menu.index', [
             'menu' => $menu,
             'recommended' => $this->recommendations->bestPerCategory($menu),
-            'popular' => $this->recommendations->popular(),
+            'popular' => $this->recommendations->popular(6, $menu),
+            'pairs' => $this->recommendations->pairs(),
         ]);
     }
 }

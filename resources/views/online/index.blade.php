@@ -106,6 +106,7 @@
                                     <button type="button" class="add-button"
                                             data-product-id="{{ $product->id }}"
                                             data-product-name="{{ $product->name }}"
+                                            data-product-label="{{ \App\Support\Bilingual::lead($product->name) }}"
                                             data-product-price="{{ $product->price }}"
                                             aria-label="{{ __('Add') }} {{ $product->name }}">
                                         {{ __('Add') }}
@@ -194,6 +195,8 @@
             {{-- Step one --}}
             <div id="step-items">
                 <div id="order-items"></div>
+
+                @include('partials.goes-with', ['pairs' => $pairs ?? []])
 
                 <button type="button" class="add-more" data-close-sheet>
                     + {{ __('Add something else') }}
@@ -798,6 +801,13 @@
         submitButton.disabled = cart.length === 0;
 
         paintCards();
+
+        if (window.SRMSGoesWith) {
+            SRMSGoesWith.render(
+                document.getElementById('goes-with'),
+                cart.map(function (item) { return item.product_id; })
+            );
+        }
     }
 
     function bump(productId, by, seed) {
@@ -823,7 +833,8 @@
 
         if (add) {
             bump(parseInt(add.dataset.productId, 10), 1, {
-                name: add.dataset.productName,
+                // What the reader sees; the server prices by id either way.
+                name: add.dataset.productLabel || add.dataset.productName,
                 price: parseFloat(add.dataset.productPrice)
             });
             return;

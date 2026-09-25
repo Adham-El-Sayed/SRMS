@@ -42,6 +42,7 @@
                                 <button type="button" class="add-button"
                                         data-product-id="{{ $product->id }}"
                                         data-product-name="{{ $product->name }}"
+                                        data-product-label="{{ \App\Support\Bilingual::lead($product->name) }}"
                                         data-product-price="{{ $product->price }}"
                                         aria-label="{{ __('Add') }} {{ $product->name }}">
                                     {{ __('Add') }}

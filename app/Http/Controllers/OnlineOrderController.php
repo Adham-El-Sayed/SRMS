@@ -38,7 +38,8 @@ class OnlineOrderController extends Controller
         return view('online.index', [
             'menu' => $menu,
             'recommended' => $this->recommendations->bestPerCategory($menu),
-            'popular' => $this->recommendations->popular(),
+            'popular' => $this->recommendations->popular(6, $menu),
+            'pairs' => $this->recommendations->pairs(),
             'deliveryOffered' => Settings::offers('delivery'),
             'deliveryFee' => Settings::deliveryFee(),
             // Closed kitchen: the page still shows the menu, but says so.
