@@ -52,7 +52,9 @@
                         @endif
                     </h2>
                     @if ($category->description)
-                        <p class="menu-section__note">{{ $category->description }}</p>
+                        {{-- A description is long: the reader gets their own
+                             language only, not both stacked. --}}
+                        <p class="menu-section__note">{{ \App\Support\Bilingual::lead($category->description) }}</p>
                     @endif
                 </div>
             </div>
@@ -85,7 +87,7 @@
                                     <span class="dish__name-alt">{{ $dishName[1] }}</span>
                                 @endif
                             </h3>
-                            <p class="dish__note">{{ $product->description ?? '' }}</p>
+                            <p class="dish__note">{{ \App\Support\Bilingual::lead($product->description) }}</p>
 
                             <div class="dish__foot">
                                 <span class="dish__price">{{ number_format($product->price, 2) }} <small>{{ __('EGP') }}</small></span>
