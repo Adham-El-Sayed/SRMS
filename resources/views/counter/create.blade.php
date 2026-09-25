@@ -57,7 +57,7 @@
 
             @forelse ($menu as $category)
                 <section class="counter-category" data-filter-group data-category="{{ $category->id }}">
-                    <h2 class="section-title">{{ $category->name }}</h2>
+                    <h2 class="section-title">{{ \App\Support\Bilingual::lead($category->name) }}</h2>
 
                     <div class="counter-items">
                         @foreach ($category->products as $product)
@@ -69,7 +69,7 @@
                                     data-name="{{ $product->name }}"
                                     data-price="{{ $product->price }}">
                                 <span class="counter-item__name">
-                                    {{ $product->name }}
+                                    {{ \App\Support\Bilingual::lead($product->name) }}
                                     @if (! $product->isSoldOut() && isset($recommended[$product->id]))
                                         <span class="counter-item__loved">★ {{ __('Most ordered') }}</span>
                                     @endif
@@ -191,7 +191,9 @@
     html[lang="ar"] .counter-item__loved { font-size: 11px; }
 </style>
 <style>
-    .counter { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
+    /* minmax(0, 1fr) rather than 1fr: a plain 1fr refuses to shrink below the
+       widest dish name, which pushed the ticket off the side of the page. */
+    .counter { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
     .counter-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
     .counter-item {
         display: flex; flex-direction: column; gap: 6px; text-align: start;

@@ -32,8 +32,8 @@
                     </div>
 
                     <div class="pick__body">
-                        <h3 class="pick__name">{{ $product->name }}</h3>
-                        <span class="pick__category">{{ $product->category?->name }}</span>
+                        <h3 class="pick__name">{{ \App\Support\Bilingual::lead($product->name) }}</h3>
+                        <span class="pick__category">{{ \App\Support\Bilingual::lead($product->category?->name) }}</span>
 
                         <div class="pick__foot">
                             <span class="pick__price">{{ number_format($product->price, 2) }} <small>{{ __('EGP') }}</small></span>

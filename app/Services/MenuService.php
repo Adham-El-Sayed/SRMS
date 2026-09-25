@@ -51,8 +51,12 @@ class MenuService
         return Category::query()
             ->where('is_active', true)
             ->with([
-                'products' => fn ($query) => $query->where('is_active', true)->orderBy('name'),
+                'products' => fn ($query) => $query->where('is_active', true)
+                    ->orderBy('sort_order')
+                    ->orderBy('name'),
             ])
+            // The restaurant's own order — starters first, drinks last.
+            ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
     }

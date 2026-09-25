@@ -107,6 +107,18 @@ html[lang="ar"] .menu-hero__kicker { letter-spacing: 0; text-transform: none; fo
 
 .dish__body { display: flex; flex-direction: column; flex: 1; padding: 14px 16px 16px; }
 .dish__name { margin: 0 0 4px; font-size: 16.5px; }
+/* The other language, kept quiet under the name. */
+.dish__name-alt, .menu-section__title-alt {
+    display: block;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0;
+}
+
+.dish__name-alt { font-size: 12px; margin-top: 2px; }
+.menu-section__title-alt { font-size: 13px; margin-top: 1px; }
+
 .dish__note { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
 
 .dish__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; }

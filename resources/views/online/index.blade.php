@@ -51,7 +51,13 @@
                 @endif
 
                 <div>
-                    <h2 class="menu-section__title">{{ $category->name }}</h2>
+                    @php ($courseName = \App\Support\Bilingual::split($category->name))
+                    <h2 class="menu-section__title">
+                        {{ $courseName[0] }}
+                        @if ($courseName[1])
+                            <span class="menu-section__title-alt">{{ $courseName[1] }}</span>
+                        @endif
+                    </h2>
                     @if ($category->description)
                         <p class="menu-section__note">{{ $category->description }}</p>
                     @endif
@@ -80,7 +86,13 @@
                         </div>
 
                         <div class="dish__body">
-                            <h3 class="dish__name">{{ $product->name }}</h3>
+                            @php ($dishName = \App\Support\Bilingual::split($product->name))
+                            <h3 class="dish__name">
+                                {{ $dishName[0] }}
+                                @if ($dishName[1])
+                                    <span class="dish__name-alt">{{ $dishName[1] }}</span>
+                                @endif
+                            </h3>
                             <p class="dish__note">{{ $product->description ?? '' }}</p>
 
                             <div class="dish__foot">

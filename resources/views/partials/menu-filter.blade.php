@@ -28,7 +28,7 @@
 
             @foreach ($categories as $category)
                 <button type="button" class="filter-chip" data-filter-chip
-                        data-category="{{ $category->id }}" aria-pressed="false">{{ $category->name }}</button>
+                        data-category="{{ $category->id }}" aria-pressed="false">{{ \App\Support\Bilingual::lead($category->name) }}</button>
             @endforeach
         </div>
     @endif

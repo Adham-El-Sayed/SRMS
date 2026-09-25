@@ -18,7 +18,8 @@ class MenuManagementController extends Controller
 
     public function index()
     {
-        $categories = Category::with('products')
+        $categories = Category::with(['products' => fn ($query) => $query->orderBy('sort_order')->orderBy('name')])
+            ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
 
