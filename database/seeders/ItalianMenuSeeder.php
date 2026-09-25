@@ -7,6 +7,7 @@ use App\Models\Product;
 use App\Services\MenuService;
 use App\Support\DishArt;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * A full menu for an Italian restaurant of the kind you find in Alexandria:
@@ -24,6 +25,16 @@ class ItalianMenuSeeder extends Seeder
 {
     public function run(): void
     {
+        // The menu is ordered by a column a migration adds; without it this
+        // would fail somewhere unreadable instead of saying what is wrong.
+        foreach (['categories', 'products'] as $table) {
+            if (! Schema::hasColumn($table, 'sort_order')) {
+                $this->command?->error('The database is behind: ' . $table . '.sort_order is missing.');
+                $this->command?->warn('Run this first:  php artisan migrate');
+                return;
+            }
+        }
+
         $this->retireTheOldMenu();
 
         foreach ($this->menu() as $order => $course) {

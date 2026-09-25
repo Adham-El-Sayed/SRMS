@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Services\RecommendationService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 /**
@@ -37,6 +38,10 @@ class DemoHistorySeeder extends Seeder
 
     public function run(): void
     {
+        if (! $this->schemaIsReady()) {
+            return;
+        }
+
         $staff = User::query()->orderBy('id')->get();
 
         if ($staff->isEmpty()) {
@@ -89,6 +94,29 @@ class DemoHistorySeeder extends Seeder
             $orders, $items, number_format($money, 2), self::DAYS + 1
         ));
         $this->command?->warn('All of it is marked "' . self::MARK . '" and is removed if this seeder runs again.');
+    }
+
+    /**
+     * Says plainly what is missing instead of failing on a column deep
+     * inside a query nobody can read.
+     */
+    private function schemaIsReady(): bool
+    {
+        $needed = [
+            'products' => 'sort_order',
+            'categories' => 'sort_order',
+            'orders' => 'source',
+        ];
+
+        foreach ($needed as $table => $column) {
+            if (! Schema::hasColumn($table, $column)) {
+                $this->command?->error('The database is behind: ' . $table . '.' . $column . ' is missing.');
+                $this->command?->warn('Run this first:  php artisan migrate');
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /* ---------------------------------------------------------------- */
