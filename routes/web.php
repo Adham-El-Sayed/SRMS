@@ -13,6 +13,8 @@ use App\Http\Controllers\KitchenStockController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MenuManagementController;
 use App\Http\Controllers\MonthlyReportController;
+use App\Http\Controllers\OnlineDeskController;
+use App\Http\Controllers\OnlineOrderController;
 use App\Http\Controllers\OrderChangeRequestController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QrCodeController;
@@ -56,6 +58,9 @@ Route::get('/menu/{qr_token}', [TableMenuController::class, 'show'])
 
 Route::get('/menu', [MenuController::class, 'index'])
     ->name('menu.index');
+
+// Ordering from home. Public on purpose; it shows the menu and nothing else.
+Route::get('/order', [OnlineOrderController::class, 'create'])->name('online.create');
 
 /*
 |--------------------------------------------------------------------------
@@ -133,6 +138,10 @@ Route::middleware(['auth', 'role:super-admin|admin|cashier'])->group(function ()
     // Taking an order at the counter: collection, delivery, or an online one
     Route::get('/counter', [CounterOrderController::class, 'create'])->name('counter.create');
     Route::post('/counter', [CounterOrderController::class, 'store'])->name('counter.store');
+
+    // Orders arriving from the website
+    Route::get('/online-orders', [OnlineDeskController::class, 'index'])->name('online.desk');
+    Route::get('/online-orders/board', [OnlineDeskController::class, 'board'])->name('online.board');
 
     // Orders on their way out
     Route::get('/delivery', [DeliveryController::class, 'index'])->name('delivery.index');

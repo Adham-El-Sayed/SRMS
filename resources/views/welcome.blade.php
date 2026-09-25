@@ -181,10 +181,17 @@
             <p>{{ __('Tables, menu, kitchen and takings — one place for the whole floor.') }}</p>
 
             <div class="landing__actions">
+                {{-- A customer arriving at the front door should be able to
+                     order without hunting for the link. --}}
+                @if (\App\Support\Settings::offers('online'))
+                    <a href="{{ route('online.create') }}" class="btn-solid">{{ __('Order Online') }}</a>
+                @endif
+
                 @auth
                     <a href="{{ route('dashboard') }}" class="btn-solid">{{ __('Dashboard') }}</a>
                 @else
-                    <a href="{{ route('login') }}" class="btn-solid">{{ __('Log in') }}</a>
+                    <a href="{{ route('login') }}"
+                       class="{{ \App\Support\Settings::offers('online') ? 'btn-ghost' : 'btn-solid' }}">{{ __('Log in') }}</a>
                     @if (Route::has('register'))
                         <a href="{{ route('register') }}" class="btn-ghost">{{ __('Register') }}</a>
                     @endif

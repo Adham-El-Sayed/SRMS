@@ -26,6 +26,7 @@
     var stopped = false;
     var boards = [];
     var audio = null;
+    var busy = 0;          // actions in flight: don't redraw underneath them
 
     /* ---------- storage that never throws ---------- */
 
@@ -168,6 +169,7 @@
 
             setBadge('kitchen', data.kitchen);
             if ('alerts' in data) setBadge('alerts', data.alerts);
+            if ('online' in data) setBadge('online', data.online);
             if ('payments' in data) setBadge('payments', data.payments);
 
             var somethingNew = false;
@@ -190,11 +192,24 @@
 
     /* ---------- boards ---------- */
 
+    /*
+     * A board is left alone while an action it started is still in flight, and
+     * while someone is typing into it — redrawing then would either swallow the
+     * click or wipe what they were writing. It is NOT judged by whether it
+     * holds a disabled button: a button disabled by its own click would keep
+     * the board frozen for good.
+     */
+    function boardIsBusy(board) {
+        if (busy > 0) return true;
+        var active = document.activeElement;
+        return !!(active && board.el.contains(active) &&
+            /^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName));
+    }
+
     function refreshBoard(board) {
         return getJson(board.el.dataset.liveUrl).then(function (data) {
             if (!data || data.signature === board.signature) return;
-            // Don't pull the rug out from under a click that's still in flight.
-            if (board.el.querySelector('button:disabled')) return;
+            if (boardIsBusy(board)) return;
             board.signature = data.signature;
             board.el.innerHTML = data.html;
             board.el.dispatchEvent(new CustomEvent('live:updated', { bubbles: true }));
@@ -242,7 +257,25 @@
 
     window.SRMSLive = {
         refreshNow: function () { return Promise.all([pulse(), refreshBoards()]); },
-        handleAuthFailure: handleAuthFailure
+        handleAuthFailure: handleAuthFailure,
+
+        /*
+         * Called before a page's own action starts; the returned function is
+         * called once it finishes. Boards hold still in between. A safety
+         * timer releases the hold if a page ever forgets to, so a lost
+         * release can never freeze the board the way it used to.
+         */
+        hold: function () {
+            busy++;
+            var done = false;
+            var release = function () {
+                if (done) return;
+                done = true;
+                busy = Math.max(0, busy - 1);
+            };
+            setTimeout(release, 15000);
+            return release;
+        }
     };
 
     if (document.readyState === 'loading') {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\OrderChangeRequestController;
+use App\Http\Controllers\OnlineOrderController;
 use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:guest-orders')->group(function () {
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+
+    // The same rate limit covers the website's own ordering page.
+    Route::post('/online-orders', [OnlineOrderController::class, 'store'])->name('online.store');
 });
 
 Route::middleware('throttle:guest-api')->group(function () {

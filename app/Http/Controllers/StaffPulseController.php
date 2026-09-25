@@ -33,6 +33,14 @@ class StaffPulseController extends Controller
         }
 
         if (in_array($workspace, ['admin', 'cashier'], true)) {
+            // Website orders nobody has accepted yet — a customer is waiting
+            // by the phone for each one of these.
+            $pulse['online'] = Order::where('source', 'web')
+                ->where('status', 'pending')
+                ->count();
+        }
+
+        if (in_array($workspace, ['admin', 'cashier'], true)) {
             $pulse['alerts'] = OrderChangeRequest::where('status', 'pending')->count();
             $pulse['latest_alert_id'] = (int) OrderChangeRequest::where('status', 'pending')->max('id');
         }

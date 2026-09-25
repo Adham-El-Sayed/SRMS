@@ -53,6 +53,9 @@ class OrderService
             $order = Order::create([
                 'restaurant_table_id' => $table?->id,
                 'order_type' => $type,
+                // 'qr' at a table, 'counter' from the cashier, 'web' from the
+                // online page. The online desk watches the last of these.
+                'source' => $service['source'] ?? ($table ? 'qr' : 'counter'),
                 'delivery_address' => $service['delivery_address'] ?? null,
                 'delivery_fee' => $deliveryFee,
                 'delivery_status' => $type === 'delivery' ? 'waiting' : null,

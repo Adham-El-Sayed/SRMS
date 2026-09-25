@@ -580,6 +580,17 @@
                            class="{{ request()->routeIs('delivery.*') ? 'active' : '' }}">{{ __('Delivery') }}</a>
                     @endif
 
+                    {{-- The cashier's bar is deliberately short, so the online
+                         desk is listed for whoever runs the place. Cashiers can
+                         still open it from a link. --}}
+                    @if ($showAdmin && in_array('online', $offers, true))
+                        <a href="{{ route('online.desk') }}"
+                           class="{{ request()->routeIs('online.*') ? 'active' : '' }}">
+                            {{ __('Online Orders') }}
+                            <span class="nav-badge" data-pulse="online" hidden></span>
+                        </a>
+                    @endif
+
                     <a href="{{ route('shifts.current') }}"
                        class="{{ request()->routeIs('shifts.current') ? 'active' : '' }}">{{ __('Shift') }}</a>
 

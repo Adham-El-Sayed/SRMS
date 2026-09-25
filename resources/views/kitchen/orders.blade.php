@@ -245,6 +245,17 @@
         cursor: not-allowed;
     }
 
+    .status-button.is-working { position: relative; color: transparent; }
+
+    .status-button.is-working::after {
+        content: ''; position: absolute; inset: 0; margin: auto;
+        width: 18px; height: 18px; border-radius: 50%;
+        border: 2px solid rgba(255,255,255,.45); border-top-color: #fff;
+        animation: srms-spin .7s linear infinite;
+    }
+
+    @keyframes srms-spin { to { transform: rotate(360deg); } }
+
 
     .complete-button {
         background: #16a34a;
@@ -291,7 +302,13 @@
 
         if (button.dataset.confirm && !window.confirm(button.dataset.confirm)) return;
 
+        // Hold the live refresh while this change is on its way, then let it
+        // land: the board redraws itself with the next step's button, so the
+        // kitchen never has to reload the page to move an order along.
+        const release = window.SRMSLive ? SRMSLive.hold() : function () {};
+
         button.disabled = true;
+        button.classList.add('is-working');
 
         try {
             const response = await fetch(
@@ -313,17 +330,27 @@
             const data = await response.json().catch(() => ({}));
 
             if (!response.ok) {
+                release();
                 alert(data.message || __t('Failed to update order status.'));
                 button.disabled = false;
+                button.classList.remove('is-working');
                 return;
             }
 
-            window.SRMSLive ? SRMSLive.refreshNow() : window.location.reload();
+            release();
+
+            if (window.SRMSLive) {
+                await SRMSLive.refreshNow();
+            } else {
+                window.location.reload();
+            }
 
         } catch (error) {
             console.error(error);
+            release();
             alert(__t('Something went wrong while updating the order.'));
             button.disabled = false;
+            button.classList.remove('is-working');
         }
     });
 </script>

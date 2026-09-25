@@ -27,6 +27,7 @@ class Order extends Model
     protected $fillable = [
         'restaurant_table_id',
         'order_type',
+        'source',
         'delivery_address',
         'delivery_fee',
         'driver_name',
