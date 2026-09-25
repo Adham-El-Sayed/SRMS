@@ -3,11 +3,13 @@
 use App\Http\Controllers\CashPaymentController;
 use App\Http\Controllers\CounterOrderController;
 use App\Http\Controllers\DeliveryController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StaffOrderController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\KitchenOrderController;
+use App\Http\Controllers\KitchenStockController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\MenuManagementController;
 use App\Http\Controllers\MonthlyReportController;
@@ -107,6 +109,12 @@ Route::middleware(['auth', 'role:super-admin|admin|kitchen|cashier'])->group(fun
     Route::patch('/kitchen/orders/{order}/status', [KitchenOrderController::class, 'updateStatus'])
         ->whereNumber('order')
         ->name('kitchen.orders.status');
+
+    // What the kitchen has run out of
+    Route::get('/kitchen/stock', [KitchenStockController::class, 'index'])->name('kitchen.stock');
+    Route::patch('/kitchen/stock/{product}', [KitchenStockController::class, 'toggle'])
+        ->whereNumber('product')
+        ->name('kitchen.stock.toggle');
 });
 
 /*
@@ -185,6 +193,12 @@ Route::middleware(['auth', 'role:super-admin|admin'])->group(function () {
     Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
 
     Route::get('/staff', [StaffController::class, 'index'])->name('staff.index');
+
+    // Employment details and this month's pay
+    Route::get('/staff/employees', [EmployeeController::class, 'index'])->name('employees.index');
+    Route::patch('/staff/employees/{user}', [EmployeeController::class, 'update'])->whereNumber('user')->name('employees.update');
+    Route::post('/staff/employees/{user}/entries', [EmployeeController::class, 'storeEntry'])->whereNumber('user')->name('employees.entries.store');
+    Route::delete('/staff/entries/{entry}', [EmployeeController::class, 'destroyEntry'])->whereNumber('entry')->name('employees.entries.destroy');
     Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
     Route::patch('/staff/{user}', [StaffController::class, 'updateRole'])->whereNumber('user')->name('staff.role');
     Route::delete('/staff/{user}', [StaffController::class, 'destroy'])->whereNumber('user')->name('staff.destroy');

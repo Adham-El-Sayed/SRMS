@@ -22,6 +22,8 @@ class MenuService
     private const VERSION_KEY = 'menu.version';
     private const TTL_SECONDS = 600;
 
+    /** Sold-out dishes stay on the menu, marked, so guests can see we serve them. */
+
     public function getMenu(): Collection
     {
         $rows = Cache::remember(

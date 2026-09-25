@@ -52,12 +52,19 @@
 
                     <div class="counter-items">
                         @foreach ($category->products as $product)
-                            <button type="button" class="counter-item"
+                            <button type="button" class="counter-item {{ $product->isSoldOut() ? 'is-out' : '' }}"
+                                    @disabled($product->isSoldOut())
                                     data-id="{{ $product->id }}"
                                     data-name="{{ $product->name }}"
                                     data-price="{{ $product->price }}">
                                 <span class="counter-item__name">{{ $product->name }}</span>
-                                <span class="counter-item__price">{{ number_format($product->price, 2) }} <small>{{ __('EGP') }}</small></span>
+                                <span class="counter-item__price">
+                                    @if ($product->isSoldOut())
+                                        {{ __('Finished') }}
+                                    @else
+                                        {{ number_format($product->price, 2) }} <small>{{ __('EGP') }}</small>
+                                    @endif
+                                </span>
                             </button>
                         @endforeach
                     </div>
@@ -157,7 +164,9 @@
         border: 1px solid var(--line-strong); background: var(--surface);
         cursor: pointer; font-family: inherit;
     }
-    .counter-item:hover { border-color: var(--accent); background: #FFFDFB; }
+    .counter-item:hover:not(:disabled) { border-color: var(--accent); background: #FFFDFB; }
+    .counter-item.is-out { opacity: .55; cursor: not-allowed; }
+    .counter-item.is-out .counter-item__price { color: var(--danger); }
     .counter-item__name { font-weight: 600; font-size: 14.5px; color: var(--ink); }
     .counter-item__price { color: var(--accent); font-weight: 600; font-size: 13.5px; }
     .counter__ticket { position: sticky; top: 76px; padding: 20px; }

@@ -14,6 +14,12 @@
         <button type="button" class="primary-btn" id="add-staff-btn">{{ __('+ Add Account') }}</button>
     </div>
 
+    {{-- Access is one thing, employment is another --}}
+    <nav class="kitchen-tabs">
+        <a href="{{ route('staff.index') }}" class="{{ request()->routeIs('staff.index') ? 'is-on' : '' }}">{{ __('Staff & Access') }}</a>
+        <a href="{{ route('employees.index') }}" class="{{ request()->routeIs('employees.*') ? 'is-on' : '' }}">{{ __('Employee Records') }}</a>
+    </nav>
+
     @if (session('success'))
         <div class="success-message">{{ session('success') }}</div>
     @endif
@@ -153,6 +159,14 @@
 
 @push('styles')
 <style>
+    .kitchen-tabs { display: flex; gap: 8px; margin-bottom: 22px; }
+    .kitchen-tabs a {
+        padding: 9px 16px; border-radius: 100px;
+        background: var(--surface); border: 1px solid var(--line-strong);
+        color: var(--ink-soft); text-decoration: none; font-size: 14px; font-weight: 600;
+    }
+    .kitchen-tabs a.is-on { background: var(--ink); border-color: var(--ink); color: #FBF5EE; }
+
     .role-form { display: flex; gap: 8px; align-items: center; margin: 0 0 4px; }
     .role-form select { width: auto; min-width: 150px; }
     #staff-modal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 80; }

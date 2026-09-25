@@ -251,6 +251,11 @@ class OrderService
                 throw new InvalidArgumentException(__('One or more selected products are not available.'));
             }
 
+            // Nor can anything the kitchen has run out of.
+            if ($product->isSoldOut()) {
+                throw new InvalidArgumentException(__(':product is finished for today.', ['product' => $product->name]));
+            }
+
             $quantity = (int) $item['quantity'];
 
             return [

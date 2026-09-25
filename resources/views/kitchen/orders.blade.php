@@ -4,6 +4,17 @@
 
 @section('content')
 
+    {{-- The kitchen's two jobs --}}
+    <nav class="kitchen-tabs">
+        <a href="{{ route('kitchen.orders') }}" class="{{ request()->routeIs('kitchen.orders') ? 'is-on' : '' }}">
+            {{ __('Orders') }}
+        </a>
+        <a href="{{ route('kitchen.stock') }}" class="{{ request()->routeIs('kitchen.stock') ? 'is-on' : '' }}">
+            {{ __('Availability') }}
+        </a>
+    </nav>
+
+
     <div class="header">
 
         <div>
@@ -24,6 +35,15 @@
 @push('styles')
 
 <style>
+    .kitchen-tabs { display: flex; gap: 8px; margin-bottom: 22px; }
+    .kitchen-tabs a {
+        padding: 9px 16px; border-radius: 100px;
+        background: var(--surface); border: 1px solid var(--line-strong);
+        color: var(--ink-soft); text-decoration: none;
+        font-size: 14px; font-weight: 600;
+    }
+    .kitchen-tabs a.is-on { background: var(--ink); border-color: var(--ink); color: #FBF5EE; }
+
     .order-head-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
     /* Where the order is going — readable at a glance across the kitchen */

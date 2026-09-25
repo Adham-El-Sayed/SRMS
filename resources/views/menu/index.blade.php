@@ -50,12 +50,16 @@
 
             <div class="dish-grid">
                 @forelse ($category->products as $product)
-                    <article class="dish">
+                    <article class="dish {{ $product->isSoldOut() ? 'is-sold-out' : '' }}">
                         <div class="dish__image">
                             @if ($product->image)
                                 <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" loading="lazy">
                             @else
                                 <div class="dish__image-placeholder">🍽</div>
+                            @endif
+
+                            @if ($product->isSoldOut())
+                                <span class="dish__sold-out">{{ __('Finished for today') }}</span>
                             @endif
                         </div>
 
@@ -67,13 +71,17 @@
                                 <span class="dish__price">{{ number_format($product->price, 2) }} <small>{{ __('EGP') }}</small></span>
 
                                 @isset($table)
-                                    <button type="button" class="add-button"
-                                            data-product-id="{{ $product->id }}"
-                                            data-product-name="{{ $product->name }}"
-                                            data-product-price="{{ $product->price }}"
-                                            aria-label="{{ __('Add') }} {{ $product->name }}">
-                                        {{ __('Add') }}
-                                    </button>
+                                    @if ($product->isSoldOut())
+                                        <span class="dish__unavailable">{{ __('Unavailable') }}</span>
+                                    @else
+                                        <button type="button" class="add-button"
+                                                data-product-id="{{ $product->id }}"
+                                                data-product-name="{{ $product->name }}"
+                                                data-product-price="{{ $product->price }}"
+                                                aria-label="{{ __('Add') }} {{ $product->name }}">
+                                            {{ __('Add') }}
+                                        </button>
+                                    @endif
                                 @endisset
                             </div>
                         </div>
@@ -367,6 +375,25 @@
     .dish__price small { font-size: 11.5px; font-weight: 600; color: var(--muted); }
 
     .add-button { padding: 9px 16px; font-size: 13.5px; border-radius: 100px; }
+
+    /* Run out in the kitchen: still on the menu, plainly not available */
+    .dish.is-sold-out { opacity: .72; }
+    .dish.is-sold-out .dish__image img { filter: grayscale(.85); }
+    .dish.is-sold-out .dish__price { color: var(--muted); }
+
+    .dish__image { position: relative; }
+
+    .dish__sold-out {
+        position: absolute; inset-inline-start: 10px; top: 10px;
+        padding: 5px 11px; border-radius: 100px;
+        background: rgba(36, 29, 24, .82); color: #FBF5EE;
+        font-size: 11.5px; font-weight: 700;
+    }
+
+    .dish__unavailable {
+        font-size: 13px; font-weight: 600; color: var(--muted);
+        padding: 9px 0;
+    }
 
     /* ---------- the bar that follows you ---------- */
 
