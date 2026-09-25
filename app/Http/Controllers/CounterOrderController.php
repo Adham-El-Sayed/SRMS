@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Services\MenuService;
 use App\Services\OrderService;
+use App\Services\RecommendationService;
 use App\Services\ShiftService;
 use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
@@ -22,13 +23,18 @@ class CounterOrderController extends Controller
     public function __construct(
         private OrderService $orderService,
         private MenuService $menuService,
-        private ShiftService $shiftService
+        private ShiftService $shiftService,
+        private RecommendationService $recommendations,
     ) {}
 
     public function create(): View
     {
+        $menu = $this->menuService->getMenu();
+
         return view('counter.create', [
-            'menu' => $this->menuService->getMenu(),
+            'menu' => $menu,
+            // The cashier sees what sells too, for suggesting it over the counter.
+            'recommended' => $this->recommendations->bestPerCategory($menu),
             'types' => array_values(array_diff(Settings::enabledTypes(), ['dine_in'])),
             'deliveryFee' => Settings::deliveryFee(),
             'shiftOpen' => (bool) $this->shiftService->currentOpenShift(),

@@ -27,6 +27,12 @@
         @include('partials.menu-filter', ['categories' => $menu, 'scope' => '#menu-app'])
     @endif
 
+    {{-- ===== What people order most ===== --}}
+    @include('partials.popular-picks', [
+        'popular' => $popular ?? collect(),
+        'ordering' => isset($table),
+    ])
+
     {{-- ===== The menu ===== --}}
     @forelse ($menu as $category)
         <section class="menu-section" id="category-{{ $category->id }}"
@@ -60,6 +66,8 @@
 
                             @if ($product->isSoldOut())
                                 <span class="dish__sold-out">{{ __('Finished for today') }}</span>
+                            @elseif (isset($recommended[$product->id]))
+                                <span class="dish__loved">★ {{ __('Most ordered') }}</span>
                             @endif
                         </div>
 

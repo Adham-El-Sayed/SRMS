@@ -68,7 +68,12 @@
                                     data-id="{{ $product->id }}"
                                     data-name="{{ $product->name }}"
                                     data-price="{{ $product->price }}">
-                                <span class="counter-item__name">{{ $product->name }}</span>
+                                <span class="counter-item__name">
+                                    {{ $product->name }}
+                                    @if (! $product->isSoldOut() && isset($recommended[$product->id]))
+                                        <span class="counter-item__loved">★ {{ __('Most ordered') }}</span>
+                                    @endif
+                                </span>
                                 <span class="counter-item__price">
                                     @if ($product->isSoldOut())
                                         {{ __('Finished') }}
@@ -168,6 +173,23 @@
 @endsection
 
 @push('styles')
+<style>
+    /* The counter shows the same "most ordered" mark the guest menu uses. */
+    .counter-item__loved {
+        display: inline-flex; align-items: center; gap: 4px;
+        margin-inline-start: 7px;
+        padding: 2px 8px;
+        border-radius: 100px;
+        background: var(--amber-soft);
+        border: 1px solid rgba(193, 135, 28, .3);
+        color: #8A5E0C;
+        font-size: 10.5px; font-weight: 700;
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+
+    html[lang="ar"] .counter-item__loved { font-size: 11px; }
+</style>
 <style>
     .counter { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; }
     .counter-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }

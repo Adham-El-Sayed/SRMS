@@ -6,6 +6,7 @@ use App\Enums\TableStatus;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\RestaurantTable;
+use App\Services\RecommendationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -75,6 +76,10 @@ class OrderService
             if ($table && $table->status !== TableStatus::Occupied) {
                 $table->update(['status' => TableStatus::Occupied]);
             }
+
+            // What sells has just changed, so the menu's recommendations
+            // are worked out again on the next visit.
+            RecommendationService::forget();
 
             return $order->load(['table', 'items']);
         });

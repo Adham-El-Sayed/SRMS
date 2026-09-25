@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreOnlineOrderRequest;
 use App\Services\MenuService;
 use App\Services\OrderService;
+use App\Services\RecommendationService;
 use App\Services\ShiftService;
 use App\Support\Settings;
 use Illuminate\Contracts\View\View;
@@ -24,6 +25,7 @@ class OnlineOrderController extends Controller
         private MenuService $menuService,
         private OrderService $orderService,
         private ShiftService $shiftService,
+        private RecommendationService $recommendations,
     ) {}
 
     public function create(): View
@@ -31,8 +33,12 @@ class OnlineOrderController extends Controller
         // Online ordering is something the restaurant switches on in Settings.
         abort_unless(Settings::offers('online'), 404);
 
+        $menu = $this->menuService->getMenu();
+
         return view('online.index', [
-            'menu' => $this->menuService->getMenu(),
+            'menu' => $menu,
+            'recommended' => $this->recommendations->bestPerCategory($menu),
+            'popular' => $this->recommendations->popular(),
             'deliveryOffered' => Settings::offers('delivery'),
             'deliveryFee' => Settings::deliveryFee(),
             // Closed kitchen: the page still shows the menu, but says so.

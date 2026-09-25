@@ -34,6 +34,12 @@
         @include('partials.menu-filter', ['categories' => $menu, 'scope' => '#online-app'])
     @endif
 
+    {{-- ===== What people order most ===== --}}
+    @include('partials.popular-picks', [
+        'popular' => $popular ?? collect(),
+        'ordering' => $open,
+    ])
+
     {{-- ===== The menu ===== --}}
     @forelse ($menu as $category)
         <section class="menu-section" id="category-{{ $category->id }}"
@@ -68,6 +74,8 @@
 
                             @if ($product->isSoldOut())
                                 <span class="dish__sold-out">{{ __('Finished for today') }}</span>
+                            @elseif (isset($recommended[$product->id]))
+                                <span class="dish__loved">★ {{ __('Most ordered') }}</span>
                             @endif
                         </div>
 
@@ -796,7 +804,8 @@
     document.addEventListener('click', function (event) {
         if (!IS_OPEN) return;
 
-        const add = event.target.closest('.dish .add-button');
+        // Either from a dish on the menu or from the favourites rail above it.
+        const add = event.target.closest('.add-button');
 
         if (add) {
             bump(parseInt(add.dataset.productId, 10), 1, {
