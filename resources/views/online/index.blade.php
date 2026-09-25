@@ -31,31 +31,13 @@
 
     {{-- ===== Finding a dish ===== --}}
     @if ($menu->count() > 0)
-        <div class="menu-search">
-            <svg class="menu-search__icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.8"/>
-                <path d="M13.5 13.5 17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            </svg>
-            <input type="search" id="dish-search" autocomplete="off"
-                   placeholder="{{ __('Search the menu') }}"
-                   aria-label="{{ __('Search the menu') }}">
-            <button type="button" class="menu-search__clear" id="clear-search" hidden
-                    aria-label="{{ __('Clear') }}">&times;</button>
-        </div>
-    @endif
-
-    {{-- ===== Jump to a section ===== --}}
-    @if ($menu->count() > 1)
-        <nav class="menu-tabs" aria-label="{{ __('Categories') }}">
-            @foreach ($menu as $category)
-                <a href="#category-{{ $category->id }}" class="menu-tab">{{ $category->name }}</a>
-            @endforeach
-        </nav>
+        @include('partials.menu-filter', ['categories' => $menu, 'scope' => '#online-app'])
     @endif
 
     {{-- ===== The menu ===== --}}
     @forelse ($menu as $category)
-        <section class="menu-section" id="category-{{ $category->id }}">
+        <section class="menu-section" id="category-{{ $category->id }}"
+                 data-filter-group data-category="{{ $category->id }}">
 
             <div class="menu-section__head">
                 @if ($category->image)
@@ -73,7 +55,9 @@
             <div class="dish-grid">
                 @forelse ($category->products as $product)
                     <article class="dish {{ $product->isSoldOut() ? 'is-sold-out' : '' }}"
-                             data-name="{{ Str::lower($product->name) }}"
+                             data-filter-item
+                             data-name="{{ $product->name }}"
+                             data-category="{{ $category->id }}"
                              data-dish="{{ $product->id }}">
                         <div class="dish__image">
                             @if ($product->image)
@@ -132,7 +116,7 @@
         </div>
     @endforelse
 
-    <p class="no-match" id="no-match" hidden>{{ __('Nothing on the menu matches that.') }}</p>
+    <p class="filter-empty" data-filter-empty hidden>{{ __('Nothing on the menu matches that.') }}</p>
 
 </div>
 
@@ -335,52 +319,6 @@
 
     .closed-note strong { font-size: 15px; }
     .closed-note span { color: var(--ink-soft); }
-
-    /* ---------- finding a dish ---------- */
-
-    .menu-search { position: relative; margin-bottom: 18px; }
-
-    .menu-search__icon {
-        position: absolute; inset-inline-start: 16px; top: 50%;
-        transform: translateY(-50%);
-        width: 18px; height: 18px;
-        color: var(--muted); pointer-events: none;
-    }
-
-    /* The design system styles every input and loads after this page, so a
-       rule of equal weight would lose the tie. These name one more thing. */
-    body .menu-search input[type="search"] {
-        width: 100%;
-        padding: 13px 46px;
-        border-radius: 100px;
-        border: 1.5px solid var(--line-strong);
-        background: var(--surface);
-        font-family: var(--font-sans); font-size: 15px; color: var(--ink);
-        box-shadow: none;
-        -webkit-appearance: none;
-    }
-
-    body .menu-search input[type="search"]::-webkit-search-cancel-button { display: none; }
-
-    body .menu-search input[type="search"]:focus {
-        outline: none; border-color: var(--accent);
-        box-shadow: 0 0 0 3px var(--accent-soft);
-    }
-
-    .menu-search__clear {
-        position: absolute; inset-inline-end: 8px; top: 50%;
-        transform: translateY(-50%);
-        width: 30px; height: 30px; padding: 0;
-        display: grid; place-items: center;
-        border: none; border-radius: 50%;
-        background: var(--surface-sunk); color: var(--muted);
-        font-size: 18px; line-height: 1; cursor: pointer;
-    }
-
-    .menu-search__clear:hover { background: var(--line); color: var(--ink); }
-    body .menu-search__clear[hidden] { display: none; }
-
-    .no-match { text-align: center; padding: 40px 10px; color: var(--muted); }
 
     /* ---------- counting a dish on its own card ---------- */
 
@@ -675,10 +613,6 @@
     const addressField = document.getElementById('address-field');
     const addressInput = document.getElementById('delivery-address');
 
-    const search       = document.getElementById('dish-search');
-    const clearSearch  = document.getElementById('clear-search');
-    const noMatch      = document.getElementById('no-match');
-
     const trackBar     = document.getElementById('track-bar');
     const trackBarId   = document.getElementById('track-bar-id');
     const trackBarWhat = document.getElementById('track-bar-status');
@@ -878,37 +812,6 @@
             bump(parseInt(stepper.dataset.productId, 10), parseInt(stepper.dataset.step, 10));
         }
     });
-
-    /* ---------- searching the menu ---------- */
-
-    if (search) {
-        const filter = function () {
-            const needle = search.value.trim().toLowerCase();
-            let shown = 0;
-
-            document.querySelectorAll('.dish[data-name]').forEach(function (card) {
-                const hit = !needle || card.dataset.name.indexOf(needle) !== -1;
-                card.hidden = !hit;
-                if (hit) shown++;
-            });
-
-            // A course with nothing left in it steps aside too.
-            document.querySelectorAll('.menu-section').forEach(function (section) {
-                section.hidden = !section.querySelector('.dish:not([hidden])');
-            });
-
-            noMatch.hidden = shown > 0;
-            clearSearch.hidden = needle === '';
-        };
-
-        search.addEventListener('input', filter);
-
-        clearSearch.addEventListener('click', function () {
-            search.value = '';
-            filter();
-            search.focus();
-        });
-    }
 
     /* ---------- changing what is in the basket ---------- */
 

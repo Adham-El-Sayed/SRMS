@@ -100,11 +100,20 @@
     {{-- =========================
         Categories
     ========================== --}}
+    @if ($categories->count() > 0)
+        @include('partials.menu-filter', [
+            'categories' => $categories,
+            'scope' => '.categories-container',
+            'placeholder' => __('Search products'),
+        ])
+    @endif
+
     <div class="categories-container">
 
         @forelse($categories as $category)
 
-            <div class="category-card {{ !$category->is_active ? 'category-inactive' : '' }}">
+            <div class="category-card {{ !$category->is_active ? 'category-inactive' : '' }}"
+                 data-filter-group data-category="{{ $category->id }}">
 
                 {{-- =========================
                     Category Header
@@ -249,6 +258,9 @@
 
                                 <div
                                     class="product-card {{ !$product->is_active ? 'product-inactive' : '' }}"
+                                    data-filter-item
+                                    data-name="{{ $product->name }}"
+                                    data-category="{{ $category->id }}"
                                 >
 
                                     {{-- Product Image --}}
@@ -446,6 +458,8 @@
             </div>
 
         @endforelse
+
+        <p class="filter-empty" data-filter-empty hidden>{{ __('Nothing on the menu matches that.') }}</p>
 
     </div>
 

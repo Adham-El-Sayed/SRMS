@@ -152,6 +152,27 @@
         });
     }
 
+    /*
+     * A navigation section is usually closed, so it carries the total of the
+     * counts inside it: the kitchen's orders and the waiting alerts add up on
+     * the section's own badge, and nothing waiting goes unnoticed.
+     */
+    function rollUpBadges() {
+        document.querySelectorAll('[data-badge-sum]').forEach(function (badge) {
+            var group = badge.closest('[data-nav-group]');
+            if (!group) return;
+
+            var total = 0;
+
+            group.querySelectorAll('.nav-menu [data-pulse]').forEach(function (child) {
+                if (!child.hidden) total += parseInt(child.textContent, 10) || 0;
+            });
+
+            badge.textContent = total > 99 ? '99+' : String(total);
+            badge.hidden = total === 0;
+        });
+    }
+
     function checkNew(key, latest, onNew) {
         if (typeof latest !== 'number') return;
         var seen = store(key);
@@ -185,6 +206,8 @@
                 ring('alert');
                 toast(config.text.newAlert, config.alertsUrl);
             });
+
+            rollUpBadges();
 
             if (somethingNew) refreshBoards();
         });

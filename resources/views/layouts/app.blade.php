@@ -12,6 +12,85 @@
     $showKitchen = in_array($workspace, ['admin', 'kitchen', 'cashier'], true);
     $showAlerts  = in_array($workspace, ['admin', 'cashier'], true);
     $offers      = \App\Support\Settings::enabledTypes();
+
+    /*
+     | The navigation, as sections rather than a single long row. Fourteen
+     | links side by side meant scrolling sideways to find half the app; in
+     | sections, everything is two clicks away and nothing is off-screen.
+     |
+     | A section with one visible link is drawn as that link, so the kitchen
+     | never sees a menu holding a single item.
+     */
+    $navSections = [
+        [
+            'label' => __('Dashboard'),
+            'show'  => $showAdmin,
+            'items' => [
+                ['label' => __('Dashboard'), 'route' => 'dashboard', 'active' => 'dashboard'],
+            ],
+        ],
+        [
+            'label' => __('Orders'),
+            'show'  => $showKitchen || $showAlerts,
+            'items' => [
+                ['label' => __('Kitchen'), 'route' => 'kitchen.orders', 'active' => 'kitchen.*',
+                 'show' => $showKitchen, 'pulse' => 'kitchen'],
+                ['label' => __('Alerts'), 'route' => 'order-change-requests.index', 'active' => 'order-change-requests.*',
+                 'show' => $showAlerts, 'pulse' => 'alerts'],
+                ['label' => __('Online Orders'), 'route' => 'online.desk', 'active' => 'online.*',
+                 'show' => $showAdmin && in_array('online', $offers, true), 'pulse' => 'online'],
+                ['label' => __('Delivery'), 'route' => 'delivery.index', 'active' => 'delivery.*',
+                 'show' => $showMoney && in_array('delivery', $offers, true)],
+            ],
+        ],
+        [
+            'label' => __('Cash Desk'),
+            'show'  => $showMoney,
+            'items' => [
+                ['label' => __('Payments'), 'route' => 'cash-payments.index', 'active' => 'cash-payments.*',
+                 'pulse' => 'payments', 'quiet' => true],
+                ['label' => __('Counter'), 'route' => 'counter.create', 'active' => 'counter.*',
+                 'show' => count(array_diff($offers, ['dine_in'])) > 0],
+                ['label' => __('Shift'), 'route' => 'shifts.current', 'active' => 'shifts.current'],
+                // The history is a manager's record, not part of a cashier's shift.
+                ['label' => __('Shift History'), 'route' => 'shifts.history',
+                 'active' => 'shifts.history|shifts.show', 'show' => $showAdmin],
+            ],
+        ],
+        [
+            'label' => __('Restaurant'),
+            'show'  => $showAdmin,
+            'items' => [
+                ['label' => __('Tables'), 'route' => 'tables.index', 'active' => 'tables.*'],
+                ['label' => __('Menu Management'), 'route' => 'menu.management', 'active' => 'menu.management*'],
+                ['label' => __('Reports'), 'route' => 'reports.monthly', 'active' => 'reports.*'],
+                ['label' => __('Staff'), 'route' => 'staff.index', 'active' => 'staff.*|employees.*'],
+                ['label' => __('Settings'), 'route' => 'settings.edit', 'active' => 'settings.*'],
+            ],
+        ],
+    ];
+
+    // Drop what this account may not open, and any section left empty.
+    $navSections = collect($navSections)
+        ->filter(fn ($section) => $section['show'] ?? true)
+        ->map(function ($section) {
+            $section['items'] = collect($section['items'])
+                ->filter(fn ($item) => $item['show'] ?? true)
+                ->map(function ($item) {
+                    $item['is_active'] = request()->routeIs(explode('|', $item['active']));
+                    return $item;
+                })
+                ->values()
+                ->all();
+
+            $section['open'] = collect($section['items'])->contains(fn ($item) => $item['is_active']);
+
+            return $section;
+        })
+        ->filter(fn ($section) => count($section['items']) > 0)
+        ->values()
+        ->all();
+
     $i18nFile = lang_path($locale . '.json');
     $i18n = ($locale !== 'en' && is_file($i18nFile)) ? json_decode(file_get_contents($i18nFile), true) : [];
 @endphp
@@ -241,27 +320,31 @@
 
         .app-nav__inner {
             gap: 2px;
-            overflow-x: auto;
-            scrollbar-width: none;
+            flex-wrap: wrap;
         }
 
-        .app-nav__inner::-webkit-scrollbar { display: none; }
-
-        .app-nav a {
+        .nav-link {
             position: relative;
             display: inline-flex;
             align-items: center;
             gap: 7px;
-            padding: 15px 13px;
+            /* A fixed height keeps the underline level whether or not the
+               link carries a counter. */
+            height: 52px;
+            padding: 0 13px;
+            border: none;
+            background: none;
+            font-family: inherit;
             font-size: 14px;
             font-weight: 600;
             color: var(--muted);
             text-decoration: none;
             white-space: nowrap;
+            cursor: pointer;
             transition: color .16s ease;
         }
 
-        .app-nav a::after {
+        .nav-link::after {
             content: "";
             position: absolute;
             inset-inline: 13px;
@@ -274,17 +357,65 @@
             transition: transform .2s cubic-bezier(.2, .7, .3, 1);
         }
 
-        .app-nav a:hover { color: var(--ink); }
+        .nav-link:hover { color: var(--ink); }
 
-        .app-nav a.active { color: var(--accent-dark); }
-        .app-nav a.active::after { transform: scaleX(1); }
+        .nav-link.active { color: var(--accent-dark); }
+        .nav-link.active::after { transform: scaleX(1); }
 
-        .nav-divider {
-            width: 1px;
-            height: 18px;
-            background: var(--line-strong);
-            margin: 0 8px;
-            flex-shrink: 0;
+        /* --- A section of the navigation -------------------------------- */
+
+        .nav-group { position: relative; }
+
+        .nav-group__arrow {
+            width: 0; height: 0;
+            border-inline: 4px solid transparent;
+            border-top: 5px solid currentColor;
+            opacity: .65;
+            transition: transform .18s ease;
+        }
+
+        .nav-group.is-open .nav-group__button { color: var(--ink); }
+        .nav-group.is-open .nav-group__arrow { transform: rotate(180deg); }
+
+        .nav-menu {
+            position: absolute;
+            inset-inline-start: 0;
+            top: calc(100% - 2px);
+            z-index: 50;
+            min-width: 214px;
+            padding: 6px;
+            border-radius: var(--r);
+            background: var(--surface);
+            border: 1px solid var(--line-strong);
+            box-shadow: 0 18px 38px -16px rgba(36, 29, 24, .38);
+            animation: nav-drop .16s ease;
+        }
+
+        .nav-menu[hidden] { display: none; }
+
+        @keyframes nav-drop {
+            from { opacity: 0; transform: translateY(-5px); }
+        }
+
+        .nav-menu__item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: var(--r-xs);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--ink-soft);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .nav-menu__item span:first-child { margin-inline-end: auto; }
+        .nav-menu__item:hover { background: var(--surface-sunk); color: var(--ink); }
+
+        .nav-menu__item.active {
+            background: var(--accent-soft);
+            color: var(--accent-dark);
         }
 
         /* Live counters beside a nav link */
@@ -429,8 +560,8 @@
             .user-chip span:not(.user-chip__avatar) { display: none; }
             .user-chip { padding: 6px; }
             .app-nav__inner { gap: 0; }
-            .app-nav a { padding: 13px 11px; font-size: 13.5px; }
-            .nav-divider { display: none; }
+            .nav-link { height: 46px; padding: 0 11px; font-size: 13.5px; }
+            .nav-menu { min-width: 190px; }
         }
     </style>
 </head>
@@ -527,92 +658,50 @@
         <nav class="app-nav">
             <div class="app-nav__inner">
 
-                @if ($showAdmin)
-                    <a href="{{ route('dashboard') }}"
-                       class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">{{ __('Dashboard') }}</a>
-                @endif
+                @foreach ($navSections as $section)
+                    @if (count($section['items']) === 1)
 
-                @if ($showAdmin)
-                    <a href="{{ route('tables.index') }}"
-                       class="{{ request()->routeIs('tables.*') ? 'active' : '' }}">{{ __('Tables') }}</a>
-                @endif
-
-                @if ($showKitchen)
-                    <a href="{{ route('kitchen.orders') }}"
-                       class="{{ request()->routeIs('kitchen.*') ? 'active' : '' }}">
-                        {{ __('Kitchen') }}
-                        <span class="nav-badge" data-pulse="kitchen" hidden></span>
-                    </a>
-                @endif
-
-                @if ($showAlerts)
-                    <a href="{{ route('order-change-requests.index') }}"
-                       class="{{ request()->routeIs('order-change-requests.*') ? 'active' : '' }}">
-                        {{ __('Alerts') }}
-                        <span class="nav-badge" data-pulse="alerts" hidden></span>
-                    </a>
-                @endif
-
-                @if ($showAdmin)
-                    <span class="nav-divider"></span>
-
-                    <a href="{{ route('menu.management') }}"
-                       class="{{ request()->routeIs('menu.management*') ? 'active' : '' }}">{{ __('Menu Management') }}</a>
-
-                @endif
-
-                @if ($showMoney)
-                    @if ($showAdmin)<span class="nav-divider"></span>@endif
-
-                    <a href="{{ route('cash-payments.index') }}"
-                       class="{{ request()->routeIs('cash-payments.*') ? 'active' : '' }}">
-                        {{ __('Payments') }}
-                        <span class="nav-badge nav-badge--quiet" data-pulse="payments" hidden></span>
-                    </a>
-
-                    @if (count(array_diff($offers, ['dine_in'])) > 0)
-                        <a href="{{ route('counter.create') }}"
-                           class="{{ request()->routeIs('counter.*') ? 'active' : '' }}">{{ __('Counter') }}</a>
-                    @endif
-
-                    @if (in_array('delivery', $offers, true))
-                        <a href="{{ route('delivery.index') }}"
-                           class="{{ request()->routeIs('delivery.*') ? 'active' : '' }}">{{ __('Delivery') }}</a>
-                    @endif
-
-                    {{-- The cashier's bar is deliberately short, so the online
-                         desk is listed for whoever runs the place. Cashiers can
-                         still open it from a link. --}}
-                    @if ($showAdmin && in_array('online', $offers, true))
-                        <a href="{{ route('online.desk') }}"
-                           class="{{ request()->routeIs('online.*') ? 'active' : '' }}">
-                            {{ __('Online Orders') }}
-                            <span class="nav-badge" data-pulse="online" hidden></span>
+                        @php ($only = $section['items'][0])
+                        <a href="{{ route($only['route']) }}"
+                           class="nav-link {{ $only['is_active'] ? 'active' : '' }}">
+                            {{ $only['label'] }}
+                            @isset($only['pulse'])
+                                <span class="nav-badge {{ ($only['quiet'] ?? false) ? 'nav-badge--quiet' : '' }}"
+                                      data-pulse="{{ $only['pulse'] }}" hidden></span>
+                            @endisset
                         </a>
+
+                    @else
+
+                        <div class="nav-group" data-nav-group>
+                            <button type="button"
+                                    class="nav-link nav-group__button {{ $section['open'] ? 'active' : '' }}"
+                                    aria-expanded="false" aria-haspopup="true">
+                                {{ $section['label'] }}
+
+                                {{-- Counts from inside add up here, so a closed
+                                     menu still says something needs attention. --}}
+                                <span class="nav-badge" data-badge-sum hidden></span>
+
+                                <span class="nav-group__arrow" aria-hidden="true"></span>
+                            </button>
+
+                            <div class="nav-menu" hidden>
+                                @foreach ($section['items'] as $item)
+                                    <a href="{{ route($item['route']) }}"
+                                       class="nav-menu__item {{ $item['is_active'] ? 'active' : '' }}">
+                                        <span>{{ $item['label'] }}</span>
+                                        @isset($item['pulse'])
+                                            <span class="nav-badge {{ ($item['quiet'] ?? false) ? 'nav-badge--quiet' : '' }}"
+                                                  data-pulse="{{ $item['pulse'] }}" hidden></span>
+                                        @endisset
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+
                     @endif
-
-                    <a href="{{ route('shifts.current') }}"
-                       class="{{ request()->routeIs('shifts.current') ? 'active' : '' }}">{{ __('Shift') }}</a>
-
-                    {{-- The history is a manager's record, not part of a cashier's shift. --}}
-                    @if ($showAdmin)
-                        <a href="{{ route('shifts.history') }}"
-                           class="{{ request()->routeIs('shifts.history') || request()->routeIs('shifts.show') ? 'active' : '' }}">{{ __('Shift History') }}</a>
-                    @endif
-                @endif
-
-                @if ($showAdmin)
-                    <span class="nav-divider"></span>
-
-                    <a href="{{ route('reports.monthly') }}"
-                       class="{{ request()->routeIs('reports.*') ? 'active' : '' }}">{{ __('Reports') }}</a>
-
-                    <a href="{{ route('staff.index') }}"
-                       class="{{ request()->routeIs('staff.*') ? 'active' : '' }}">{{ __('Staff') }}</a>
-
-                    <a href="{{ route('settings.edit') }}"
-                       class="{{ request()->routeIs('settings.*') ? 'active' : '' }}">{{ __('Settings') }}</a>
-                @endif
+                @endforeach
 
             </div>
         </nav>
@@ -672,6 +761,51 @@
             };
         </script>
         <script src="{{ asset('js/srms-live.js') }}?v={{ @filemtime(public_path('js/srms-live.js')) }}" defer></script>
+
+        <script>
+            /*
+             * The navigation's sections. Opening is a click, not a hover, so a
+             * finger works as well as a mouse, and only one is ever open.
+             */
+            (function () {
+                'use strict';
+
+                const groups = Array.prototype.slice.call(document.querySelectorAll('[data-nav-group]'));
+                if (!groups.length) return;
+
+                function close(group) {
+                    group.classList.remove('is-open');
+                    group.querySelector('.nav-menu').hidden = true;
+                    group.querySelector('.nav-group__button').setAttribute('aria-expanded', 'false');
+                }
+
+                function closeAll(except) {
+                    groups.forEach(function (group) { if (group !== except) close(group); });
+                }
+
+                groups.forEach(function (group) {
+                    const button = group.querySelector('.nav-group__button');
+                    const menu = group.querySelector('.nav-menu');
+
+                    button.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                        const opening = menu.hidden;
+                        closeAll(group);
+                        menu.hidden = !opening;
+                        group.classList.toggle('is-open', opening);
+                        button.setAttribute('aria-expanded', opening ? 'true' : 'false');
+                    });
+                });
+
+                document.addEventListener('click', function (event) {
+                    if (!event.target.closest('[data-nav-group]')) closeAll();
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') closeAll();
+                });
+            })();
+        </script>
     @endif
 
 </body>

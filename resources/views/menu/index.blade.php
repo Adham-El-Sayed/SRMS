@@ -22,18 +22,15 @@
         @endisset
     </header>
 
-    {{-- ===== Jump to a section ===== --}}
-    @if ($menu->count() > 1)
-        <nav class="menu-tabs" aria-label="{{ __('Categories') }}">
-            @foreach ($menu as $category)
-                <a href="#category-{{ $category->id }}" class="menu-tab">{{ $category->name }}</a>
-            @endforeach
-        </nav>
+    {{-- ===== Finding a dish ===== --}}
+    @if ($menu->count() > 0)
+        @include('partials.menu-filter', ['categories' => $menu, 'scope' => '#menu-app'])
     @endif
 
     {{-- ===== The menu ===== --}}
     @forelse ($menu as $category)
-        <section class="menu-section" id="category-{{ $category->id }}">
+        <section class="menu-section" id="category-{{ $category->id }}"
+                 data-filter-group data-category="{{ $category->id }}">
 
             <div class="menu-section__head">
                 @if ($category->image)
@@ -50,7 +47,10 @@
 
             <div class="dish-grid">
                 @forelse ($category->products as $product)
-                    <article class="dish {{ $product->isSoldOut() ? 'is-sold-out' : '' }}">
+                    <article class="dish {{ $product->isSoldOut() ? 'is-sold-out' : '' }}"
+                             data-filter-item
+                             data-name="{{ $product->name }}"
+                             data-category="{{ $category->id }}">
                         <div class="dish__image">
                             @if ($product->image)
                                 <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" loading="lazy">
@@ -98,6 +98,8 @@
             <p>{{ __('There are currently no menu items available.') }}</p>
         </div>
     @endforelse
+
+    <p class="filter-empty" data-filter-empty hidden>{{ __('Nothing on the menu matches that.') }}</p>
 
 </div>
 

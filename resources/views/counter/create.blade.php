@@ -45,15 +45,26 @@
         @csrf
 
         {{-- Menu --}}
-        <div class="counter__menu">
+        <div class="counter__menu" id="counter-menu">
+
+            @if ($menu->count() > 0)
+                @include('partials.menu-filter', [
+                    'categories' => $menu,
+                    'scope' => '#counter-menu',
+                    'placeholder' => __('Search the menu'),
+                ])
+            @endif
+
             @forelse ($menu as $category)
-                <section class="counter-category">
+                <section class="counter-category" data-filter-group data-category="{{ $category->id }}">
                     <h2 class="section-title">{{ $category->name }}</h2>
 
                     <div class="counter-items">
                         @foreach ($category->products as $product)
                             <button type="button" class="counter-item {{ $product->isSoldOut() ? 'is-out' : '' }}"
                                     @disabled($product->isSoldOut())
+                                    data-filter-item
+                                    data-category="{{ $category->id }}"
                                     data-id="{{ $product->id }}"
                                     data-name="{{ $product->name }}"
                                     data-price="{{ $product->price }}">
@@ -72,6 +83,8 @@
             @empty
                 <div class="empty"><p>{{ __('There are currently no menu items available.') }}</p></div>
             @endforelse
+
+            <p class="filter-empty" data-filter-empty hidden>{{ __('Nothing on the menu matches that.') }}</p>
         </div>
 
         {{-- Ticket --}}
