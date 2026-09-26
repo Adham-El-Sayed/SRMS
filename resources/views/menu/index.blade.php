@@ -218,6 +218,10 @@
 
 @endisset
 
+    {{-- =========================
+         Paying by card
+         The tail of this comment had lost its opening, so Blade printed the
+         line of equals signs at the foot of the menu.
     ========================== --}}
 
     @if(isset($table))
