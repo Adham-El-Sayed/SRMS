@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Shift;
 use App\Models\User;
 use App\Support\Bilingual;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 
 /**
@@ -24,6 +25,22 @@ use Illuminate\Support\Str;
  */
 class AskService
 {
+    /**
+     * Words that name a subject, kept in one place because more than one
+     * handler asks about the same subject and they drifted apart once:
+     * "who was absent this month" reached the handler for the month before
+     * the one for absence, and that handler carried a shorter list.
+     *
+     * Each entry is the shortest distinctive stem, so the prefixes people
+     * actually type are covered without listing every spelling: "نهارده"
+     * catches النهارده and انهارده, "غاب" catches غاب and غابوا. Folding
+     * takes care of the vowel marks and the shapes of alef and ya, but not
+     * of hamza on ya, so غائب is listed beside غايب.
+     */
+    private const ABSENCE = ['غاب', 'غياب', 'غايب', 'غائب', 'absent', 'absence'];
+    private const TODAY = ['نهارده', 'اليوم', 'today'];
+    private const SALARY = ['مرتب', 'رواتب', 'راتب', 'salary', 'salaries', 'payroll'];
+
     /**
      * @return array{answer: string, detail: ?string, link: ?array, kind: string}
      */
@@ -74,17 +91,17 @@ class AskService
                 today()->subDay()->startOfDay(), today()->subDay()->endOfDay(), __('Yesterday')
             )],
 
-            [['الشهر', 'شهر', 'month'], function ($q) {
-                if ($this->mentions($q, ['غياب', 'غائب', 'absence', 'absent'])) return $this->absencesThisMonth();
-                if ($this->mentions($q, ['مرتب', 'رواتب', 'راتب', 'salary', 'salaries', 'payroll'])) return $this->payroll();
+            [['شهر', 'month'], function ($q) {
+                if ($this->mentions($q, self::ABSENCE)) return $this->absencesThisMonth();
+                if ($this->mentions($q, self::SALARY)) return $this->payroll();
                 return $this->takings(now()->startOfMonth(), now()->endOfMonth(), now()->translatedFormat('F Y'));
             }],
 
-            [['الاسبوع', 'اسبوع', 'week'], fn () => $this->takings(
+            [['اسبوع', 'week'], fn () => $this->takings(
                 now()->startOfWeek(), now()->endOfWeek(), __('This week')
             )],
 
-            [['غياب', 'غائب', 'غايب', 'absent', 'absence'], fn ($q) => $this->mentions($q, ['النهارده', 'اليوم', 'today'])
+            [self::ABSENCE, fn ($q) => $this->mentions($q, self::TODAY)
                 ? $this->absentToday()
                 : $this->absencesThisMonth()],
 
@@ -100,7 +117,7 @@ class AskService
 
             [['خلصان', 'خلص', 'ناقص', 'finished', 'sold out', 'soldout'], fn () => $this->soldOut()],
 
-            [['مرتب', 'رواتب', 'راتب', 'salary', 'salaries', 'payroll'], fn () => $this->payroll()],
+            [self::SALARY, fn () => $this->payroll()],
 
             [['كام طلب', 'عدد الطلبات', 'طلبات', 'how many orders', 'orders'], fn ($q) => $this->orderCount($q)],
 
@@ -108,7 +125,7 @@ class AskService
             [['ايراد', 'مبيعات', 'فلوس', 'دخل', 'حصلنا', 'revenue', 'sales', 'takings', 'income'],
                 fn () => $this->takings(today()->startOfDay(), today()->endOfDay(), __('Today'))],
 
-            [['النهارده', 'اليوم', 'today'],
+            [self::TODAY,
                 fn () => $this->takings(today()->startOfDay(), today()->endOfDay(), __('Today'))],
         ];
     }
@@ -241,8 +258,32 @@ class AskService
         ];
     }
 
+    /**
+     * Attendance arrived after the rest of this, so an installation that
+     * has not run its migrations yet has no table to read. Without this the
+     * question comes back as a 500 the manager cannot interpret; with it,
+     * it comes back saying which command to run.
+     */
+    private function attendanceMissing(): ?array
+    {
+        if (Schema::hasTable('attendance')) {
+            return null;
+        }
+
+        return [
+            'kind' => 'note',
+            'answer' => __('Attendance is not set up on this installation yet. Run: php artisan migrate'),
+            'detail' => null,
+            'link' => null,
+        ];
+    }
+
     private function absentToday(): array
     {
+        if ($missing = $this->attendanceMissing()) {
+            return $missing;
+        }
+
         $marks = Attendance::with('user')
             ->whereDate('day', today())
             ->whereIn('status', [Attendance::ABSENT, Attendance::LEAVE])
@@ -268,6 +309,10 @@ class AskService
 
     private function absencesThisMonth(): array
     {
+        if ($missing = $this->attendanceMissing()) {
+            return $missing;
+        }
+
         $tally = Attendance::with('user')
             ->where('status', Attendance::ABSENT)
             ->whereYear('day', now()->year)

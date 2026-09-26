@@ -645,5 +645,6 @@
     "Ask SRMS": "اسأل SRMS",
     "Takings, orders, staff — just ask": "الإيرادات والطلبات والموظفين — اسأل وبس",
     "Ask me about the restaurant. Here are a few to start with:": "اسألني عن أي حاجة في المطعم. دي كام سؤال تبدأ بيهم:",
-    "Send": "إرسال"
+    "Send": "إرسال",
+    "Attendance is not set up on this installation yet. Run: php artisan migrate": "الحضور والغياب لسه مش متظبط على النسخة دي. شغّل: php artisan migrate"
 }
