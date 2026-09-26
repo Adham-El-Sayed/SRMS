@@ -1,124 +1,229 @@
-{{-- The manager's question box. Admin only; the route checks that too. --}}
-<button type="button" class="ask-open" id="ask-open" aria-label="{{ __('Ask a question') }}">
-    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.8"/>
-        <path d="M13.5 13.5 17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+{{-- The manager's assistant. Admin only; the route checks that too.
+
+     A bubble in the corner rather than a keyboard shortcut: nobody
+     discovers Ctrl+K on their own, and the answers read better as a
+     conversation you can scroll back through than as one box that
+     replaces its contents every time you ask. --}}
+
+<button type="button" class="ask-fab" id="ask-open"
+        aria-label="{{ __('Ask a question') }}" aria-expanded="false" aria-controls="ask">
+    <svg class="ask-fab__talk" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <path d="M4 4.8h14a1.8 1.8 0 0 1 1.8 1.8v7.2a1.8 1.8 0 0 1-1.8 1.8H9.4L5.2 19v-3.4H4a1.8 1.8 0 0 1-1.8-1.8V6.6A1.8 1.8 0 0 1 4 4.8Z"
+              stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+        <circle cx="7.6" cy="10.2" r="1" fill="currentColor"/>
+        <circle cx="11" cy="10.2" r="1" fill="currentColor"/>
+        <circle cx="14.4" cy="10.2" r="1" fill="currentColor"/>
     </svg>
-    <span>{{ __('Ask') }}</span>
-    <kbd>Ctrl K</kbd>
+    <svg class="ask-fab__shut" viewBox="0 0 22 22" fill="none" aria-hidden="true">
+        <path d="M6 6l10 10M16 6 6 16" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
+    </svg>
+    <span class="ask-fab__label">{{ __('Ask') }}</span>
 </button>
 
-<div class="ask" id="ask" hidden>
-    <div class="ask__box" role="dialog" aria-modal="true" aria-labelledby="ask-label">
-
-        <label class="ask__field" for="ask-input">
-            <span class="sr-only" id="ask-label">{{ __('Ask a question') }}</span>
-            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.8"/>
-                <path d="M13.5 13.5 17 17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+<section class="ask" id="ask" hidden role="dialog" aria-labelledby="ask-title">
+    <header class="ask__head">
+        <span class="ask__avatar" aria-hidden="true">S</span>
+        <span class="ask__who">
+            <strong id="ask-title">{{ __('Ask SRMS') }}</strong>
+            <small>{{ __('Takings, orders, staff — just ask') }}</small>
+        </span>
+        <button type="button" class="ask__close" id="ask-close" aria-label="{{ __('Close') }}">
+            <svg viewBox="0 0 18 18" fill="none" aria-hidden="true">
+                <path d="M5 5l8 8M13 5l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
             </svg>
-            <input type="text" id="ask-input" autocomplete="off" spellcheck="false" maxlength="120"
-                   placeholder="{{ __('Revenue today? Who is absent?') }}">
-            <button type="button" class="ask__close" id="ask-close" aria-label="{{ __('Close') }}">esc</button>
-        </label>
+        </button>
+    </header>
 
-        <div class="ask__body" id="ask-body" aria-live="polite"></div>
-    </div>
-</div>
+    <div class="ask__thread" id="ask-thread" aria-live="polite"></div>
+
+    <form class="ask__compose" id="ask-form" autocomplete="off">
+        <input type="text" id="ask-input" spellcheck="false" maxlength="120"
+               placeholder="{{ __('Revenue today? Who is absent?') }}"
+               aria-label="{{ __('Ask a question') }}">
+        <button type="submit" class="ask__send" aria-label="{{ __('Send') }}">
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M17 10 3.5 4.5 5.6 10l-2.1 5.5L17 10Z"
+                      stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+            </svg>
+        </button>
+    </form>
+</section>
 
 @once
     @push('scripts')
     <script>
         /*
-         * Opens on Ctrl+K (or the button), asks the server, shows the answer.
-         * The server understands a fixed set of questions; anything else comes
-         * back as "I don't know that one" with a few that it does.
+         * A small chat panel. Questions go to the server, which understands a
+         * fixed set of them and answers from ordinary queries; anything else
+         * comes back as "I don't know that one" with a few that it does.
+         *
+         * The thread is kept in sessionStorage so moving between pages does
+         * not throw away what was already asked. Stored as data rather than
+         * markup, and re-rendered, so nothing from storage is ever written
+         * into the page as HTML.
          */
         (function () {
             'use strict';
 
+            var fab = document.getElementById('ask-open');
             var panel = document.getElementById('ask');
+            var thread = document.getElementById('ask-thread');
+            var form = document.getElementById('ask-form');
             var input = document.getElementById('ask-input');
-            var body = document.getElementById('ask-body');
+
+            if (!fab || !panel || !thread || !form || !input) return;
+
             var url = @json(route('ask'));
+            var EXAMPLES = @json((new \App\Services\AskService())->examples());
+            var SAY = {
+                hello: @json(__('Ask me about the restaurant. Here are a few to start with:')),
+                looking: @json(__('Looking…')),
+                broke: @json(__('Something went wrong. Please try again.'))
+            };
 
-            if (!panel || !input) return;
+            var KEY = 'srms.ask.thread';
+            var LIMIT = 40;
+            var turns = [];
+            var busy = false;
 
-            var waiting = null;
-            var asked = '';
+            /* ---- what has been said ------------------------------------- */
 
-            function escapeHtml(text) {
-                var box = document.createElement('div');
-                box.textContent = text == null ? '' : String(text);
-                return box.innerHTML;
+            function remember() {
+                try { sessionStorage.setItem(KEY, JSON.stringify(turns.slice(-LIMIT))); } catch (e) {}
             }
 
-            function open() {
-                panel.hidden = false;
-                input.focus();
-                input.select();
-                if (!body.innerHTML) showExamples();
+            function recall() {
+                try {
+                    var saved = JSON.parse(sessionStorage.getItem(KEY) || '[]');
+                    if (Array.isArray(saved)) turns = saved.slice(-LIMIT);
+                } catch (e) { turns = []; }
             }
 
-            function close() { panel.hidden = true; }
+            /* ---- drawing -------------------------------------------------
+               Everything goes in through textContent. */
 
-            function showExamples(list) {
-                var examples = list || @json((new \App\Services\AskService())->examples());
-
-                body.innerHTML =
-                    '<p class="ask-hint">' + escapeHtml(@json(__('Try one of these:'))) + '</p>' +
-                    '<div class="ask-examples">' +
-                    examples.map(function (e) {
-                        return '<button type="button" class="ask-example">' + escapeHtml(e) + '</button>';
-                    }).join('') +
-                    '</div>';
+            function bubble(kind) {
+                var el = document.createElement('div');
+                el.className = 'ask-turn ask-turn--' + kind;
+                return el;
             }
 
-            function show(data) {
-                if (data.kind === 'unknown') {
-                    body.innerHTML = '<p class="ask-hint">' + escapeHtml(data.answer) + '</p>';
-                    var holder = document.createElement('div');
-                    body.appendChild(holder);
-                    showExamplesInto(data.examples || []);
-                    return;
-                }
-
-                var html = '<div class="ask-answer' + (data.kind === 'text' || data.kind === 'none' ? ' ask-answer--text' : '') + '">'
-                    + escapeHtml(data.answer) + '</div>';
-
-                if (data.detail) html += '<div class="ask-detail">' + escapeHtml(data.detail) + '</div>';
-
-                if (data.link) {
-                    html += '<a class="ask-link" href="' + escapeHtml(data.link.url) + '">'
-                        + escapeHtml(data.link.label) + '</a>';
-                }
-
-                body.innerHTML = html;
+            function drawAsked(text) {
+                var el = bubble('asked');
+                el.textContent = text;
+                thread.appendChild(el);
             }
 
-            function showExamplesInto(examples) {
+            function drawExamples(list) {
                 var wrap = document.createElement('div');
                 wrap.className = 'ask-examples';
 
-                examples.forEach(function (e) {
-                    var button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = 'ask-example';
-                    button.textContent = e;
-                    wrap.appendChild(button);
+                (list || []).forEach(function (text) {
+                    var chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = 'ask-example';
+                    chip.textContent = text;
+                    wrap.appendChild(chip);
                 });
 
-                body.appendChild(wrap);
+                thread.appendChild(wrap);
             }
 
-            function ask() {
-                var q = input.value.trim();
+            function drawAnswer(data) {
+                var el = bubble('said');
 
-                if (q === '') { showExamples(); return; }
-                if (q === asked) return;
+                if (data.kind === 'unknown' || data.kind === 'note') {
+                    var note = document.createElement('p');
+                    note.className = 'ask-note';
+                    note.textContent = data.answer;
+                    el.appendChild(note);
+                    thread.appendChild(el);
+                    drawExamples(data.examples && data.examples.length ? data.examples : EXAMPLES);
+                    return;
+                }
 
-                asked = q;
-                body.innerHTML = '<p class="ask-working">' + escapeHtml(@json(__('Looking…'))) + '</p>';
+                var headline = document.createElement('div');
+                headline.className = 'ask-answer'
+                    + (data.kind === 'text' || data.kind === 'none' ? ' ask-answer--text' : '');
+                headline.textContent = data.answer;
+                el.appendChild(headline);
+
+                if (data.detail) {
+                    var detail = document.createElement('div');
+                    detail.className = 'ask-detail';
+                    detail.textContent = data.detail;
+                    el.appendChild(detail);
+                }
+
+                if (data.link && data.link.url) {
+                    var link = document.createElement('a');
+                    link.className = 'ask-link';
+                    link.href = data.link.url;
+                    link.textContent = data.link.label || data.link.url;
+                    el.appendChild(link);
+                }
+
+                thread.appendChild(el);
+            }
+
+            function drawTurn(turn) {
+                if (turn.role === 'asked') drawAsked(turn.text);
+                else if (turn.role === 'hello') { drawHello(); }
+                else drawAnswer(turn.data);
+            }
+
+            function drawHello() {
+                var el = bubble('said');
+                var note = document.createElement('p');
+                note.className = 'ask-note';
+                note.textContent = SAY.hello;
+                el.appendChild(note);
+                thread.appendChild(el);
+                drawExamples(EXAMPLES);
+            }
+
+            function redraw() {
+                thread.innerHTML = '';
+                if (!turns.length) { drawHello(); return; }
+                turns.forEach(drawTurn);
+            }
+
+            function toBottom() { thread.scrollTop = thread.scrollHeight; }
+
+            /* ---- opening and closing ------------------------------------ */
+
+            function open() {
+                panel.hidden = false;
+                fab.classList.add('is-open');
+                fab.setAttribute('aria-expanded', 'true');
+                redraw();
+                toBottom();
+                input.focus();
+            }
+
+            function close() {
+                panel.hidden = true;
+                fab.classList.remove('is-open');
+                fab.setAttribute('aria-expanded', 'false');
+            }
+
+            /* ---- asking -------------------------------------------------- */
+
+            function ask(question) {
+                var q = (question || '').trim();
+                if (q === '' || busy) return;
+
+                busy = true;
+                input.value = '';
+
+                turns.push({ role: 'asked', text: q });
+                drawAsked(q);
+
+                var waiting = bubble('said');
+                waiting.classList.add('ask-turn--waiting');
+                waiting.textContent = SAY.looking;
+                thread.appendChild(waiting);
+                toBottom();
 
                 fetch(url + '?q=' + encodeURIComponent(q), {
                     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
@@ -126,42 +231,58 @@
                 })
                     .then(function (r) { return r.ok ? r.json() : null; })
                     .then(function (data) {
-                        if (data) show(data);
-                        else body.innerHTML = '<p class="ask-hint">' + escapeHtml(@json(__('Something went wrong. Please try again.'))) + '</p>';
+                        waiting.remove();
+
+                        if (!data) data = { kind: 'note', answer: SAY.broke, examples: EXAMPLES };
+
+                        turns.push({ role: 'said', data: data });
+                        turns = turns.slice(-LIMIT);
+                        remember();
+
+                        drawAnswer(data);
+                        toBottom();
                     })
                     .catch(function () {
-                        body.innerHTML = '<p class="ask-hint">' + escapeHtml(@json(__('Something went wrong. Please try again.'))) + '</p>';
-                    });
+                        waiting.remove();
+                        var data = { kind: 'note', answer: SAY.broke, examples: EXAMPLES };
+                        turns.push({ role: 'said', data: data });
+                        remember();
+                        drawAnswer(data);
+                        toBottom();
+                    })
+                    .then(function () { busy = false; input.focus(); });
             }
 
-            input.addEventListener('input', function () {
-                clearTimeout(waiting);
-                waiting = setTimeout(ask, 280);
+            /* ---- wiring --------------------------------------------------
+               The chips are drawn and redrawn, so the thread listens for
+               them rather than each one listening for itself. */
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                ask(input.value);
             });
 
-            input.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') { clearTimeout(waiting); ask(); }
+            thread.addEventListener('click', function (e) {
+                var chip = e.target.closest('.ask-example');
+                if (chip) ask(chip.textContent);
             });
 
-            body.addEventListener('click', function (e) {
-                var example = e.target.closest('.ask-example');
-                if (!example) return;
-                input.value = example.textContent;
-                asked = '';
-                ask();
+            fab.addEventListener('click', function () {
+                panel.hidden ? open() : close();
             });
 
-            document.getElementById('ask-open').addEventListener('click', open);
             document.getElementById('ask-close').addEventListener('click', close);
-            panel.addEventListener('click', function (e) { if (e.target === panel) close(); });
 
             document.addEventListener('keydown', function (e) {
                 if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
                     e.preventDefault();
                     panel.hidden ? open() : close();
+                    return;
                 }
                 if (e.key === 'Escape' && !panel.hidden) close();
             });
+
+            recall();
         })();
     </script>
     @endpush

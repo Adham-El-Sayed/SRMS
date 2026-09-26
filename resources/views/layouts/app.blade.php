@@ -553,116 +553,216 @@
 
         /* --- Small screens ----------------------------------------------- */
 
-        /* --- The question box ------------------------------------------
+        /* --- The assistant ------------------------------------------------
            These live here rather than in the partial: the partial is
            included while the body renders, by which time the head's
            style stack has already been written out and anything pushed
-           to it is dropped on the floor. */
+           to it is dropped on the floor.
+
+           Placement uses logical properties throughout, so the bubble
+           sits in the bottom-left corner in Arabic and the bottom-right
+           in English without a second set of rules. */
 
         .sr-only {
             position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
             overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
         }
 
-        .ask-open {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 7px 10px 7px 12px;
-            border-radius: 100px;
-            background: rgba(255, 255, 255, .07);
-            border: 1px solid rgba(255, 255, 255, .1);
-            color: #CBBBA8;
-            font: inherit; font-size: 13px; font-weight: 600;
+        .ask-fab {
+            position: fixed; z-index: 91;
+            inset-block-end: 22px; inset-inline-end: 22px;
+            display: inline-flex; align-items: center; gap: 9px;
+            padding: 12px 18px 12px 15px;
+            border: none; border-radius: 100px;
+            background: var(--ink); color: #FBF5EE;
+            font: inherit; font-size: 14px; font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 14px 30px -10px rgba(36, 29, 24, .55);
+            transition: transform .18s cubic-bezier(.2, .7, .3, 1), box-shadow .18s ease;
+        }
+
+        .ask-fab:hover { transform: translateY(-2px); box-shadow: 0 18px 34px -10px rgba(36, 29, 24, .6); }
+        .ask-fab:active { transform: translateY(0); }
+        .ask-fab svg { width: 21px; height: 21px; flex-shrink: 0; }
+        .ask-fab__shut { display: none; }
+
+        .ask-fab.is-open .ask-fab__talk { display: none; }
+        .ask-fab.is-open .ask-fab__shut { display: block; }
+        .ask-fab.is-open .ask-fab__label { display: none; }
+        .ask-fab.is-open { padding: 12px; }
+
+        .ask {
+            position: fixed; z-index: 90;
+            inset-block-end: 84px; inset-inline-end: 22px;
+            width: min(calc(100vw - 44px), 380px);
+            height: min(calc(100vh - 128px), 540px);
+            display: flex; flex-direction: column;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            color: var(--ink);
+            box-shadow: 0 30px 70px -24px rgba(36, 29, 24, .5);
+            overflow: hidden;
+            animation: ask-in .18s cubic-bezier(.2, .7, .3, 1);
+        }
+
+        body .ask[hidden] { display: none; }
+
+        @keyframes ask-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
+
+        .ask__head {
+            display: flex; align-items: center; gap: 10px;
+            padding: 13px 14px;
+            border-bottom: 1px solid var(--line);
+            background: var(--surface-sunk);
+            flex-shrink: 0;
+        }
+
+        .ask__avatar {
+            width: 32px; height: 32px; flex-shrink: 0;
+            display: grid; place-items: center;
+            border-radius: 10px;
+            background: var(--ink); color: #FBF5EE;
+            font-family: var(--font-display); font-size: 15px; font-weight: 700;
+        }
+
+        .ask__who { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+        .ask__who strong { font-size: 14px; font-weight: 600; }
+        .ask__who small { font-size: 11.5px; color: var(--muted); }
+
+        .ask__close {
+            flex-shrink: 0;
+            width: 28px; height: 28px;
+            display: grid; place-items: center;
+            border: none; border-radius: 8px;
+            background: none; color: var(--muted);
             cursor: pointer;
             transition: background-color .16s ease, color .16s ease;
         }
 
-        .ask-open:hover { background: rgba(255, 255, 255, .12); color: #F3EADF; }
-        .ask-open svg { width: 15px; height: 15px; }
+        .ask__close:hover { background: var(--line); color: var(--ink); }
+        .ask__close svg { width: 16px; height: 16px; }
 
-        .ask-open kbd {
-            font: inherit; font-size: 10.5px; font-weight: 700;
-            padding: 2px 6px; border-radius: 5px;
-            background: rgba(255, 255, 255, .1);
-            color: #A2907F;
+        .ask__thread {
+            flex: 1; min-height: 0;
+            overflow-y: auto;
+            padding: 16px 14px;
+            display: flex; flex-direction: column; gap: 10px;
+            scroll-behavior: smooth;
         }
 
-        .ask {
-            position: fixed; inset: 0; z-index: 90;
-            display: flex; align-items: flex-start; justify-content: center;
-            padding: 12vh 18px 18px;
-            background: rgba(36, 29, 24, .55);
-            backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+        .ask-turn {
+            max-width: 86%;
+            padding: 11px 14px;
+            border-radius: 16px;
+            font-size: 14px; line-height: 1.55;
+            animation: ask-turn-in .2s cubic-bezier(.2, .7, .3, 1);
         }
 
-        .ask[hidden] { display: none; }
+        @keyframes ask-turn-in { from { opacity: 0; transform: translateY(6px); } }
 
-        .ask__box {
-            width: min(100%, 560px);
-            background: var(--surface);
-            border-radius: var(--r-lg, 18px);
-            box-shadow: 0 30px 70px -24px rgba(36, 29, 24, .5);
-            overflow: hidden;
-            animation: ask-in .16s cubic-bezier(.2, .7, .3, 1);
+        .ask-turn--asked {
+            align-self: flex-end;
+            background: var(--ink); color: #FBF5EE;
+            border-end-end-radius: 5px;
         }
 
-        @keyframes ask-in { from { opacity: 0; transform: translateY(-8px); } }
-
-        .ask__field {
-            display: flex; align-items: center; gap: 11px;
-            padding: 15px 16px;
-            border-bottom: 1px solid var(--line);
+        .ask-turn--said {
+            align-self: flex-start;
+            background: var(--surface-sunk);
+            border: 1px solid var(--line);
+            border-end-start-radius: 5px;
         }
 
-        .ask__field svg { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }
+        .ask-turn--waiting { color: var(--muted); font-size: 13.5px; }
 
-        body .ask__field input {
-            flex: 1; min-width: 0;
-            border: none; background: none; box-shadow: none; padding: 0;
-            font-family: var(--font-sans); font-size: 16px; color: var(--ink);
+        .ask-answer {
+            color: var(--ink);
+            font-family: var(--font-display);
+            font-size: 26px; font-weight: 600; line-height: 1.2;
         }
 
-        body .ask__field input:focus { outline: none; box-shadow: none; }
-
-        .ask__close {
-            border: none; border-radius: 6px;
-            padding: 4px 8px;
-            background: var(--surface-sunk); color: var(--muted);
-            font: inherit; font-size: 11px; font-weight: 700; cursor: pointer;
-        }
-
-        .ask__body { padding: 16px; max-height: 58vh; overflow-y: auto; }
-
-        .ask-answer { font-family: var(--font-display); font-size: 29px; font-weight: 600; line-height: 1.2; }
-        .ask-answer--text { font-size: 22px; }
-        .ask-detail { margin-top: 8px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.6; }
+        .ask-answer--text { font-size: 18px; line-height: 1.4; }
+        .ask-detail { margin-top: 7px; color: var(--ink-soft); font-size: 13px; line-height: 1.6; }
+        .ask-note { margin: 0; color: var(--ink-soft); font-size: 13.5px; line-height: 1.6; }
 
         .ask-link {
-            display: inline-flex; margin-top: 14px;
-            padding: 8px 14px; border-radius: 100px;
+            display: inline-flex; margin-top: 12px;
+            padding: 7px 13px; border-radius: 100px;
             background: var(--ink); color: #FBF5EE;
-            font-size: 13px; font-weight: 600; text-decoration: none;
+            font-size: 12.5px; font-weight: 600; text-decoration: none;
         }
 
-        .ask-hint { color: var(--muted); font-size: 13.5px; margin: 0 0 10px; }
-
-        .ask-examples { display: flex; flex-wrap: wrap; gap: 7px; }
+        .ask-examples { display: flex; flex-wrap: wrap; gap: 6px; align-self: flex-start; max-width: 100%; }
 
         body .ask-example {
-            padding: 7px 13px; border-radius: 100px;
-            background: var(--surface-sunk); border: 1px solid var(--line);
+            padding: 7px 12px; border-radius: 100px;
+            background: var(--surface);
+            border: 1px solid var(--line);
             color: var(--ink-soft);
-            font: inherit; font-size: 13px; cursor: pointer;
+            font: inherit; font-size: 12.5px; text-align: start; cursor: pointer;
             transition: border-color .16s ease, color .16s ease;
         }
 
         body .ask-example:hover { border-color: var(--accent); color: var(--accent-dark); }
 
-        .ask-working { color: var(--muted); font-size: 14px; }
+        .ask__compose {
+            display: flex; align-items: center; gap: 8px;
+            padding: 11px 12px;
+            border-top: 1px solid var(--line);
+            flex-shrink: 0;
+        }
+
+        body .ask__compose input {
+            flex: 1; min-width: 0;
+            padding: 10px 14px;
+            border: 1px solid var(--line); border-radius: 100px;
+            background: var(--surface-sunk); box-shadow: none;
+            font-family: var(--font-sans); font-size: 14px; color: var(--ink);
+        }
+
+        body .ask__compose input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: none;
+        }
+
+        .ask__send {
+            flex-shrink: 0;
+            width: 38px; height: 38px;
+            display: grid; place-items: center;
+            border: none; border-radius: 50%;
+            background: var(--ink); color: #FBF5EE;
+            cursor: pointer;
+            transition: opacity .16s ease;
+        }
+
+        .ask__send:hover { opacity: .85; }
+        .ask__send svg { width: 18px; height: 18px; }
+        /* The arrow points the way the language runs. */
+        [dir="rtl"] .ask__send svg { transform: scaleX(-1); }
 
         @media (max-width: 720px) {
-            .ask-open span, .ask-open kbd { display: none; }
-            .ask-open { padding: 8px; }
-            .ask { padding-top: 8vh; }
+            .ask-fab { inset-block-end: 16px; inset-inline-end: 16px; padding: 12px; }
+            .ask-fab__label { display: none; }
+
+            /* The sheet reaches the bottom of the screen on a phone, so the
+               bubble would sit on top of the send button. The header's own
+               close button is the way out here. */
+            .ask-fab.is-open { display: none; }
+
+            .ask {
+                inset-block-end: 0; inset-inline: 0;
+                width: 100%; height: min(86vh, 560px);
+                border-radius: 20px 20px 0 0;
+                border-inline: none; border-block-end: none;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .ask, .ask-turn { animation: none; }
+            .ask-fab { transition: none; }
+            .ask__thread { scroll-behavior: auto; }
         }
 
         @media (max-width: 720px) {
@@ -729,10 +829,6 @@
                 </a>
 
                 <div class="topbar__tools">
-                    {{-- Whoever runs the place can ask rather than go looking. --}}
-                    @if ($showAdmin)
-                        @include('partials.ask-box')
-                    @endif
 
                     @if ($isSuper)
                         {{-- A super admin works one side at a time and can move between them. --}}
@@ -855,6 +951,17 @@
             return Object.prototype.hasOwnProperty.call(window.SRMS_I18N, key) ? window.SRMS_I18N[key] : key;
         };
     </script>
+
+    {{-- Whoever runs the place can ask rather than go looking.
+
+         It sits here rather than in the top bar for two reasons: it is a
+         floating panel, and as a child of that dark strip it inherited the
+         pale text colour meant for the bar, which left the headline of every
+         answer almost invisible — and it has to come BEFORE the stack below,
+         because a @push into a stack that has already rendered is dropped. --}}
+    @if ($showAdmin)
+        @include('partials.ask-box')
+    @endif
 
     @stack('scripts')
 

@@ -641,5 +641,9 @@
     "Open since :time · cash :cash · card :card · :unpaid still to collect": "مفتوحة من :time · كاش :cash · فيزا :card · :unpaid لسه متحصّلش",
     "Nobody is marked absent today.": "محدش متسجّل غايب النهارده.",
     "No absences this month.": "مفيش غياب الشهر ده.",
-    "Salaries :base · bonuses :bonus · deductions :cut · for :month": "المرتبات :base · حوافز :bonus · خصومات :cut · لشهر :month"
+    "Salaries :base · bonuses :bonus · deductions :cut · for :month": "المرتبات :base · حوافز :bonus · خصومات :cut · لشهر :month",
+    "Ask SRMS": "اسأل SRMS",
+    "Takings, orders, staff — just ask": "الإيرادات والطلبات والموظفين — اسأل وبس",
+    "Ask me about the restaurant. Here are a few to start with:": "اسألني عن أي حاجة في المطعم. دي كام سؤال تبدأ بيهم:",
+    "Send": "إرسال"
 }
