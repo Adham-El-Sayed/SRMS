@@ -18,26 +18,31 @@ use Illuminate\Support\Facades\Storage;
 class DishArt
 {
     /** Two warm tones per family: the background fades from one to the other. */
+    /**
+     * Two tones per family, both dark: the photographs are all shot on a
+     * wooden table in low warm light, and a tile on bright flat colour sat
+     * beside one looked like it came from a different menu. Each family
+     * keeps its own hue, but at the photographs' depth.
+     */
     private const PALETTES = [
-        'pizza'   => ['#F3C878', '#D2641F'],
-        'pasta'   => ['#F2D08A', '#C07F2B'],
-        'salad'   => ['#CFE0AE', '#6E8A4E'],
-        'soup'    => ['#F2C08C', '#B4611F'],
-        'sandwich'=> ['#EFC489', '#A9662B'],
-        'chicken' => ['#F3CE92', '#B0762A'],
-        'seafood' => ['#BCD9E4', '#3F6C82'],
-        'dessert' => ['#F4CBB4', '#B0653E'],
-        'drink'   => ['#C6DDE6', '#3B6382'],
-        'starter' => ['#EFD3A0', '#9A6C24'],
-        'rice'    => ['#F0D7A4', '#B4883A'],
-        'steak'   => ['#E6B08A', '#8E4A2A'],
-        'icecream'=> ['#F6D7C6', '#B97A55'],
-        'cake'    => ['#EFC6AE', '#A45F3C'],
-        'bottle'  => ['#C9E2E9', '#35708A'],
-        'hotcup'  => ['#E8CBA8', '#8A5A2B'],
-        'juice'   => ['#F8CE8E', '#C8781A'],
+        'pizza'   => ['#6B3A1E', '#2E1A0F'],
+        'pasta'   => ['#6A4520', '#2C1B0E'],
+        'salad'   => ['#3F4F2C', '#1B2413'],
+        'soup'    => ['#6E3C1B', '#2D1A0C'],
+        'sandwich'=> ['#67421F', '#2B1A0E'],
+        'chicken' => ['#6B4520', '#2C1C0E'],
+        'seafood' => ['#2C4959', '#131F27'],
+        'dessert' => ['#663824', '#2A1710'],
+        'drink'   => ['#2B4657', '#121E26'],
+        'starter' => ['#644523', '#2A1D0F'],
+        'rice'    => ['#65491F', '#2A1E0E'],
+        'steak'   => ['#63331C', '#29150C'],
+        'icecream'=> ['#6A4433', '#2B1B15'],
+        'cake'    => ['#5F3526', '#281611'],
+        'bottle'  => ['#2A4A57', '#121F25'],
+        'hotcup'  => ['#5E3E1F', '#27190D'],
+        'juice'   => ['#6E4A17', '#2D1E0B'],
     ];
-
     /**
      * The line art itself, drawn on a 160 x 120 canvas. Kept simple on
      * purpose: at the size a dish card shows, detail turns to mud.
@@ -138,25 +143,38 @@ class DishArt
         // The same dish always gets the same tilt and wash.
         $hash = crc32($seed);
         $angle = ($hash % 60) - 30;
-        $shift = 26 + ($hash >> 6) % 34;
+        $shift = 30 + ($hash >> 6) % 42;   // where the light lands
         $glyph = self::glyph($family);
 
         $svg = <<<SVG
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 120" width="640" height="480" role="img">
             <defs>
+                <!-- Light falling from one side, the way it does in the photographs -->
                 <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1" gradientTransform="rotate({$angle} .5 .5)">
                     <stop offset="0%" stop-color="{$light}"/>
                     <stop offset="100%" stop-color="{$deep}"/>
                 </linearGradient>
+
+                <!-- The corners fall away, as they do under a soft window -->
+                <radialGradient id="vignette" cx="{$shift}%" cy="34%" r="78%">
+                    <stop offset="0%" stop-color="#FFE9C9" stop-opacity=".22"/>
+                    <stop offset="55%" stop-color="#000000" stop-opacity="0"/>
+                    <stop offset="100%" stop-color="#000000" stop-opacity=".46"/>
+                </radialGradient>
+
+                <!-- A suggestion of grain, so the surface is not dead flat -->
+                <pattern id="grain" width="160" height="7" patternUnits="userSpaceOnUse">
+                    <rect width="160" height="7" fill="none"/>
+                    <path d="M0 3.5h160" stroke="#000000" stroke-opacity=".10" stroke-width="1.4"/>
+                </pattern>
             </defs>
 
             <rect width="160" height="120" fill="url(#bg)"/>
+            <rect width="160" height="120" fill="url(#grain)"/>
+            <rect width="160" height="120" fill="url(#vignette)"/>
 
-            <circle cx="{$shift}" cy="18" r="34" fill="#FFFFFF" opacity=".08"/>
-            <circle cx="140" cy="108" r="28" fill="#2B1C10" opacity=".07"/>
-
-            <g fill="none" stroke="#FFF6EA" stroke-width="3.2"
-               stroke-linecap="round" stroke-linejoin="round" opacity=".92" color="#FFF6EA">
+            <g fill="none" stroke="#F6E3C6" stroke-width="3"
+               stroke-linecap="round" stroke-linejoin="round" opacity=".95" color="#F6E3C6">
                 {$glyph}
             </g>
         </svg>
