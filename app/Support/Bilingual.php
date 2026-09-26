@@ -45,6 +45,26 @@ class Bilingual
         return self::split($name)[0];
     }
 
+    /**
+     * The two halves in the order they were written, whatever the reader's
+     * language — for anything that has to be the same on every machine,
+     * such as the file name of a dish's photograph.
+     *
+     * @return array{0: string, 1: ?string}
+     */
+    public static function splitRaw(?string $name): array
+    {
+        $name = trim((string) $name);
+
+        if (! str_contains($name, self::SEPARATOR)) {
+            return [$name, null];
+        }
+
+        [$first, $second] = array_map('trim', explode(self::SEPARATOR, $name, 2));
+
+        return ($first === '' || $second === '') ? [$name, null] : [$first, $second];
+    }
+
     private static function isArabic(string $text): bool
     {
         return (bool) preg_match('/\p{Arabic}/u', $text);

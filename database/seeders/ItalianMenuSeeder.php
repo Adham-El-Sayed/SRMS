@@ -8,6 +8,7 @@ use App\Services\MenuService;
 use App\Support\DishArt;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * A full menu for an Italian restaurant of the kind you find in Alexandria:
@@ -58,7 +59,9 @@ class ItalianMenuSeeder extends Seeder
                         'sort_order' => $place + 1,
                         'is_active' => true,
                         'sold_out_at' => null,
-                        'image' => DishArt::make($dish[3] ?? $course['art'], $dish[0]),
+                        // A drawn tile only while the dish has no photograph;
+                        // re-running this must never paint over a real one.
+                        'image' => $this->pictureFor($dish[0], $dish[3] ?? $course['art']),
                     ]
                 );
             }
@@ -96,6 +99,16 @@ class ItalianMenuSeeder extends Seeder
             $this->command?->warn('Switched off: ' . $retired->pluck('name')->implode(', '));
         }
 
+    }
+
+    /** A photograph if one has been made for this dish, otherwise a drawing. */
+    private function pictureFor(string $name, string $family): string
+    {
+        $photo = 'menu/products/photo-' . MenuPhotoSeeder::slugFor($name) . '.jpg';
+
+        return Storage::disk('public')->exists($photo)
+            ? $photo
+            : DishArt::make($family, $name);
     }
 
     /** name · note · art family · [dish name, description, price, art?] */
