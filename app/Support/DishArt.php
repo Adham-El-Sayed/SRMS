@@ -29,6 +29,13 @@ class DishArt
         'dessert' => ['#F4CBB4', '#B0653E'],
         'drink'   => ['#C6DDE6', '#3B6382'],
         'starter' => ['#EFD3A0', '#9A6C24'],
+        'rice'    => ['#F0D7A4', '#B4883A'],
+        'steak'   => ['#E6B08A', '#8E4A2A'],
+        'icecream'=> ['#F6D7C6', '#B97A55'],
+        'cake'    => ['#EFC6AE', '#A45F3C'],
+        'bottle'  => ['#C9E2E9', '#35708A'],
+        'hotcup'  => ['#E8CBA8', '#8A5A2B'],
+        'juice'   => ['#F8CE8E', '#C8781A'],
     ];
 
     /**
@@ -74,6 +81,42 @@ class DishArt
                           <path d="M57 79h46"/>
                           <path d="M80 44v-6"/>
                           <circle cx="80" cy="33" r="6"/>',
+
+            // A bowl of rice with a spoon resting in it.
+            'rice' => '<path d="M44 64h72a36 36 0 0 1-72 0Z"/>
+                       <path d="M52 56c8-7 18-7 26 0M82 56c8-7 18-7 26 0"/>
+                       <path d="M112 44c9 0 13 9 9 16l-7 12"/>',
+
+            // A steak with grill marks.
+            'steak' => '<path d="M46 60c8-16 34-22 54-14 16 6 20 24 8 34-14 12-40 10-54-4-5-5-9-10-8-16Z"/>
+                        <path d="M62 56 78 72M78 52 94 68M94 50l14 14"/>',
+
+            // A cone with two scoops.
+            'icecream' => '<circle cx="70" cy="48" r="14"/>
+                           <circle cx="92" cy="48" r="14"/>
+                           <path d="M54 58h54l-27 46Z"/>',
+
+            // A round cake with a slice cut out.
+            'cake' => '<path d="M40 70a41 26 0 0 0 82 0Z"/>
+                       <path d="M40 70a41 26 0 0 1 82 0"/>
+                       <path d="M81 44v26l26 12"/>
+                       <path d="M81 44v-8"/>',
+
+            // A bottle with a cap.
+            'bottle' => '<path d="M70 34h22v12c0 6 8 8 8 18v38a6 6 0 0 1-6 6H68a6 6 0 0 1-6-6V64c0-10 8-12 8-18Z"/>
+                         <path d="M62 70h38"/>',
+
+            // A cup and saucer, steam rising.
+            'hotcup' => '<path d="M52 56h52v20a26 26 0 0 1-52 0Z"/>
+                         <path d="M104 62h10a9 9 0 0 1 0 18h-8"/>
+                         <path d="M42 104h74"/>
+                         <path d="M70 42c-5-6 5-9 0-15M88 42c-5-6 5-9 0-15"/>',
+
+            // A tall glass with a slice on the rim.
+            'juice' => '<path d="M60 40h42l-6 62H66Z"/>
+                        <path d="M64 58h34"/>
+                        <circle cx="104" cy="40" r="10"/>
+                        <path d="M104 30v20M94 40h20"/>',
 
             'drink' => '<path d="M58 44h44l-6 54H64Z"/>
                         <path d="M62 62h36"/>
