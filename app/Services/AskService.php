@@ -8,6 +8,7 @@ use App\Models\PayrollEntry;
 use App\Models\Product;
 use App\Models\Shift;
 use App\Models\User;
+use App\Support\Arithmetic;
 use App\Support\Bilingual;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -40,6 +41,8 @@ class AskService
     private const ABSENCE = ['غاب', 'غياب', 'غايب', 'غائب', 'absent', 'absence'];
     private const TODAY = ['نهارده', 'اليوم', 'today'];
     private const SALARY = ['مرتب', 'رواتب', 'راتب', 'salary', 'salaries', 'payroll'];
+    private const SHORTAGE = ['عجز', 'نقص', 'فرق', 'فائض', 'فايض', 'زياده', 'shortage', 'surplus', 'short'];
+    private const CANCELLED = ['ملغي', 'ملغيه', 'الغيت', 'اتلغت', 'cancel', 'cancelled', 'canceled'];
 
     /**
      * @return array{answer: string, detail: ?string, link: ?array, kind: string}
@@ -50,6 +53,14 @@ class AskService
 
         if ($q === '') {
             return $this->unknown();
+        }
+
+        // A sum is recognised by its shape, not by a word, so it is settled
+        // before the word matching starts. looksLikeSum wants digits AND an
+        // operator between them, so "كام طلب النهارده" — which has neither —
+        // carries on to the handler that counts orders.
+        if (Arithmetic::looksLikeSum($question) && ($sum = $this->sum($question))) {
+            return $sum;
         }
 
         foreach ($this->handlers() as $handler) {
@@ -77,6 +88,12 @@ class AskService
             __('Who is on shift'),
             __('What is finished in the kitchen'),
             __('Salaries this month'),
+            __('Cash shortage this month'),
+            __('Average order'),
+            __('Cancelled orders'),
+            __('Busiest day'),
+            __('Online orders'),
+            __('Calculate 15% of 1000'),
         ];
     }
 
@@ -87,6 +104,23 @@ class AskService
         return [
             // Order matters: the more specific questions come first, so
             // "revenue this month" is not caught by the one about today.
+
+            [self::SHORTAGE, fn ($q) => $this->cashDifference($q)],
+
+            [self::CANCELLED, fn () => $this->cancelled()],
+
+            [['متوسط', 'المتوسط', 'average', 'avg'], fn () => $this->averageOrder()],
+
+            [['ازحم', 'اكتر يوم', 'انشط', 'busiest', 'best day'], fn () => $this->busiestDay()],
+
+            [['اونلاين', 'دليفري', 'توصيل', 'الصاله', 'صاله', 'تيك اواي', 'سفري',
+              'online', 'delivery', 'dine', 'takeaway'], fn ($q) => $this->byType($q)],
+
+            [['كام موظف', 'عدد الموظفين', 'الموظفين', 'فريق', 'how many staff', 'staff', 'employees'],
+                fn () => $this->staffCount()],
+
+            [['ترابيز', 'طاوله', 'طاولات', 'table', 'tables'], fn () => $this->tables()],
+
             [['امس', 'مبارح', 'yesterday'], fn () => $this->takings(
                 today()->subDay()->startOfDay(), today()->subDay()->endOfDay(), __('Yesterday')
             )],
@@ -365,6 +399,240 @@ class AskService
                 'month' => now()->translatedFormat('F Y'),
             ]),
             'link' => ['label' => __('Employee Records'), 'url' => route('employees.index')],
+        ];
+    }
+
+    /** "احسبلي 15% من 7000" — the arithmetic is done in App\Support\Arithmetic. */
+    private function sum(string $question): ?array
+    {
+        $result = Arithmetic::evaluate($question);
+
+        if ($result === null) {
+            return null;
+        }
+
+        $shown = floor($result) == $result
+            ? number_format($result, 0)
+            : rtrim(rtrim(number_format($result, 4, '.', ','), '0'), '.');
+
+        return [
+            'kind' => 'text',
+            'answer' => $shown,
+            'detail' => null,
+            'link' => null,
+        ];
+    }
+
+    /**
+     * What the drawer held against what the system expected.
+     *
+     * A shift counts only once it has been closed and counted: an open one
+     * has nothing to compare against yet. Positive is a surplus, negative
+     * is a shortage, and the two are reported separately because a month
+     * that is 200 over and 200 short is not a month that balanced.
+     */
+    private function cashDifference(string $q): array
+    {
+        $shifts = Shift::with('user')
+            ->where('status', 'closed')
+            ->whereNotNull('counted_cash')
+            ->when(!$this->mentions($q, ['كل', 'اجمالي', 'all', 'total', 'ever']),
+                fn ($rows) => $rows->whereYear('closed_at', now()->year)->whereMonth('closed_at', now()->month))
+            ->orderByDesc('closed_at')
+            ->get()
+            ->map(fn ($s) => ['shift' => $s, 'diff' => $s->cashDifference()])
+            ->filter(fn ($row) => $row['diff'] !== null);
+
+        $off = $shifts->filter(fn ($row) => abs($row['diff']) >= 0.01);
+
+        if ($off->isEmpty()) {
+            return [
+                'kind' => 'none',
+                'answer' => $shifts->isEmpty()
+                    ? __('No shift has been counted yet.')
+                    : __('Every counted shift balanced.'),
+                'detail' => null,
+                'link' => ['label' => __('Shift'), 'url' => route('shifts.current')],
+            ];
+        }
+
+        $short = abs($off->where('diff', '<', 0)->sum('diff'));
+        $over = $off->where('diff', '>', 0)->sum('diff');
+
+        $lines = $off->take(6)->map(fn ($row) => ($row['shift']->user?->name ?? '—')
+            . ' ' . $row['shift']->closed_at?->translatedFormat('j M')
+            . ' — ' . ($row['diff'] < 0 ? '−' : '+') . $this->money(abs($row['diff'])));
+
+        return [
+            'kind' => 'money',
+            'answer' => $this->money($short),
+            'detail' => __('Shortage :short · Surplus :over · across :count counted shifts', [
+                'short' => $this->money($short),
+                'over' => $this->money($over),
+                'count' => $off->count(),
+            ]) . ' · ' . $lines->implode(' · '),
+            'link' => ['label' => __('Shift'), 'url' => route('shifts.current')],
+        ];
+    }
+
+    private function cancelled(): array
+    {
+        $orders = Order::where('status', 'cancelled')
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->get();
+
+        if ($orders->isEmpty()) {
+            return [
+                'kind' => 'none',
+                'answer' => __('No orders were cancelled this month.'),
+                'detail' => null,
+                'link' => ['label' => __('Orders'), 'url' => route('kitchen.orders')],
+            ];
+        }
+
+        return [
+            'kind' => 'money',
+            'answer' => (string) $orders->count(),
+            'detail' => __('Worth :amount this month', ['amount' => $this->money((float) $orders->sum('total'))]),
+            'link' => ['label' => __('Orders'), 'url' => route('kitchen.orders')],
+        ];
+    }
+
+    /** Cancelled orders are left out: they are not what an average basket looks like. */
+    private function averageOrder(): array
+    {
+        $orders = Order::where('status', '!=', 'cancelled')
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month);
+
+        $count = (clone $orders)->count();
+
+        if ($count === 0) {
+            return [
+                'kind' => 'none',
+                'answer' => __('No orders this month yet.'),
+                'detail' => null,
+                'link' => ['label' => __('Reports'), 'url' => route('reports.monthly')],
+            ];
+        }
+
+        return [
+            'kind' => 'money',
+            'answer' => $this->money((float) $orders->sum('total') / $count),
+            'detail' => __('Average of :count orders this month', ['count' => $count]),
+            'link' => ['label' => __('Reports'), 'url' => route('reports.monthly')],
+        ];
+    }
+
+    private function busiestDay(): array
+    {
+        $days = Order::where('status', '!=', 'cancelled')
+            ->where('created_at', '>=', now()->subDays(30))
+            ->get()
+            ->groupBy(fn ($o) => $o->created_at->toDateString())
+            ->map(fn ($rows) => ['orders' => $rows->count(), 'total' => (float) $rows->sum('total')])
+            ->sortByDesc('orders');
+
+        if ($days->isEmpty()) {
+            return [
+                'kind' => 'none',
+                'answer' => __('No orders in the last 30 days.'),
+                'detail' => null,
+                'link' => ['label' => __('Reports'), 'url' => route('reports.monthly')],
+            ];
+        }
+
+        $day = $days->keys()->first();
+        $top = $days->first();
+
+        return [
+            'kind' => 'text',
+            'answer' => \Illuminate\Support\Carbon::parse($day)->translatedFormat('l j M'),
+            'detail' => __(':count orders · :amount · busiest of the last 30 days', [
+                'count' => $top['orders'],
+                'amount' => $this->money($top['total']),
+            ]),
+            'link' => ['label' => __('Reports'), 'url' => route('reports.monthly')],
+        ];
+    }
+
+    /** Which counter the orders came over, this month. */
+    private function byType(string $q): array
+    {
+        $wanted = match (true) {
+            $this->mentions($q, ['دليفري', 'توصيل', 'delivery']) => 'delivery',
+            $this->mentions($q, ['اونلاين', 'online']) => 'online',
+            $this->mentions($q, ['تيك اواي', 'سفري', 'takeaway']) => 'takeaway',
+            default => 'dine_in',
+        };
+
+        $labels = [
+            'delivery' => __('Delivery'), 'online' => __('Online'),
+            'takeaway' => __('Takeaway'), 'dine_in' => __('Dine in'),
+        ];
+
+        $orders = Order::where('order_type', $wanted)
+            ->where('status', '!=', 'cancelled')
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month);
+
+        $count = (clone $orders)->count();
+
+        return [
+            'kind' => 'money',
+            'answer' => $this->money((float) $orders->sum('total')),
+            'detail' => __(':label · :count orders this month', ['label' => $labels[$wanted], 'count' => $count]),
+            'link' => ['label' => __('Orders'), 'url' => route('kitchen.orders')],
+        ];
+    }
+
+    private function staffCount(): array
+    {
+        $people = User::with('roles')->get()->filter(fn ($u) => $u->getRoleNames()->isNotEmpty());
+
+        if ($people->isEmpty()) {
+            return [
+                'kind' => 'none',
+                'answer' => __('Nobody has a role yet.'),
+                'detail' => null,
+                'link' => ['label' => __('Staff'), 'url' => route('staff.index')],
+            ];
+        }
+
+        $byRole = $people->groupBy(fn ($u) => $u->getRoleNames()->first())
+            ->map->count()
+            ->map(fn ($n, $role) => \App\Support\Access::roleLabel($role) . ' ' . $n);
+
+        return [
+            'kind' => 'money',
+            'answer' => (string) $people->count(),
+            'detail' => $byRole->implode(' · '),
+            'link' => ['label' => __('Staff'), 'url' => route('staff.index')],
+        ];
+    }
+
+    private function tables(): array
+    {
+        $tables = \App\Models\RestaurantTable::all();
+
+        if ($tables->isEmpty()) {
+            return [
+                'kind' => 'none',
+                'answer' => __('No tables have been set up.'),
+                'detail' => null,
+                'link' => ['label' => __('Tables'), 'url' => route('tables.index')],
+            ];
+        }
+
+        $byStatus = $tables->groupBy('status')->map->count()
+            ->map(fn ($n, $status) => __(ucfirst($status)) . ' ' . $n);
+
+        return [
+            'kind' => 'money',
+            'answer' => (string) $tables->count(),
+            'detail' => $byStatus->implode(' · '),
+            'link' => ['label' => __('Tables'), 'url' => route('tables.index')],
         ];
     }
 
