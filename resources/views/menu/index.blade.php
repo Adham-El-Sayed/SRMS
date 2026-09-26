@@ -294,6 +294,7 @@
 
 @push('styles')
 <link rel="stylesheet" href="{{ asset('css/srms-menu.css') }}?v={{ @filemtime(public_path('css/srms-menu.css')) }}">
+<script src="{{ asset('js/srms-menu-motion.js') }}?v={{ @filemtime(public_path('js/srms-menu-motion.js')) }}" defer></script>
 @endpush
 
 @push('scripts')

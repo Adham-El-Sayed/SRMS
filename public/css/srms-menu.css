@@ -336,3 +336,87 @@ html[lang="ar"] .menu-hero__kicker { letter-spacing: 0; text-transform: none; fo
     .sheet { align-items: center; padding: 20px; }
     .sheet__box { border-radius: var(--r-lg); max-height: 86vh; }
 }
+
+/* ==================================================================
+   Movement
+   ------------------------------------------------------------------
+   A restaurant's menu should feel calm. Everything here is short
+   (under a third of a second), travels a short distance, and happens
+   once. Nothing loops, nothing bounces, nothing waits on a delay long
+   enough to notice.
+
+   srms-menu-motion.js adds .will-settle before a card is in view and
+   .has-settled when it arrives; .is-calm means the reader has asked
+   their system for less motion, and then none of this applies.
+   ================================================================== */
+
+.will-settle {
+    opacity: 0;
+    transform: translateY(14px);
+}
+
+.has-settled {
+    opacity: 1;
+    transform: none;
+    transition: opacity .34s ease, transform .34s cubic-bezier(.2, .7, .3, 1);
+}
+
+/* A course heading leads its dishes in by a fraction. */
+.menu-section__head.will-settle { transform: translateY(10px); }
+
+/* The picture holds still, then drifts closer while you look at it —
+   slow enough to read as depth rather than as an effect. */
+.dish__image img { transition: transform .7s cubic-bezier(.2, .7, .3, 1); }
+.dish:hover .dish__image img { transform: scale(1.05); }
+
+/* Pressing something should feel like pressing something. */
+body .add-button:active,
+body .quantity-button:active,
+body .filter-chip:active { transform: translateY(1px) scale(.985); }
+
+body .add-button { transition: background-color .16s ease, color .16s ease, transform .09s ease; }
+
+/* The order bar arrives from below the fold, but never on first paint. */
+.cart-bar, .track-bar {
+    transition: transform .28s cubic-bezier(.2, .7, .3, 1), opacity .2s ease;
+}
+
+html.is-ready .cart-bar[hidden], html.is-ready .track-bar[hidden] {
+    display: block;
+    opacity: 0;
+    transform: translateY(120%);
+    pointer-events: none;
+}
+
+/* A count or a total that has just changed nods once. */
+.has-ticked { animation: tick .28s cubic-bezier(.2, .7, .3, 1); }
+
+@keyframes tick {
+    40% { transform: translateY(-2px) scale(1.06); }
+    100% { transform: none; }
+}
+
+.cart-bar__count, .cart-bar__total { display: inline-block; }
+
+/* The sheet's backdrop fades rather than snapping on. */
+.sheet { animation: veil .18s ease; }
+
+@keyframes veil { from { background: rgba(36, 29, 24, 0); } }
+
+/* ---------- when the reader has asked for less ---------- */
+
+html.is-calm .will-settle,
+html.is-calm .has-settled { opacity: 1; transform: none; transition: none; }
+
+html.is-calm .sheet,
+html.is-calm .sheet__box,
+html.is-calm .has-ticked { animation: none; }
+
+html.is-calm .dish:hover .dish__image img { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .will-settle, .has-settled { opacity: 1; transform: none; transition: none; }
+    .sheet, .sheet__box, .has-ticked { animation: none; }
+    .dish__image img, .dish:hover .dish__image img { transition: none; transform: none; }
+    .cart-bar, .track-bar { transition: none; }
+}
