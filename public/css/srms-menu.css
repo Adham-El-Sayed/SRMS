@@ -1,0 +1,422 @@
+/* ==================================================================
+   The guest menu, shared by the table page (/menu/{qr}) and the online
+   ordering page (/order). Both are read on a phone, usually one-handed:
+   generous tap targets, the order always one thumb away, and nothing
+   between the food and the guest.
+
+   Loaded before srms-theme.css, so the design system still governs.
+   ================================================================== */
+
+.menu-app { padding-bottom: 96px; }
+
+/* ---------- welcome ---------- */
+
+.menu-hero { padding: 28px 0 22px; }
+
+.menu-hero__kicker {
+    margin: 0 0 8px;
+    font-size: 11.5px; font-weight: 700;
+    letter-spacing: .14em; text-transform: uppercase;
+    color: var(--accent);
+}
+
+html[lang="ar"] .menu-hero__kicker { letter-spacing: 0; text-transform: none; font-size: 13px; }
+
+.menu-hero__title {
+    margin: 0 0 10px;
+    font-size: clamp(28px, 6vw, 40px);
+    line-height: 1.12;
+}
+
+.menu-hero__note { margin: 0; color: var(--muted); font-size: 15px; max-width: 46ch; line-height: 1.6; }
+
+/* ---------- section jump ---------- */
+
+.menu-tabs {
+    position: sticky; top: 0; z-index: 30;
+    display: flex; gap: 8px;
+    margin: 0 -16px 26px; padding: 12px 16px;
+    overflow-x: auto; scrollbar-width: none;
+    background: rgba(250, 246, 240, .94);
+    backdrop-filter: saturate(1.6) blur(10px);
+    -webkit-backdrop-filter: saturate(1.6) blur(10px);
+    border-bottom: 1px solid var(--line);
+}
+
+.menu-tabs::-webkit-scrollbar { display: none; }
+
+.menu-tab {
+    padding: 8px 15px; border-radius: 100px;
+    background: var(--surface); border: 1px solid var(--line-strong);
+    color: var(--ink-soft); text-decoration: none;
+    font-size: 13.5px; font-weight: 600; white-space: nowrap;
+    transition: background-color .16s ease, color .16s ease, border-color .16s ease;
+}
+
+.menu-tab:hover { border-color: var(--accent); color: var(--accent-dark); }
+
+/* ---------- a course ---------- */
+
+.menu-section { margin-bottom: 44px; scroll-margin-top: 72px; }
+
+.menu-section__head {
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 18px; padding-bottom: 14px;
+    border-bottom: 1px solid var(--line-strong);
+}
+
+.menu-section__image {
+    width: 54px; height: 54px; flex-shrink: 0;
+    object-fit: cover; border-radius: 12px;
+    border: 1px solid var(--line); box-shadow: var(--sh-1);
+}
+
+.menu-section__title { margin: 0; font-size: 22px; }
+.menu-section__note { margin: 3px 0 0; color: var(--muted); font-size: 13.5px; }
+
+/* ---------- a dish ---------- */
+
+.dish-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 16px;
+}
+
+.dish {
+    display: flex; flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    overflow: hidden;
+    box-shadow: var(--sh-1);
+    transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+}
+
+.dish:hover { box-shadow: var(--sh-3); border-color: var(--line-strong); transform: translateY(-2px); }
+
+.dish__image { aspect-ratio: 4 / 3; background: var(--surface-sunk); overflow: hidden; }
+.dish__image img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s cubic-bezier(.2,.7,.3,1); }
+.dish:hover .dish__image img { transform: scale(1.04); }
+
+.dish__image-placeholder {
+    width: 100%; height: 100%;
+    display: grid; place-items: center;
+    font-size: 30px; color: var(--muted);
+    background-image: repeating-linear-gradient(45deg, rgba(138,125,113,.05) 0 8px, transparent 8px 16px);
+}
+
+.dish__body { display: flex; flex-direction: column; flex: 1; padding: 14px 16px 16px; }
+.dish__name { margin: 0 0 4px; font-size: 16.5px; }
+/* The other language, kept quiet under the name. */
+.dish__name-alt, .menu-section__title-alt {
+    display: block;
+    font-family: var(--font-sans);
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0;
+}
+
+.dish__name-alt { font-size: 12px; margin-top: 2px; }
+.menu-section__title-alt { font-size: 13px; margin-top: 1px; }
+
+.dish__note { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+
+.dish__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; }
+.dish__price { font-family: var(--font-display); font-size: 17px; font-weight: 600; color: var(--accent); }
+.dish__price small { font-size: 11.5px; font-weight: 600; color: var(--muted); }
+
+.add-button { padding: 9px 16px; font-size: 13.5px; border-radius: 100px; }
+
+/* Run out in the kitchen: still on the menu, plainly not available */
+.dish.is-sold-out { opacity: .72; }
+.dish.is-sold-out .dish__image img { filter: grayscale(.85); }
+.dish.is-sold-out .dish__price { color: var(--muted); }
+
+.dish__image { position: relative; }
+
+.dish__sold-out {
+    position: absolute; inset-inline-start: 10px; top: 10px;
+    padding: 5px 11px; border-radius: 100px;
+    background: rgba(36, 29, 24, .82); color: #FBF5EE;
+    font-size: 11.5px; font-weight: 700;
+}
+
+.dish__unavailable {
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    padding: 9px 0;
+}
+
+/* ---------- the bar that follows you ---------- */
+
+.cart-bar {
+    position: fixed; inset-inline: 0; bottom: 0; z-index: 60;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    background: linear-gradient(to top, var(--paper) 62%, rgba(250,246,240,0));
+    pointer-events: none;
+}
+
+.cart-bar[hidden] { display: none; }
+
+.cart-bar__button {
+    pointer-events: auto;
+    display: flex; align-items: center; gap: 12px;
+    width: min(100%, 560px); margin: 0 auto;
+    padding: 14px 18px; border: 0; border-radius: 100px;
+    background: var(--accent); color: #fff;
+    font-family: inherit; font-size: 15px; font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 28px -10px rgba(189, 78, 44, .85);
+    transition: background-color .16s ease, transform .08s ease;
+}
+
+.cart-bar__button:hover { background: var(--accent-dark); }
+.cart-bar__button:active { transform: translateY(1px); }
+
+.cart-bar__count {
+    display: grid; place-items: center;
+    min-width: 26px; height: 26px; padding: 0 7px;
+    border-radius: 100px; background: rgba(255,255,255,.22);
+    font-size: 13px; font-weight: 700;
+}
+
+.cart-bar__label { flex: 1; text-align: start; }
+.cart-bar__total { font-variant-numeric: tabular-nums; }
+
+/* ---------- sheets ---------- */
+
+.sheet {
+    position: fixed; inset: 0; z-index: 70;
+    background: rgba(36, 29, 24, .5);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+    display: flex; align-items: flex-end; justify-content: center;
+    padding: 0;
+}
+
+.sheet[hidden] { display: none; }
+
+.sheet__box {
+    display: flex; flex-direction: column;
+    width: min(100%, 560px); max-height: 92vh;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--r-lg) var(--r-lg) 0 0;
+    box-shadow: 0 -20px 60px -24px rgba(36,29,24,.5);
+    animation: sheet-up .22s cubic-bezier(.2,.7,.3,1);
+}
+
+@keyframes sheet-up { from { transform: translateY(14px); opacity: .6; } to { transform: none; opacity: 1; } }
+
+.sheet__head {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 20px 20px 14px; border-bottom: 1px solid var(--line);
+}
+
+.sheet__head h2 { margin: 0; font-size: 20px; }
+.sheet__head .muted-text { margin: 3px 0 0; font-size: 13px; }
+.sheet__head .order-count { margin-inline-start: auto; }
+
+.sheet__close {
+    background: transparent; border: 0; cursor: pointer;
+    font-size: 26px; line-height: 1; color: var(--muted);
+    padding: 0 4px; margin-inline-start: 4px;
+}
+
+.sheet__close:hover { color: var(--ink); }
+
+.sheet__body { flex: 1; overflow-y: auto; padding: 4px 20px; -webkit-overflow-scrolling: touch; }
+.sheet__foot { padding: 14px 20px calc(20px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: #FDFBF8; }
+
+/* ---------- lines inside a sheet ---------- */
+
+.order-item {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 14px 0; border-bottom: 1px solid var(--line);
+}
+
+.order-item-info { flex: 1; min-width: 45%; }
+.order-item-name { font-weight: 600; font-size: 14.5px; }
+.order-item-price { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.item-subtotal { font-family: var(--font-display); font-size: 15px; min-width: 88px; text-align: end; }
+.item-notes { flex-basis: 100%; margin-top: 4px; font-size: 13px; padding: 9px 11px; }
+
+/* Removing a line is a small, quiet control — not a button competing
+   with the order itself. */
+.sheet .remove-button {
+    order: 5;
+    width: 30px; height: 30px; padding: 0;
+    display: inline-grid; place-items: center;
+    font-size: 0; line-height: 0;
+    border-radius: 50%;
+    background: transparent; border-color: transparent;
+    color: var(--muted);
+}
+
+.sheet .remove-button::before { content: "\00d7"; font-size: 19px; line-height: 1; }
+.sheet .remove-button:hover { background: var(--danger-soft); color: var(--danger); border-color: transparent; }
+
+.order-item .quantity-controls { order: 2; }
+.item-subtotal { order: 3; }
+
+.empty-order { text-align: center; padding: 36px 10px; color: var(--muted); }
+.empty-order-icon { font-size: 30px; margin-bottom: 8px; }
+.empty-order p { margin: 0 0 4px; color: var(--ink); font-weight: 600; }
+.empty-order span { font-size: 13.5px; }
+
+.order-total {
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: var(--font-display); font-size: 19px; font-weight: 600;
+    margin-bottom: 14px;
+}
+
+.who { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.who input { width: 100%; }
+
+.pay-choice { display: flex; gap: 10px; margin-bottom: 14px; }
+
+.pay-choice label {
+    flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 11px 12px; border-radius: var(--r-sm);
+    border: 1px solid var(--line-strong); background: var(--surface);
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    transition: border-color .16s ease, background-color .16s ease;
+}
+
+.pay-choice label:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-dark); }
+
+.submit-button { width: 100%; padding: 14px; font-size: 15px; }
+.submit-button.call-waiter { background: var(--accent); margin-top: 10px; }
+
+#message:not(:empty), #submitted-message:not(:empty) { margin-top: 12px; }
+
+/* ---------- the visa form ---------- */
+
+.payment-modal-overlay {
+    position: fixed; inset: 0; z-index: 80;
+    align-items: center; justify-content: center; padding: 18px;
+    background: rgba(36, 29, 24, .55);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+}
+
+.payment-modal {
+    width: min(100%, 420px); max-height: 92vh; overflow-y: auto;
+    background: var(--surface); border-radius: var(--r-lg);
+    box-shadow: 0 24px 60px -20px rgba(36,29,24,.45);
+    padding: 24px;
+}
+
+.payment-modal h2 { margin: 0 0 4px; font-size: 21px; }
+.payment-modal-amount { font-family: var(--font-display); font-size: 26px; color: var(--accent); margin-bottom: 16px; }
+.payment-field { margin-bottom: 14px; }
+.payment-field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.payment-modal .payment-modal-error { display: none; }
+.payment-modal .payment-modal-error.visible { display: flex; }
+
+.scan-card-button { width: 100%; margin-bottom: 16px; }
+.camera-scan-container { margin-bottom: 16px; }
+.camera-scan-container video { width: 100%; border-radius: var(--r-sm); display: block; }
+.camera-scan-frame { position: relative; margin-top: -60px; height: 60px; }
+
+.modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+.modal-actions button { flex: 1; }
+
+/* ---------- phones ---------- */
+
+@media (max-width: 620px) {
+    .dish-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+    .dish__body { padding: 12px 13px 14px; }
+    .dish__name { font-size: 15px; }
+    .dish__note { display: none; }
+    .dish__foot { flex-direction: column; align-items: stretch; gap: 8px; }
+    .add-button { width: 100%; justify-content: center; }
+    .menu-section__image { width: 44px; height: 44px; }
+    .who { grid-template-columns: 1fr; }
+}
+
+@media (min-width: 900px) {
+    .sheet { align-items: center; padding: 20px; }
+    .sheet__box { border-radius: var(--r-lg); max-height: 86vh; }
+}
+
+/* ==================================================================
+   Movement
+   ------------------------------------------------------------------
+   A restaurant's menu should feel calm. Everything here is short
+   (under a third of a second), travels a short distance, and happens
+   once. Nothing loops, nothing bounces, nothing waits on a delay long
+   enough to notice.
+
+   srms-menu-motion.js adds .will-settle before a card is in view and
+   .has-settled when it arrives; .is-calm means the reader has asked
+   their system for less motion, and then none of this applies.
+   ================================================================== */
+
+.will-settle {
+    opacity: 0;
+    transform: translateY(14px);
+}
+
+.has-settled {
+    opacity: 1;
+    transform: none;
+    transition: opacity .34s ease, transform .34s cubic-bezier(.2, .7, .3, 1);
+}
+
+/* A course heading leads its dishes in by a fraction. */
+.menu-section__head.will-settle { transform: translateY(10px); }
+
+/* The picture holds still, then drifts closer while you look at it —
+   slow enough to read as depth rather than as an effect. */
+.dish__image img { transition: transform .7s cubic-bezier(.2, .7, .3, 1); }
+.dish:hover .dish__image img { transform: scale(1.05); }
+
+/* Pressing something should feel like pressing something. */
+body .add-button:active,
+body .quantity-button:active,
+body .filter-chip:active { transform: translateY(1px) scale(.985); }
+
+body .add-button { transition: background-color .16s ease, color .16s ease, transform .09s ease; }
+
+/* The order bar arrives from below the fold, but never on first paint. */
+.cart-bar, .track-bar {
+    transition: transform .28s cubic-bezier(.2, .7, .3, 1), opacity .2s ease;
+}
+
+html.is-ready .cart-bar[hidden], html.is-ready .track-bar[hidden] {
+    display: block;
+    opacity: 0;
+    transform: translateY(120%);
+    pointer-events: none;
+}
+
+/* A count or a total that has just changed nods once. */
+.has-ticked { animation: tick .28s cubic-bezier(.2, .7, .3, 1); }
+
+@keyframes tick {
+    40% { transform: translateY(-2px) scale(1.06); }
+    100% { transform: none; }
+}
+
+.cart-bar__count, .cart-bar__total { display: inline-block; }
+
+/* The sheet's backdrop fades rather than snapping on. */
+.sheet { animation: veil .18s ease; }
+
+@keyframes veil { from { background: rgba(36, 29, 24, 0); } }
+
+/* ---------- when the reader has asked for less ---------- */
+
+html.is-calm .will-settle,
+html.is-calm .has-settled { opacity: 1; transform: none; transition: none; }
+
+html.is-calm .sheet,
+html.is-calm .sheet__box,
+html.is-calm .has-ticked { animation: none; }
+
+html.is-calm .dish:hover .dish__image img { transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .will-settle, .has-settled { opacity: 1; transform: none; transition: none; }
+    .sheet, .sheet__box, .has-ticked { animation: none; }
+    .dish__image img, .dish:hover .dish__image img { transition: none; transform: none; }
+    .cart-bar, .track-bar { transition: none; }
+}

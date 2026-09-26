@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Invoice #{{ $order->id }}</title>
+    <title>{{ __('Invoice #') }}{{ $order->id }}</title>
     <style>
         body {
             font-family: Helvetica, Arial, sans-serif;
@@ -69,42 +69,42 @@
 <body>
 
     <div class="header">
-        <h1>SRMS Restaurant</h1>
-        <p>Invoice #{{ $order->id }}</p>
+        <h1>{{ __('SRMS Restaurant') }}</h1>
+        <p>{{ __('Invoice #') }}{{ $order->id }}</p>
     </div>
 
     <table class="meta">
         <tr>
-            <td><strong>Table:</strong> {{ $order->table->number ?? 'N/A' }}</td>
-            <td class="text-right"><strong>Date:</strong> {{ $order->created_at->format('Y-m-d H:i') }}</td>
+            <td><strong>{{ __('Table') }}:</strong> {{ __($order->table->number ?? 'N/A') }}</td>
+            <td class="text-right"><strong>{{ __('Date') }}:</strong> {{ $order->created_at->format('Y-m-d H:i') }}</td>
         </tr>
 
         @if($order->client_name)
             <tr>
-                <td colspan="2"><strong>Client:</strong> {{ $order->client_name }}</td>
+                <td colspan="2"><strong>{{ __('Client') }}:</strong> {{ $order->client_name }}</td>
             </tr>
         @endif
 
         <tr>
-            <td><strong>Payment Method:</strong> {{ $order->payment_method === 'card' ? 'Visa' : 'Cash' }}</td>
-            <td class="text-right"><strong>Status:</strong> {{ ucfirst($order->payment_status) }}</td>
+            <td><strong>{{ __('Payment Method') }}:</strong> {{ __($order->payment_method === 'card' ? 'Visa' : 'Cash') }}</td>
+            <td class="text-right"><strong>{{ __('Status') }}:</strong> {{ __(ucfirst($order->payment_status)) }}</td>
         </tr>
     </table>
 
     <table class="items">
         <thead>
             <tr>
-                <th>Item</th>
-                <th class="text-right">Qty</th>
-                <th class="text-right">Unit Price</th>
-                <th class="text-right">Subtotal</th>
+                <th>{{ __('Item') }}</th>
+                <th class="text-right">{{ __('Qty') }}</th>
+                <th class="text-right">{{ __('Unit Price') }}</th>
+                <th class="text-right">{{ __('Subtotal') }}</th>
             </tr>
         </thead>
         <tbody>
             @foreach($order->items as $item)
                 <tr>
                     <td>
-                        {{ $item->product?->name ?? 'Unknown Product' }}
+                        {{ $item->product_name }}
                         @if($item->notes)
                             <br><small>({{ $item->notes }})</small>
                         @endif
@@ -116,14 +116,14 @@
             @endforeach
 
             <tr class="total-row">
-                <td colspan="3">Total</td>
-                <td class="text-right">{{ number_format($order->total, 2) }} EGP</td>
+                <td colspan="3">{{ __('Total') }}</td>
+                <td class="text-right">{{ number_format($order->total, 2) }} {{ __('EGP') }}</td>
             </tr>
         </tbody>
     </table>
 
     <div class="footer">
-        Thank you for your order.
+        {{ __('Thank you for your order.') }}
     </div>
 
 </body>

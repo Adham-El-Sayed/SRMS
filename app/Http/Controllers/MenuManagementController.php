@@ -18,7 +18,8 @@ class MenuManagementController extends Controller
 
     public function index()
     {
-        $categories = Category::with('products')
+        $categories = Category::with(['products' => fn ($query) => $query->orderBy('sort_order')->orderBy('name')])
+            ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
 
@@ -36,7 +37,7 @@ class MenuManagementController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
+            'description' => ['nullable', 'string', 'max:1000'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -53,7 +54,7 @@ class MenuManagementController extends Controller
 
         return redirect()
             ->route('menu.management')
-            ->with('success', 'Category created successfully.');
+            ->with('success', __('Category created successfully.'));
     }
 
 
@@ -67,7 +68,7 @@ class MenuManagementController extends Controller
 {
     $validated = $request->validate([
         'name' => ['required', 'string', 'max:255'],
-        'description' => ['nullable', 'string'],
+        'description' => ['nullable', 'string', 'max:1000'],
         'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         'is_active' => ['nullable', 'boolean'],
         'remove_image' => ['nullable', 'boolean'],
@@ -99,7 +100,7 @@ class MenuManagementController extends Controller
 
     return redirect()
         ->route('menu.management')
-        ->with('success', 'Category updated successfully.');
+        ->with('success', __('Category updated successfully.'));
 }
 
 
@@ -108,25 +109,6 @@ class MenuManagementController extends Controller
     | Delete Category
     |--------------------------------------------------------------------------
     */
-
-    // public function destroyCategory(Category $category)
-    // {
-    //     if ($category->products()->exists()) {
-    //         return redirect()
-    //             ->route('menu.management')
-    //             ->with('error', 'Cannot delete this category because it contains products. Deactivate it instead.');
-    //     }
-
-    //     if ($category->image) {
-    //         Storage::disk('public')->delete($category->image);
-    //     }
-
-    //     $category->delete();
-
-    //     return redirect()
-    //         ->route('menu.management')
-    //         ->with('success', 'Category deleted successfully.');
-    // }
 
 
     /*
@@ -138,10 +120,10 @@ class MenuManagementController extends Controller
     public function storeProduct(Request $request)
     {
         $validated = $request->validate([
-            'category_id' => ['required', 'exists:categories,id'],
+            'category_id' => ['required', 'integer', 'exists:categories,id'],
             'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'price' => ['required', 'numeric', 'min:0', 'max:99999'],
             'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'is_active' => ['nullable', 'boolean'],
         ]);
@@ -158,7 +140,7 @@ class MenuManagementController extends Controller
 
         return redirect()
             ->route('menu.management')
-            ->with('success', 'Product created successfully.');
+            ->with('success', __('Product created successfully.'));
     }
 
 
@@ -171,10 +153,10 @@ class MenuManagementController extends Controller
     public function updateProduct(Request $request, Product $product)
 {
     $validated = $request->validate([
-        'category_id' => ['required', 'exists:categories,id'],
+        'category_id' => ['required', 'integer', 'exists:categories,id'],
         'name' => ['required', 'string', 'max:255'],
-        'description' => ['nullable', 'string'],
-        'price' => ['required', 'numeric', 'min:0'],
+        'description' => ['nullable', 'string', 'max:1000'],
+        'price' => ['required', 'numeric', 'min:0', 'max:99999'],
         'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         'is_active' => ['nullable', 'boolean'],
         'remove_image' => ['nullable', 'boolean'],
@@ -206,7 +188,7 @@ class MenuManagementController extends Controller
 
     return redirect()
         ->route('menu.management')
-        ->with('success', 'Product updated successfully.');
+        ->with('success', __('Product updated successfully.'));
 }
 
 
@@ -216,31 +198,6 @@ class MenuManagementController extends Controller
     |--------------------------------------------------------------------------
     */
 
-// public function destroyProduct(Product $product)
-// {
-//     $isUsedInOrders = DB::table('order_items')
-//         ->where('product_id', $product->id)
-//         ->exists();
-
-//     if ($isUsedInOrders) {
-//         return redirect()
-//             ->route('menu.management')
-//             ->with(
-//                 'error',
-//                 'Cannot delete this product because it is already used in an order. Deactivate it instead.'
-//             );
-//     }
-
-//     if ($product->image) {
-//         Storage::disk('public')->delete($product->image);
-//     }
-
-//     $product->delete();
-
-//     return redirect()
-//         ->route('menu.management')
-//         ->with('success', 'Product deleted successfully.');
-// }
 
 public function toggleCategory(Category $category)
 {
@@ -253,8 +210,8 @@ public function toggleCategory(Category $category)
         ->with(
             'success',
             $category->is_active
-                ? 'Category activated successfully.'
-                : 'Category deactivated successfully.'
+                ? __('Category activated successfully.')
+                : __('Category deactivated successfully.')
         );
 }
 
@@ -269,8 +226,8 @@ public function toggleProduct(Product $product)
         ->with(
             'success',
             $product->is_active
-                ? 'Product activated successfully.'
-                : 'Product deactivated successfully.'
+                ? __('Product activated successfully.')
+                : __('Product deactivated successfully.')
         );
 }
 

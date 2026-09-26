@@ -30,4 +30,38 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function employeeRecord()
+    {
+        return $this->hasOne(EmployeeRecord::class);
+    }
+
+    public function attendance()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    /** Days marked absent in a month, which is what a manager asks about. */
+    public function absencesIn($month): int
+    {
+        return $this->attendance()
+            ->where('status', Attendance::ABSENT)
+            ->whereYear('day', $month->year)
+            ->whereMonth('day', $month->month)
+            ->count();
+    }
+
+    public function payrollEntries()
+    {
+        return $this->hasMany(PayrollEntry::class);
+    }
+
+    /** Bonuses less deductions for a given month. */
+    public function payrollTotal(string $kind, \Carbon\Carbon $month): float
+    {
+        return (float) $this->payrollEntries()
+            ->where('kind', $kind)
+            ->whereBetween('happened_on', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            ->sum('amount');
+    }
 }

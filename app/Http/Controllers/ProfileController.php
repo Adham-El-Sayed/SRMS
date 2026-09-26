@@ -48,6 +48,13 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        // Shifts keep the name of whoever ran them, for the cash records.
+        if (\App\Models\Shift::where('user_id', $user->id)->exists()) {
+            return Redirect::route('profile.edit')->withErrors([
+                'password' => __('This account has run shifts, so it is kept for the cash records.'),
+            ], 'userDeletion');
+        }
+
         Auth::logout();
 
         $user->delete();

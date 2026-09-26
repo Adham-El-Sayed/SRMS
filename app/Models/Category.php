@@ -10,6 +10,7 @@ class Category extends Model
 {
     protected $fillable = [
         'name',
+        'sort_order',
         'description',
         'image',
         'is_active',
@@ -22,5 +23,12 @@ class Category extends Model
     public function products(): HasMany
     {
     return $this->hasMany(Product::class);
+    }
+
+    /** Menu content changed: guests must see it on their next scan. */
+    protected static function booted(): void
+    {
+        static::saved(fn () => \App\Services\MenuService::forget());
+        static::deleted(fn () => \App\Services\MenuService::forget());
     }
 }

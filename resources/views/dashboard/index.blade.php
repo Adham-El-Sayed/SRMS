@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Restaurant Dashboard')
+@section('title', __('Restaurant Dashboard'))
 
 @push('styles')
 <style>
@@ -171,60 +171,60 @@
 @section('content')
 
     <div class="header">
-        <h1>Restaurant Dashboard</h1>
-        <p>Overview of your restaurant activity.</p>
+        <h1>{{ __('Restaurant Dashboard') }}</h1>
+        <p>{{ __('Overview of your restaurant activity.') }}</p>
     </div>
 
 
     <div class="stats-grid">
 
         <div class="card">
-            <div class="card-title">Total Orders</div>
+            <div class="card-title">{{ __('Total Orders') }}</div>
             <div class="card-value">{{ $totalOrders }}</div>
         </div>
 
         <div class="card">
-            <div class="card-title">Active Orders</div>
+            <div class="card-title">{{ __('Active Orders') }}</div>
             <div class="card-value">{{ $activeOrders }}</div>
         </div>
 
         <div class="card">
-            <div class="card-title">Preparing Orders</div>
+            <div class="card-title">{{ __('Preparing Orders') }}</div>
             <div class="card-value">{{ $preparingOrders }}</div>
         </div>
 
         <div class="card">
-            <div class="card-title">Completed Revenue</div>
+            <div class="card-title">{{ __('Completed Revenue') }}</div>
 
             <div class="card-value revenue">
-                {{ number_format($totalRevenue, 2) }} EGP
+                {{ number_format($totalRevenue, 2) }} {{ __('EGP') }}
             </div>
         </div>
 
     </div>
 
 
-    <h2 class="section-title">Tables Status</h2>
+    <h2 class="section-title">{{ __('Tables Status') }}</h2>
 
     <div class="tables-grid">
 
         <div class="table-card">
             <div class="status-row">
-                <span class="status-name available">Available</span>
+                <span class="status-name available">{{ __('Available') }}</span>
                 <span class="status-count">{{ $availableTables }}</span>
             </div>
         </div>
 
         <div class="table-card">
             <div class="status-row">
-                <span class="status-name occupied">Occupied</span>
+                <span class="status-name occupied">{{ __('Occupied') }}</span>
                 <span class="status-count">{{ $occupiedTables }}</span>
             </div>
         </div>
 
         <div class="table-card">
             <div class="status-row">
-                <span class="status-name reserved">Reserved</span>
+                <span class="status-name reserved">{{ __('Reserved') }}</span>
                 <span class="status-count">{{ $reservedTables }}</span>
             </div>
         </div>
@@ -232,7 +232,7 @@
     </div>
 
 
-    <h2 class="section-title">Recent Orders</h2>
+    <h2 class="section-title">{{ __('Recent Orders') }}</h2>
 
     <div class="recent-orders">
 
@@ -242,11 +242,11 @@
 
                 <thead>
                     <tr>
-                        <th>Order</th>
-                        <th>Table</th>
-                        <th>Status</th>
-                        <th>Total</th>
-                        <th>Created At</th>
+                        <th>{{ __('Order') }}</th>
+                        <th>{{ __('Table') }}</th>
+                        <th>{{ __('Status') }}</th>
+                        <th>{{ __('Total') }}</th>
+                        <th>{{ __('Created At') }}</th>
                     </tr>
                 </thead>
 
@@ -259,7 +259,7 @@
                             <td>#{{ $order->id }}</td>
 
                             <td>
-                                {{ $order->table?->number ?? 'N/A' }}
+                                {{ __($order->table?->number ?? 'N/A') }}
                             </td>
 
                             <td>
@@ -269,7 +269,7 @@
                             </td>
 
                             <td>
-                                {{ number_format($order->total, 2) }} EGP
+                                {{ number_format($order->total, 2) }} {{ __('EGP') }}
                             </td>
 
                             <td>
@@ -287,7 +287,7 @@
         @else
 
             <div class="empty">
-                No orders found.
+                {{ __('No orders found.') }}
             </div>
 
         @endif

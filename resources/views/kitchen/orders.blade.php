@@ -1,206 +1,33 @@
 @extends('layouts.app')
 
-@section('title', 'Kitchen Orders')
+@section('title', __('Kitchen Orders'))
 
 @section('content')
+
+    {{-- The kitchen's two jobs --}}
+    <nav class="kitchen-tabs">
+        <a href="{{ route('kitchen.orders') }}" class="{{ request()->routeIs('kitchen.orders') ? 'is-on' : '' }}">
+            {{ __('Orders') }}
+        </a>
+        <a href="{{ route('kitchen.stock') }}" class="{{ request()->routeIs('kitchen.stock') ? 'is-on' : '' }}">
+            {{ __('Availability') }}
+        </a>
+    </nav>
+
 
     <div class="header">
 
         <div>
-            <h1>Kitchen Orders</h1>
-            <p>Manage and update restaurant orders.</p>
+            <h1>{{ __('Kitchen Orders') }}</h1>
+            <p>{{ __('Manage and update restaurant orders.') }}</p>
         </div>
 
     </div>
 
 
-    @if($orders->count() > 0)
-
-        <div class="orders">
-
-            @foreach($orders as $order)
-
-                <div class="order-card">
-
-                    {{-- Order Header --}}
-                    <div class="order-header">
-
-                        <h2>
-                            Order #{{ $order->id }}
-                        </h2>
-
-                        <span class="status {{ $order->status }}">
-                            {{ ucfirst($order->status) }}
-                        </span>
-
-                    </div>
-
-
-                    {{-- Order Information --}}
-                    <div class="info">
-
-                        <p>
-                            <strong>Table:</strong>
-
-                            @if($order->table)
-                                {{ $order->table->number }}
-                            @else
-                                N/A
-                            @endif
-                        </p>
-
-                        <p>
-                            <strong>Capacity:</strong>
-
-                            @if($order->table)
-                                {{ $order->table->capacity }}
-                            @else
-                                N/A
-                            @endif
-                        </p>
-
-                        <p>
-                            <strong>Created:</strong>
-                            {{ $order->created_at->format('Y-m-d H:i') }}
-                        </p>
-
-                    </div>
-
-
-                    {{-- Order Items --}}
-                    <div class="items">
-
-                        <h3>Items</h3>
-
-                        @forelse($order->items as $item)
-
-                            <div class="item">
-
-                                <div>
-
-                                    <div class="item-name">
-                                        {{ $item->product?->name ?? 'Unknown Product' }}
-                                    </div>
-
-                                    <div class="item-details">
-                                        Quantity: {{ $item->quantity }}
-                                        ×
-                                        {{ number_format($item->unit_price, 2) }} EGP
-                                    </div>
-
-                                    @if($item->notes)
-
-                                        <div class="item-notes">
-                                            📝 {{ $item->notes }}
-                                        </div>
-
-                                    @endif
-
-                                </div>
-
-
-                                <div class="item-price">
-
-                                    {{ number_format($item->subtotal, 2) }}
-                                    EGP
-
-                                </div>
-
-                            </div>
-
-                        @empty
-
-                            <p class="no-items">
-                                No items in this order.
-                            </p>
-
-                        @endforelse
-
-                    </div>
-
-
-                    {{-- Total --}}
-                    <div class="total">
-
-                        <span>Total</span>
-
-                        <span>
-                            {{ number_format($order->total, 2) }} EGP
-                        </span>
-
-                    </div>
-
-
-                    {{-- Status Actions --}}
-                    <div class="actions">
-
-                        @if($order->status === 'pending')
-
-                            <button
-                                type="button"
-                                class="status-button"
-                                data-order-id="{{ $order->id }}"
-                                data-status="confirmed"
-                            >
-                                Confirm Order
-                            </button>
-
-                        @elseif($order->status === 'confirmed')
-
-                            <button
-                                type="button"
-                                class="status-button"
-                                data-order-id="{{ $order->id }}"
-                                data-status="preparing"
-                            >
-                                Start Preparing
-                            </button>
-
-                        @elseif($order->status === 'preparing')
-
-                            <button
-                                type="button"
-                                class="status-button"
-                                data-order-id="{{ $order->id }}"
-                                data-status="ready"
-                            >
-                                Mark as Ready
-                            </button>
-
-                        @elseif($order->status === 'ready')
-
-                            <button
-                                type="button"
-                                class="status-button complete-button"
-                                data-order-id="{{ $order->id }}"
-                                data-status="completed"
-                            >
-                                Complete Order
-                            </button>
-
-                        @endif
-
-                    </div>
-
-                </div>
-
-            @endforeach
-
-        </div>
-
-    @else
-
-        <div class="empty">
-
-            <h2>No Active Orders</h2>
-
-            <p>
-                There are currently no orders in the kitchen.
-            </p>
-
-        </div>
-
-    @endif
+    <div id="live-kitchen" data-live-url="{{ route('kitchen.board') }}">
+        @include('kitchen._board')
+    </div>
 
 @endsection
 
@@ -208,6 +35,29 @@
 @push('styles')
 
 <style>
+    .kitchen-tabs { display: flex; gap: 8px; margin-bottom: 22px; }
+    .kitchen-tabs a {
+        padding: 9px 16px; border-radius: 100px;
+        background: var(--surface); border: 1px solid var(--line-strong);
+        color: var(--ink-soft); text-decoration: none;
+        font-size: 14px; font-weight: 600;
+    }
+    .kitchen-tabs a.is-on { background: var(--ink); border-color: var(--ink); color: #FBF5EE; }
+
+    .order-head-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+    /* Where the order is going — readable at a glance across the kitchen */
+    .order-type {
+        display: inline-flex; align-items: center;
+        padding: 4px 10px; border-radius: 100px;
+        font-size: 11.5px; font-weight: 700; letter-spacing: .04em;
+        border: 1px solid transparent; white-space: nowrap;
+    }
+    .order-type.type-dine_in  { background: var(--surface-sunk); color: var(--ink-soft); border-color: var(--line-strong); }
+    .order-type.type-takeaway { background: var(--amber-soft); color: var(--warn); border-color: rgba(176,123,20,.25); }
+    .order-type.type-delivery { background: var(--info-soft); color: var(--info); border-color: rgba(59,99,130,.25); }
+    .order-type.type-online   { background: var(--olive-soft); color: var(--olive); border-color: rgba(94,110,76,.3); }
+
 
     .header {
         margin-bottom: 30px;
@@ -395,6 +245,17 @@
         cursor: not-allowed;
     }
 
+    .status-button.is-working { position: relative; color: transparent; }
+
+    .status-button.is-working::after {
+        content: ''; position: absolute; inset: 0; margin: auto;
+        width: 18px; height: 18px; border-radius: 50%;
+        border: 2px solid rgba(255,255,255,.45); border-top-color: #fff;
+        animation: srms-spin .7s linear infinite;
+    }
+
+    @keyframes srms-spin { to { transform: rotate(360deg); } }
+
 
     .complete-button {
         background: #16a34a;
@@ -430,80 +291,67 @@
 
 
 @push('scripts')
-
 <script>
+    /*
+     * Status buttons on the kitchen board. The board itself is refreshed by
+     * srms-live.js; after a change we ask it to refresh straight away.
+     */
+    document.addEventListener('click', async function (event) {
+        const button = event.target.closest('#live-kitchen .status-button[data-order-id]');
+        if (!button) return;
 
-document.addEventListener('DOMContentLoaded', function () {
+        if (button.dataset.confirm && !window.confirm(button.dataset.confirm)) return;
 
-    const buttons = document.querySelectorAll('.status-button');
+        // Hold the live refresh while this change is on its way, then let it
+        // land: the board redraws itself with the next step's button, so the
+        // kitchen never has to reload the page to move an order along.
+        const release = window.SRMSLive ? SRMSLive.hold() : function () {};
 
+        button.disabled = true;
+        button.classList.add('is-working');
 
-    buttons.forEach(function (button) {
-
-        button.addEventListener('click', async function () {
-
-            const orderId = this.dataset.orderId;
-            const status = this.dataset.status;
-
-
-            this.disabled = true;
-
-
-            try {
-
-                const response = await fetch(
-                    `/api/orders/${orderId}/status`,
-                    {
-                        method: 'PATCH',
-
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-
-                        body: JSON.stringify({
-                            status: status
-                        })
-                    }
-                );
-
-
-                const data = await response.json();
-
-
-                if (!response.ok) {
-
-                    alert(
-                        data.message ||
-                        'Failed to update order status.'
-                    );
-
-                    this.disabled = false;
-
-                    return;
+        try {
+            const response = await fetch(
+                '{{ route('kitchen.orders.status', '__ID__') }}'.replace('__ID__', encodeURIComponent(button.dataset.orderId)),
+                {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ status: button.dataset.status })
                 }
+            );
 
+            if (window.SRMSLive && SRMSLive.handleAuthFailure(response)) return;
 
-                window.location.reload();
+            const data = await response.json().catch(() => ({}));
 
-            } catch (error) {
-
-                console.error(error);
-
-                alert(
-                    'Something went wrong while updating the order.'
-                );
-
-                this.disabled = false;
-
+            if (!response.ok) {
+                release();
+                alert(data.message || __t('Failed to update order status.'));
+                button.disabled = false;
+                button.classList.remove('is-working');
+                return;
             }
 
-        });
+            release();
 
+            if (window.SRMSLive) {
+                await SRMSLive.refreshNow();
+            } else {
+                window.location.reload();
+            }
+
+        } catch (error) {
+            console.error(error);
+            release();
+            alert(__t('Something went wrong while updating the order.'));
+            button.disabled = false;
+            button.classList.remove('is-working');
+        }
     });
-
-});
-
 </script>
-
 @endpush

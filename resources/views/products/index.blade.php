@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
-@section('title', 'Products')
+@section('title', __('Products'))
 
 @section('content')
 
     <div class="header">
         <div>
-            <h1>Products</h1>
-            <p>Manage your restaurant menu products.</p>
+            <h1>{{ __('Products') }}</h1>
+            <p>{{ __('Manage your restaurant menu products.') }}</p>
         </div>
 
         <a href="{{ route('products.create') }}" class="btn">
-            + Add Product
+            {{ __('+ Add Product') }}
         </a>
     </div>
 
@@ -29,12 +29,12 @@
 
         <div class="empty">
 
-            <h2>No Products</h2>
+            <h2>{{ __('No Products') }}</h2>
 
-            <p>There are currently no products.</p>
+            <p>{{ __('There are currently no products.') }}</p>
 
             <a href="{{ route('products.create') }}" class="btn">
-                + Add Your First Product
+                {{ __('+ Add Your First Product') }}
             </a>
 
         </div>
@@ -47,12 +47,12 @@
 
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Description</th>
-                        <th>Price</th>
-                        <th>Status</th>
-                        <th>Actions</th>
+                        <th>{{ __('Name') }}</th>
+                        <th>{{ __('Category') }}</th>
+                        <th>{{ __('Description') }}</th>
+                        <th>{{ __('Price') }}</th>
+                        <th>{{ __('Status') }}</th>
+                        <th>{{ __('Actions') }}</th>
                     </tr>
                 </thead>
 
@@ -79,14 +79,14 @@
 
 
                             <td class="price">
-                                {{ number_format($product->price, 2) }} EGP
+                                {{ number_format($product->price, 2) }} {{ __('EGP') }}
                             </td>
 
 
                             <td>
 
                                 <span class="status {{ $product->is_active ? 'active' : 'inactive' }}">
-                                    {{ $product->is_active ? 'Active' : 'Inactive' }}
+                                    {{ __($product->is_active ? 'Active' : 'Inactive') }}
                                 </span>
 
                             </td>
@@ -100,7 +100,7 @@
                                         href="{{ route('products.edit', $product) }}"
                                         class="edit-btn"
                                     >
-                                        Edit
+                                        {{ __('Edit') }}
                                     </a>
 
 
@@ -110,7 +110,7 @@
                                         data-id="{{ $product->id }}"
                                         data-name="{{ $product->name }}"
                                     >
-                                        Delete
+                                        {{ __('Delete') }}
                                     </button>
 
                                 </div>
@@ -139,15 +139,15 @@
                 !
             </div>
 
-            <h2>Delete Product?</h2>
+            <h2>{{ __('Delete Product?') }}</h2>
 
             <p>
-                Are you sure you want to delete
+                {{ __('Are you sure you want to delete') }}
                 <strong id="productName"></strong>?
             </p>
 
             <p class="modal-warning">
-                This action cannot be undone.
+                {{ __('This action cannot be undone.') }}
             </p>
 
 
@@ -158,7 +158,7 @@
                     class="cancel-btn"
                     id="cancelDeleteBtn"
                 >
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
 
 
@@ -174,7 +174,7 @@
                         type="submit"
                         class="confirm-delete-btn"
                     >
-                        Yes, Delete
+                        {{ __('Yes, Delete') }}
                     </button>
 
                 </form>

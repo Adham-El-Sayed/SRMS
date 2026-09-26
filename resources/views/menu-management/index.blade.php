@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Menu Management')
+@section('title', __('Menu Management'))
 
 @section('content')
 
@@ -14,13 +14,13 @@
         <div class="page-title">
 
             <span class="page-kicker">
-                MENU
+                {{ __('MENU') }}
             </span>
 
-            <h1>Menu Management</h1>
+            <h1>{{ __('Menu Management') }}</h1>
 
             <p>
-                Manage categories and products from one place.
+                {{ __('Manage categories and products from one place.') }}
             </p>
 
         </div>
@@ -31,7 +31,7 @@
             id="create-category-btn"
         >
             <span class="btn-icon">+</span>
-            Create Category
+            {{ __('Create Category') }}
         </button>
 
     </div>
@@ -46,7 +46,7 @@
             <div class="alert-icon">✓</div>
 
             <div>
-                <strong>Success</strong>
+                <strong>{{ __('Success') }}</strong>
                 <span>{{ session('success') }}</span>
             </div>
         </div>
@@ -63,7 +63,7 @@
             <div class="alert-icon">!</div>
 
             <div>
-                <strong>Something went wrong</strong>
+                <strong>{{ __('Something went wrong') }}</strong>
                 <span>{{ session('error') }}</span>
             </div>
         </div>
@@ -82,7 +82,7 @@
 
             <div>
 
-                <strong>Please check the following:</strong>
+                <strong>{{ __('Please check the following') }}:</strong>
 
                 <ul>
                     @foreach($errors->all() as $error)
@@ -100,11 +100,20 @@
     {{-- =========================
         Categories
     ========================== --}}
+    @if ($categories->count() > 0)
+        @include('partials.menu-filter', [
+            'categories' => $categories,
+            'scope' => '.categories-container',
+            'placeholder' => __('Search products'),
+        ])
+    @endif
+
     <div class="categories-container">
 
         @forelse($categories as $category)
 
-            <div class="category-card {{ !$category->is_active ? 'category-inactive' : '' }}">
+            <div class="category-card {{ !$category->is_active ? 'category-inactive' : '' }}"
+                 data-filter-group data-category="{{ $category->id }}">
 
                 {{-- =========================
                     Category Header
@@ -146,7 +155,7 @@
                                 >
                                     <span class="status-dot"></span>
 
-                                    {{ $category->is_active ? 'Active' : 'Inactive' }}
+                                    {{ __($category->is_active ? 'Active' : 'Inactive') }}
 
                                 </span>
 
@@ -162,7 +171,7 @@
                             @else
 
                                 <p class="muted-text">
-                                    No description added.
+                                    {{ __('No description added.') }}
                                 </p>
 
                             @endif
@@ -187,7 +196,7 @@
                             data-image="{{ $category->image ? asset('storage/' . $category->image) : '' }}"
                             data-action="{{ route('menu.management.categories.update', $category) }}"
                         >
-                            Edit
+                            {{ __('Edit') }}
                         </button>
 
 
@@ -203,7 +212,7 @@
                                 type="submit"
                                 class="toggle-btn {{ $category->is_active ? 'deactivate' : 'activate' }}"
                             >
-                                {{ $category->is_active ? 'Deactivate' : 'Activate' }}
+                                {{ __($category->is_active ? 'Deactivate' : 'Activate') }}
                             </button>
 
                         </form>
@@ -223,11 +232,11 @@
                         <div>
 
                             <h3>
-                                Products
+                                {{ __('Products') }}
                             </h3>
 
                             <p>
-                                Items inside this category
+                                {{ __('Items inside this category') }}
                             </p>
 
                         </div>
@@ -235,7 +244,7 @@
                         <span class="product-count">
                             {{ $category->products->count() }}
 
-                            {{ Str::plural('product', $category->products->count()) }}
+                            {{ __($category->products->count() === 1 ? 'Item' : 'Items') }}
                         </span>
 
                     </div>
@@ -249,6 +258,9 @@
 
                                 <div
                                     class="product-card {{ !$product->is_active ? 'product-inactive' : '' }}"
+                                    data-filter-item
+                                    data-name="{{ $product->name }}"
+                                    data-category="{{ $category->id }}"
                                 >
 
                                     {{-- Product Image --}}
@@ -272,7 +284,7 @@
                                         @if(!$product->is_active)
 
                                             <div class="inactive-overlay">
-                                                Inactive
+                                                {{ __('Inactive') }}
                                             </div>
 
                                         @endif
@@ -300,7 +312,7 @@
                                                 @else
 
                                                     <p class="product-description muted-text">
-                                                        No description.
+                                                        {{ __('No description.') }}
                                                     </p>
 
                                                 @endif
@@ -308,7 +320,7 @@
                                             </div>
 
                                             <span class="product-price">
-                                                ${{ number_format($product->price, 2) }}
+                                                {{ number_format($product->price, 2) }} <small>{{ __('EGP') }}</small>
                                             </span>
 
                                         </div>
@@ -322,7 +334,7 @@
 
                                                 <span class="status-dot"></span>
 
-                                                {{ $product->is_active ? 'Active' : 'Inactive' }}
+                                                {{ __($product->is_active ? 'Active' : 'Inactive') }}
 
                                             </span>
 
@@ -342,7 +354,7 @@
                                                     data-image="{{ $product->image ? asset('storage/' . $product->image) : '' }}"
                                                     data-action="{{ route('menu.management.products.update', $product) }}"
                                                 >
-                                                    Edit
+                                                    {{ __('Edit') }}
                                                 </button>
 
 
@@ -359,7 +371,7 @@
                                                         type="submit"
                                                         class="small-toggle-btn {{ $product->is_active ? 'deactivate' : 'activate' }}"
                                                     >
-                                                        {{ $product->is_active ? 'Deactivate' : 'Activate' }}
+                                                        {{ __($product->is_active ? 'Deactivate' : 'Activate') }}
                                                     </button>
 
                                                 </form>
@@ -385,11 +397,11 @@
                             </div>
 
                             <h4>
-                                No products yet
+                                {{ __('No products yet') }}
                             </h4>
 
                             <p>
-                                Add the first product to this category.
+                                {{ __('Add the first product to this category.') }}
                             </p>
 
                         </div>
@@ -411,7 +423,7 @@
                         data-category-name="{{ $category->name }}"
                     >
                         <span>+</span>
-                        Add Product
+                        {{ __('Add Product') }}
                     </button>
 
                 </div>
@@ -427,11 +439,11 @@
                 </div>
 
                 <h2>
-                    No Categories Yet
+                    {{ __('No Categories Yet') }}
                 </h2>
 
                 <p>
-                    Create your first category to start building your menu.
+                    {{ __('Create your first category to start building your menu.') }}
                 </p>
 
                 <button
@@ -440,12 +452,14 @@
                     id="empty-create-category-btn"
                 >
                     <span class="btn-icon">+</span>
-                    Create Category
+                    {{ __('Create Category') }}
                 </button>
 
             </div>
 
         @endforelse
+
+        <p class="filter-empty" data-filter-empty hidden>{{ __('Nothing on the menu matches that.') }}</p>
 
     </div>
 
@@ -465,15 +479,15 @@
             <div>
 
                 <span class="modal-kicker">
-                    NEW CATEGORY
+                    {{ __('NEW CATEGORY') }}
                 </span>
 
                 <h2>
-                    Create Category
+                    {{ __('Create Category') }}
                 </h2>
 
                 <p>
-                    Add a new category to your menu.
+                    {{ __('Add a new category to your menu.') }}
                 </p>
 
             </div>
@@ -500,14 +514,14 @@
             <div class="form-group">
 
                 <label for="category-name">
-                    Category Name
+                    {{ __('Category Name') }}
                 </label>
 
                 <input
                     type="text"
                     name="name"
                     id="category-name"
-                    placeholder="e.g. Burgers"
+                    placeholder="{{ __('e.g. Burgers') }}"
                     required
                 >
 
@@ -517,12 +531,12 @@
             <div class="form-group">
 
                 <label>
-                    Description
+                    {{ __('Description') }}
                 </label>
 
                 <textarea
                     name="description"
-                    placeholder="Category description..."
+                    placeholder="{{ __('Category description...') }}"
                     rows="3"
                 ></textarea>
 
@@ -532,7 +546,7 @@
             <div class="form-group">
 
                 <label>
-                    Category Image
+                    {{ __('Category Image') }}
                 </label>
 
                 <input
@@ -560,7 +574,7 @@
                 >
 
                 <span>
-                    Make category active
+                    {{ __('Make category active') }}
                 </span>
 
             </label>
@@ -573,14 +587,14 @@
                     class="cancel-btn"
                     data-close-modal="category-modal"
                 >
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
 
                 <button
                     type="submit"
                     class="primary-btn"
                 >
-                    Create Category
+                    {{ __('Create Category') }}
                 </button>
 
             </div>
@@ -605,15 +619,15 @@
             <div>
 
                 <span class="modal-kicker">
-                    CATEGORY
+                    {{ __('CATEGORY') }}
                 </span>
 
                 <h2>
-                    Edit Category
+                    {{ __('Edit Category') }}
                 </h2>
 
                 <p>
-                    Update category information.
+                    {{ __('Update category information.') }}
                 </p>
 
             </div>
@@ -642,7 +656,7 @@
             <div class="form-group">
 
                 <label>
-                    Category Name
+                    {{ __('Category Name') }}
                 </label>
 
                 <input
@@ -658,7 +672,7 @@
             <div class="form-group">
 
                 <label>
-                    Description
+                    {{ __('Description') }}
                 </label>
 
                 <textarea
@@ -673,7 +687,7 @@
             <div class="form-group">
 
                 <label>
-                    Current Image
+                    {{ __('Current Image') }}
                 </label>
 
                 <div
@@ -687,7 +701,7 @@
             <div class="form-group">
 
                 <label>
-                    Change Image
+                    {{ __('Change Image') }}
                 </label>
 
                 <input
@@ -715,7 +729,7 @@
                 >
 
                 <span>
-                    Remove current image
+                    {{ __('Remove current image') }}
                 </span>
 
             </label>
@@ -731,7 +745,7 @@
                 >
 
                 <span>
-                    Category is active
+                    {{ __('Category is active') }}
                 </span>
 
             </label>
@@ -744,14 +758,14 @@
                     class="cancel-btn"
                     data-close-modal="edit-category-modal"
                 >
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
 
                 <button
                     type="submit"
                     class="primary-btn"
                 >
-                    Save Changes
+                    {{ __('Save Changes') }}
                 </button>
 
             </div>
@@ -776,15 +790,15 @@
             <div>
 
                 <span class="modal-kicker">
-                    NEW PRODUCT
+                    {{ __('NEW PRODUCT') }}
                 </span>
 
                 <h2>
-                    Add Product
+                    {{ __('Add Product') }}
                 </h2>
 
                 <p>
-                    Add a product to
+                    {{ __('Add a product to') }}
                     <strong id="selected-category-name"></strong>
                 </p>
 
@@ -819,7 +833,7 @@
             <div class="selected-category">
 
                 <span>
-                    Category
+                    {{ __('Category') }}
                 </span>
 
                 <strong id="selected-category-display"></strong>
@@ -830,14 +844,14 @@
             <div class="form-group">
 
                 <label>
-                    Product Name
+                    {{ __('Product Name') }}
                 </label>
 
                 <input
                     type="text"
                     name="name"
                     id="product-name"
-                    placeholder="e.g. Classic Burger"
+                    placeholder="{{ __('e.g. Classic Burger') }}"
                     required
                 >
 
@@ -847,12 +861,12 @@
             <div class="form-group">
 
                 <label>
-                    Description
+                    {{ __('Description') }}
                 </label>
 
                 <textarea
                     name="description"
-                    placeholder="Product description..."
+                    placeholder="{{ __('Product description...') }}"
                     rows="3"
                 ></textarea>
 
@@ -862,7 +876,7 @@
             <div class="form-group">
 
                 <label>
-                    Price
+                    {{ __('Price') }}
                 </label>
 
                 <div class="price-input">
@@ -888,7 +902,7 @@
             <div class="form-group">
 
                 <label>
-                    Product Image
+                    {{ __('Product Image') }}
                 </label>
 
                 <input
@@ -916,7 +930,7 @@
                 >
 
                 <span>
-                    Make product active
+                    {{ __('Make product active') }}
                 </span>
 
             </label>
@@ -929,14 +943,14 @@
                     class="cancel-btn"
                     data-close-modal="product-modal"
                 >
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
 
                 <button
                     type="submit"
                     class="primary-btn"
                 >
-                    Add Product
+                    {{ __('Add Product') }}
                 </button>
 
             </div>
@@ -961,15 +975,15 @@
             <div>
 
                 <span class="modal-kicker">
-                    PRODUCT
+                    {{ __('PRODUCT') }}
                 </span>
 
                 <h2>
-                    Edit Product
+                    {{ __('Edit Product') }}
                 </h2>
 
                 <p>
-                    Update product information.
+                    {{ __('Update product information.') }}
                 </p>
 
             </div>
@@ -998,7 +1012,7 @@
             <div class="form-group">
 
                 <label>
-                    Product Name
+                    {{ __('Product Name') }}
                 </label>
 
                 <input
@@ -1014,7 +1028,7 @@
             <div class="form-group">
 
                 <label>
-                    Category
+                    {{ __('Category') }}
                 </label>
 
                 <select
@@ -1039,7 +1053,7 @@
             <div class="form-group">
 
                 <label>
-                    Description
+                    {{ __('Description') }}
                 </label>
 
                 <textarea
@@ -1054,7 +1068,7 @@
             <div class="form-group">
 
                 <label>
-                    Price
+                    {{ __('Price') }}
                 </label>
 
                 <div class="price-input">
@@ -1080,7 +1094,7 @@
             <div class="form-group">
 
                 <label>
-                    Current Image
+                    {{ __('Current Image') }}
                 </label>
 
                 <div
@@ -1094,7 +1108,7 @@
             <div class="form-group">
 
                 <label>
-                    Change Image
+                    {{ __('Change Image') }}
                 </label>
 
                 <input
@@ -1122,7 +1136,7 @@
                 >
 
                 <span>
-                    Remove current image
+                    {{ __('Remove current image') }}
                 </span>
 
             </label>
@@ -1138,7 +1152,7 @@
                 >
 
                 <span>
-                    Product is active
+                    {{ __('Product is active') }}
                 </span>
 
             </label>
@@ -1151,14 +1165,14 @@
                     class="cancel-btn"
                     data-close-modal="edit-product-modal"
                 >
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
 
                 <button
                     type="submit"
                     class="primary-btn"
                 >
-                    Save Changes
+                    {{ __('Save Changes') }}
                 </button>
 
             </div>
@@ -2305,7 +2319,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     currentImage.innerHTML =
                         '<span class="no-current-image">' +
-                        'No image uploaded.' +
+                        __t('No image uploaded.') +
                         '</span>';
 
                 }
@@ -2471,7 +2485,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     currentImage.innerHTML =
                         '<span class="no-current-image">' +
-                        'No image uploaded.' +
+                        __t('No image uploaded.') +
                         '</span>';
 
                 }
@@ -2558,7 +2572,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     event.target.result;
 
                 img.alt =
-                    'Image preview';
+                    __t('Image preview');
 
 
                 preview.appendChild(img);

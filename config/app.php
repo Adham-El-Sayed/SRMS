@@ -16,6 +16,12 @@ return [
     'name' => env('APP_NAME', 'Laravel'),
 
     /*
+    | Public sign-up. New accounts have no role and can't reach any staff page,
+    | but once your staff accounts exist you can switch sign-up off entirely.
+    */
+    'registration' => (bool) env('APP_REGISTRATION', true),
+
+    /*
     |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------

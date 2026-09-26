@@ -1,9 +1,0 @@
-[90m= [39m[34;4mApp\Models\RestaurantTable[39;24m {#8718
-    [34mnumber[39m: [32m"[39m[32m1[39m[32m"[39m,
-    [34mcapacity[39m: [35m6[39m,
-    [34mstatus[39m: [32m"[39m[32mavailable[39m[32m"[39m,
-    [34mqr_token[39m: [32m"[39m[32m4c161fb5-afb8-453f-bc3a-938c22ff7951[39m[32m"[39m,
-    [34mupdated_at[39m: [32m"[39m[32m2026-08-07 21:14:42[39m[32m"[39m,
-    [34mcreated_at[39m: [32m"[39m[32m2026-08-07 21:14:42[39m[32m"[39m,
-    [34mid[39m: [35m3[39m,
-  }

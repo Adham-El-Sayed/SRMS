@@ -1,474 +1,227 @@
 @extends('layouts.menu')
 
-@section('title', 'Restaurant Menu')
+@section('title', __('Restaurant Menu'))
 
 @section('content')
 
-    <div
-        class="menu-page"
-        id="menu-app"
-        data-table-id="{{ isset($table) ? $table->id : '' }}"
-    >
+<div class="menu-app" id="menu-app"
+     data-table-id="{{ isset($table) ? $table->id : '' }}"
+     data-table-token="{{ isset($table) ? $table->qr_token : '' }}">
 
-        {{-- =========================
-             Page Header
-        ========================== --}}
+    {{-- ===== Welcome ===== --}}
+    <header class="menu-hero">
+        <p class="menu-hero__kicker">{{ __('Restaurant Menu') }}</p>
+        <h1 class="menu-hero__title">{{ __('What would you like today?') }}</h1>
 
-        <div class="page-header">
+        @isset($table)
+            <p class="menu-hero__note">
+                {{ __('You are at table :number. Order from your phone and the kitchen starts right away.', ['number' => $table->number]) }}
+            </p>
+        @else
+            <p class="menu-hero__note">{{ __('Have a look at what we serve.') }}</p>
+        @endisset
+    </header>
 
-            <div>
-                <h1>Restaurant Menu</h1>
+    {{-- ===== Finding a dish ===== --}}
+    @if ($menu->count() > 0)
+        @include('partials.menu-filter', ['categories' => $menu, 'scope' => '#menu-app'])
+    @endif
 
-                <p>
-                    Choose your favorite items and create your order.
-                </p>
-            </div>
+    {{-- ===== What people order most ===== --}}
+    @include('partials.popular-picks', [
+        'popular' => $popular ?? collect(),
+        'ordering' => isset($table),
+    ])
 
-            @if(isset($table))
+    {{-- ===== The menu ===== --}}
+    @forelse ($menu as $category)
+        <section class="menu-section" id="category-{{ $category->id }}"
+                 data-filter-group data-category="{{ $category->id }}">
 
-                <div class="table-badge">
-                    Table #{{ $table->number }}
-                </div>
+            <div class="menu-section__head">
+                @if ($category->image)
+                    <img src="{{ asset('storage/' . $category->image) }}" alt="{{ $category->name }}" class="menu-section__image" loading="lazy">
+                @endif
 
-            @endif
-
-        </div>
-
-
-        {{-- =========================
-             Table Information
-        ========================== --}}
-
-        @if(isset($table))
-
-            <div class="table-info">
-
-                <div class="table-info-main">
-
-                    <div class="table-icon">
-                        T
-                    </div>
-
-                    <div>
-
-                        <h2>
-                            Table {{ $table->number }}
-                        </h2>
-
-                        <p>
-                            Ready to take your order
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <div class="table-details">
-
-                    <div class="table-detail">
-
-                        <span>
-                            Capacity
-                        </span>
-
-                        <strong>
-                            {{ $table->capacity }} Guests
-                        </strong>
-
-                    </div>
-
-
-                    <div class="table-detail">
-
-                        <span>
-                            Status
-                        </span>
-
-                        <strong
-                            class="table-status {{ $table->status->value ?? $table->status }}"
-                        >
-                            {{ ucfirst($table->status->value ?? $table->status) }}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        @endif
-
-
-        {{-- =========================
-             Menu
-        ========================== --}}
-
-        @forelse($menu as $category)
-
-            <section class="category">
-
-                {{-- Category Header --}}
-
-                <div class="category-header">
-
-                    <div class="category-heading">
-
-                        {{-- Category Image --}}
-
-                        @if($category->image)
-
-                            <img
-                                src="{{ asset('storage/' . $category->image) }}"
-                                alt="{{ $category->name }}"
-                                class="category-image"
-                            >
-
-                        @else
-
-                            <div class="category-image category-image-placeholder">
-                                🍽
-                            </div>
-
+                <div>
+                    @php ($courseName = \App\Support\Bilingual::split($category->name))
+                    <h2 class="menu-section__title">
+                        {{ $courseName[0] }}
+                        @if ($courseName[1])
+                            <span class="menu-section__title-alt">{{ $courseName[1] }}</span>
                         @endif
+                    </h2>
+                    @if ($category->description)
+                        {{-- A description is long: the reader gets their own
+                             language only, not both stacked. --}}
+                        <p class="menu-section__note">{{ \App\Support\Bilingual::lead($category->description) }}</p>
+                    @endif
+                </div>
+            </div>
 
-
-                        <div class="category-heading-text">
-
-                            <h2 class="category-title">
-                                {{ $category->name }}
-                            </h2>
-
-
-                            @if($category->description)
-
-                                <p class="category-description">
-                                    {{ $category->description }}
-                                </p>
-
+            <div class="dish-grid">
+                @forelse ($category->products as $product)
+                    <article class="dish {{ $product->isSoldOut() ? 'is-sold-out' : '' }}"
+                             data-filter-item
+                             data-name="{{ $product->name }}"
+                             data-category="{{ $category->id }}"
+                             data-dish="{{ $product->id }}">
+                        <div class="dish__image">
+                            @if ($product->image)
+                                <img src="{{ asset('storage/' . $product->image) }}" alt="{{ $product->name }}" loading="lazy">
+                            @else
+                                <div class="dish__image-placeholder">🍽</div>
                             @endif
 
+                            @if ($product->isSoldOut())
+                                <span class="dish__sold-out">{{ __('Finished for today') }}</span>
+                            @elseif (isset($recommended[$product->id]))
+                                <span class="dish__loved">★ {{ __('Most ordered') }}</span>
+                            @endif
                         </div>
 
-                    </div>
-
-
-                    <span class="products-count">
-
-                        {{ $category->products->count() }}
-
-                        {{ $category->products->count() === 1 ? 'Item' : 'Items' }}
-
-                    </span>
-
-                </div>
-
-
-                {{-- Products --}}
-
-                <div class="products">
-
-                    @forelse($category->products as $product)
-
-                        <div
-                            class="product-card"
-                            data-product-id="{{ $product->id }}"
-                            data-product-name="{{ $product->name }}"
-                            data-product-price="{{ $product->price }}"
-                        >
-
-                            {{-- Product Image --}}
-
-                            <div class="product-image-wrapper">
-
-                                @if($product->image)
-
-                                    <img
-                                        src="{{ asset('storage/' . $product->image) }}"
-                                        alt="{{ $product->name }}"
-                                        class="product-image"
-                                        loading="lazy"
-                                    >
-
-                                @else
-
-                                    <div class="product-image product-image-placeholder">
-                                        🍽
-                                    </div>
-
+                        <div class="dish__body">
+                            @php ($dishName = \App\Support\Bilingual::split($product->name))
+                            <h3 class="dish__name">
+                                {{ $dishName[0] }}
+                                @if ($dishName[1])
+                                    <span class="dish__name-alt">{{ $dishName[1] }}</span>
                                 @endif
+                            </h3>
+                            <p class="dish__note">{{ \App\Support\Bilingual::lead($product->description) }}</p>
 
+                            <div class="dish__foot">
+                                <span class="dish__price">{{ number_format($product->price, 2) }} <small>{{ __('EGP') }}</small></span>
 
-                                <span class="available-badge">
-                                    Available
-                                </span>
-
+                                @isset($table)
+                                    @if ($product->isSoldOut())
+                                        <span class="dish__unavailable">{{ __('Unavailable') }}</span>
+                                    @else
+                                        <button type="button" class="add-button"
+                                                data-product-id="{{ $product->id }}"
+                                                data-product-name="{{ $product->name }}"
+                                                data-product-label="{{ \App\Support\Bilingual::lead($product->name) }}"
+                                                data-product-price="{{ $product->price }}"
+                                                aria-label="{{ __('Add') }} {{ $product->name }}">
+                                            {{ __('Add') }}
+                                        </button>
+                                    @endif
+                                @endisset
                             </div>
-
-
-                            {{-- Product Content --}}
-
-                            <div class="product-content">
-
-                                <h3>
-                                    {{ $product->name }}
-                                </h3>
-
-
-                                <p class="product-description">
-
-                                    {{ $product->description ?? 'No description available.' }}
-
-                                </p>
-
-                            </div>
-
-
-                            {{-- Product Footer --}}
-
-                            <div class="product-footer">
-
-                                <div class="price">
-
-                                    {{ number_format($product->price, 2) }}
-
-                                    <span>
-                                        EGP
-                                    </span>
-
-                                </div>
-
-
-                                @if(isset($table))
-
-                                    <button
-                                        type="button"
-                                        class="add-button"
-                                        data-product-id="{{ $product->id }}"
-                                        data-product-name="{{ $product->name }}"
-                                        data-product-price="{{ $product->price }}"
-                                    >
-                                        + Add
-                                    </button>
-
-                                @endif
-
-                            </div>
-
                         </div>
-
-                    @empty
-
-                        <div class="no-products">
-
-                            <p>
-                                No products available in this category.
-                            </p>
-
-                        </div>
-
-                    @endforelse
-
-                </div>
-
-            </section>
-
-        @empty
-
-            {{-- Empty Menu --}}
-
-            <div class="empty-menu">
-
-                <div class="empty-icon">
-                    🍽
-                </div>
-
-                <h2>
-                    No Menu Available
-                </h2>
-
-                <p>
-                    There are currently no menu items available.
-                </p>
-
+                    </article>
+                @empty
+                    <p class="muted-text">{{ __('No products available in this category.') }}</p>
+                @endforelse
             </div>
+        </section>
+    @empty
+        <div class="empty">
+            <div class="empty-icon">🍽</div>
+            <h2>{{ __('No Menu Available') }}</h2>
+            <p>{{ __('There are currently no menu items available.') }}</p>
+        </div>
+    @endforelse
 
-        @endforelse
+    <p class="filter-empty" data-filter-empty hidden>{{ __('Nothing on the menu matches that.') }}</p>
 
+</div>
 
-        {{-- =========================
-             Order
-        ========================== --}}
+@isset($table)
 
-        @if(isset($table))
-
-            <div class="order-box" id="order-box">
-
-                <div class="order-header">
-
-                    <div>
-
-                        <h2>
-                            Your Order
-                        </h2>
-
-                        <p>
-                            Review your items before submitting.
-                        </p>
-
-                    </div>
-
-
-                    <span
-                        class="order-count"
-                        id="order-count"
-                    >
-                        0 Items
-                    </span>
-
-                </div>
-
-
-                {{-- Order Items --}}
-
-                <div id="order-items">
-
-                    <div class="empty-order">
-
-                        <div class="empty-order-icon">
-                            🛒
-                        </div>
-
-                        <p>
-                            Your order is empty.
-                        </p>
-
-                        <span>
-                            Add items from the menu above.
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                {{-- Total --}}
-
-                <div class="order-total">
-
-                    <span>
-                        Total
-                    </span>
-
-                    <span id="order-total">
-                        0.00 EGP
-                    </span>
-
-                </div>
-
-
-                {{-- Client Info --}}
-
-                <div class="client-info">
-
-                    <input
-                        type="text"
-                        id="client-name"
-                        placeholder="Name (optional)"
-                    >
-
-                    <input
-                        type="tel"
-                        id="client-phone"
-                        placeholder="Phone Number (optional)"
-                    >
-
-                </div>
-
-
-                {{-- Payment Method --}}
-
-                <div class="payment-method">
-
-                    <label>
-                        <input type="radio" name="payment_method" value="cash" checked>
-                        cash
-                    </label>
-
-                    <label>
-                        <input type="radio" name="payment_method" value="card">
-                        Visa
-                    </label>
-
-                </div>
-
-
-                {{-- Submit --}}
-
-                <button
-                    type="button"
-                    id="submit-order"
-                    class="submit-button"
-                    disabled
-                >
-                    Submit Order
-                </button>
-
-
-                {{-- Message --}}
-
-                <div id="message"></div>
-
-            </div>
-
-
-            {{-- =========================
-                 Submitted Order (Edit Window)
-            ========================== --}}
-
-            <div class="order-box" id="submitted-order-panel" style="display:none;">
-
-                <div class="order-header">
-                    <div>
-                        <h2>Order #<span id="submitted-order-id"></span></h2>
-                        <p id="edit-window-status">
-                            You can still edit this order for
-                            <strong><span id="edit-timer">2:30</span></strong>
-                        </p>
-                    </div>
-                </div>
-
-                <div id="submitted-order-items"></div>
-
-                <div class="order-total">
-                    <span>Total</span>
-                    <span id="submitted-order-total">0.00 EGP</span>
-                </div>
-
-                <button type="button" id="save-changes-button" class="submit-button">
-                    Save Changes
-                </button>
-
-                <button
-                    type="button"
-                    id="request-help-button"
-                    class="submit-button"
-                    style="display:none; background:#dc2626;"
-                >
-                    Request Waiter
-                </button>
-
-                <div id="submitted-message"></div>
-
-            </div>
-
-        @endif
-
+    {{-- ===== The bar that follows you down the page ===== --}}
+    <div class="cart-bar" id="cart-bar" hidden>
+        <button type="button" class="cart-bar__button" id="open-order">
+            <span class="cart-bar__count" id="cart-bar-count">0</span>
+            <span class="cart-bar__label">{{ __('View your order') }}</span>
+            <span class="cart-bar__total" id="cart-bar-total">0.00 {{ __('EGP') }}</span>
+        </button>
     </div>
 
+    {{-- ===== Your order ===== --}}
+    <div class="sheet" id="order-sheet" hidden>
+        <div class="sheet__box" role="dialog" aria-modal="true" aria-labelledby="order-sheet-title">
+
+            <div class="sheet__head">
+                <div>
+                    <h2 id="order-sheet-title">{{ __('Your Order') }}</h2>
+                    <p class="muted-text">{{ __('Review your items before submitting.') }}</p>
+                </div>
+
+                <span class="order-count" id="order-count">0 {{ __('Items') }}</span>
+
+                <button type="button" class="sheet__close" data-close-sheet aria-label="{{ __('Close') }}">&times;</button>
+            </div>
+
+            <div class="sheet__body">
+                <div id="order-items"></div>
+
+                @include('partials.goes-with', ['pairs' => $pairs ?? []])
+            </div>
+
+            <div class="sheet__foot">
+                <div class="order-total">
+                    <span>{{ __('Total') }}</span>
+                    <span id="order-total">0.00 {{ __('EGP') }}</span>
+                </div>
+
+                <div class="who">
+                    <input type="text" id="client-name" placeholder="{{ __('Name (optional)') }}" maxlength="100">
+                    <input type="tel" id="client-phone" placeholder="{{ __('Phone Number (optional)') }}" maxlength="20">
+                </div>
+
+                <div class="pay-choice">
+                    <label><input type="radio" name="payment_method" value="cash" checked> {{ __('Cash') }}</label>
+                    <label><input type="radio" name="payment_method" value="card"> {{ __('Visa') }}</label>
+                </div>
+
+                <button type="button" id="submit-order" class="submit-button" disabled>{{ __('Submit Order') }}</button>
+
+                <div id="message"></div>
+            </div>
+        </div>
+    </div>
+
+    {{-- ===== After it is sent: the edit window ===== --}}
+    <div class="sheet" id="submitted-order-panel" style="display:none;">
+        <div class="sheet__box" role="dialog" aria-modal="true">
+
+            <div class="sheet__head">
+                <div>
+                    <h2>{{ __('Order #') }}<span id="submitted-order-id"></span></h2>
+                    <p class="muted-text" id="edit-window-status">
+                        {{ __('You can still edit this order for') }}
+                        <strong><span id="edit-timer">2:30</span></strong>
+                    </p>
+                </div>
+
+                <button type="button" class="sheet__close" data-close-sheet aria-label="{{ __('Close') }}">&times;</button>
+            </div>
+
+            <div class="sheet__body">
+                <div id="submitted-order-items"></div>
+            </div>
+
+            <div class="sheet__foot">
+                <div class="order-total">
+                    <span>{{ __('Total') }}</span>
+                    <span id="submitted-order-total">0.00 {{ __('EGP') }}</span>
+                </div>
+
+                <button type="button" id="save-changes-button" class="submit-button">{{ __('Save Changes') }}</button>
+                <button type="button" id="request-help-button" class="submit-button call-waiter" style="display:none;">{{ __('Request Waiter') }}</button>
+
+                <div id="submitted-message"></div>
+            </div>
+        </div>
+    </div>
+
+@endisset
 
     {{-- =========================
-         Fake Visa Payment Modal
+         Paying by card
+         The tail of this comment had lost its opening, so Blade printed the
+         line of equals signs at the foot of the menu.
     ========================== --}}
 
     @if(isset($table))
@@ -477,57 +230,57 @@
 
             <div class="payment-modal">
 
-                <h2>Pay with Visa</h2>
+                <h2>{{ __('Pay with Visa') }}</h2>
 
                 <p class="payment-modal-amount">
-                    Amount: <strong id="payment-modal-amount">0.00 EGP</strong>
+                    {{ __('Amount') }}: <strong id="payment-modal-amount">0.00 {{ __('EGP') }}</strong>
                 </p>
 
                 <button type="button" id="scan-card-button" class="scan-card-button">
-                    📷 Scan Card with Camera
+                    📷 {{ __('Scan Card with Camera') }}
                 </button>
 
                 <div id="camera-scan-container" class="camera-scan-container" style="display:none;">
                     <video id="camera-video" autoplay playsinline></video>
                     <div class="camera-scan-frame"></div>
-                    <p id="camera-scan-status">Point your camera at the card...</p>
+                    <p id="camera-scan-status">{{ __('Point your camera at the card...') }}</p>
                     <button type="button" id="cancel-scan-button" class="cancel-payment-button">
-                        Cancel Scan
+                        {{ __('Cancel Scan') }}
                     </button>
                 </div>
 
                 <div class="payment-field">
-                    <label>Card Number</label>
+                    <label>{{ __('Card Number') }}</label>
                     <input type="text" id="card-number" placeholder="4242 4242 4242 4242" maxlength="19">
                 </div>
 
                 <div class="payment-field-row">
 
                     <div class="payment-field">
-                        <label>Expiry</label>
-                        <input type="text" id="card-expiry" placeholder="MM/YY" maxlength="5">
+                        <label>{{ __('Expiry') }}</label>
+                        <input type="text" id="card-expiry" placeholder="{{ __('MM/YY') }}" maxlength="5">
                     </div>
 
                     <div class="payment-field">
-                        <label>CVV</label>
+                        <label>{{ __('CVV') }}</label>
                         <input type="text" id="card-cvv" placeholder="123" maxlength="3">
                     </div>
 
                 </div>
 
                 <div class="payment-field">
-                    <label>Cardholder Name</label>
-                    <input type="text" id="card-name" placeholder="Name on card">
+                    <label>{{ __('Cardholder Name') }}</label>
+                    <input type="text" id="card-name" placeholder="{{ __('Name on card') }}">
                 </div>
 
                 <div id="payment-modal-error" class="payment-modal-error"></div>
 
                 <button type="button" id="pay-now-button" class="submit-button">
-                    Pay Now
+                    {{ __('Pay Now') }}
                 </button>
 
                 <button type="button" id="cancel-payment-button" class="cancel-payment-button">
-                    Cancel
+                    {{ __('Cancel') }}
                 </button>
 
             </div>
@@ -536,1287 +289,109 @@
 
     @endif
 
+
 @endsection
 
-
-{{-- =========================================================
-     STYLES
-========================================================= --}}
-
 @push('styles')
-
-<style>
-
-    /* =========================
-       Base
-    ========================== */
-
-    .menu-page {
-        width: 100%;
-        max-width: 1200px;
-        margin: 0 auto;
-    }
-
-
-    /* =========================
-       Page Header
-    ========================== */
-
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-
-
-    .page-header h1 {
-        margin: 0;
-        font-size: 32px;
-        line-height: 1.2;
-        color: #1f2937;
-    }
-
-
-    .page-header p {
-        margin: 8px 0 0;
-        color: #6b7280;
-        line-height: 1.6;
-    }
-
-
-    .table-badge {
-        background: #eff6ff;
-        color: #2563eb;
-        padding: 10px 16px;
-        border-radius: 10px;
-        font-weight: bold;
-        white-space: nowrap;
-    }
-
-
-    /* =========================
-       Table Information
-    ========================== */
-
-    .table-info {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 25px;
-
-        background: white;
-
-        padding: 22px;
-
-        border-radius: 16px;
-
-        margin-bottom: 35px;
-
-        box-shadow:
-            0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-
-
-    .table-info-main {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-    }
-
-
-    .table-icon {
-        width: 52px;
-        height: 52px;
-
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
-        border-radius: 14px;
-
-        background: #eff6ff;
-
-        color: #2563eb;
-
-        font-size: 20px;
-        font-weight: bold;
-
-        flex-shrink: 0;
-    }
-
-
-    .table-info h2 {
-        margin: 0;
-
-        font-size: 20px;
-
-        color: #1f2937;
-    }
-
-
-    .table-info p {
-        margin: 5px 0 0;
-
-        color: #6b7280;
-
-        line-height: 1.5;
-    }
-
-
-    .table-details {
-        display: flex;
-        gap: 35px;
-    }
-
-
-    .table-detail {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-
-
-    .table-detail span {
-        color: #6b7280;
-
-        font-size: 13px;
-    }
-
-
-    .table-detail strong {
-        color: #1f2937;
-    }
-
-
-    .table-status.available {
-        color: #15803d;
-    }
-
-
-    .table-status.occupied {
-        color: #dc2626;
-    }
-
-
-    .table-status.reserved {
-        color: #d97706;
-    }
-
-
-    /* =========================
-       Categories
-    ========================== */
-
-    .category {
-        margin-bottom: 40px;
-    }
-
-
-    .category-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-
-        gap: 20px;
-
-        margin-bottom: 20px;
-    }
-
-
-    .category-heading {
-        display: flex;
-        align-items: center;
-
-        gap: 15px;
-
-        min-width: 0;
-    }
-
-
-    .category-image {
-        width: 64px;
-        height: 64px;
-
-        object-fit: cover;
-
-        border-radius: 14px;
-
-        flex-shrink: 0;
-    }
-
-
-    .category-image-placeholder {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
-        background: #eff6ff;
-
-        color: #2563eb;
-
-        font-size: 26px;
-    }
-
-
-    .category-heading-text {
-        min-width: 0;
-    }
-
-
-    .category-title {
-        margin: 0;
-
-        font-size: 25px;
-
-        line-height: 1.3;
-
-        color: #1f2937;
-    }
-
-
-    .category-description {
-        margin: 7px 0 0;
-
-        color: #6b7280;
-
-        line-height: 1.5;
-    }
-
-
-    .products-count {
-        background: #f3f4f6;
-
-        color: #4b5563;
-
-        padding: 7px 12px;
-
-        border-radius: 20px;
-
-        font-size: 13px;
-
-        font-weight: bold;
-
-        white-space: nowrap;
-    }
-
-
-    /* =========================
-       Products Grid
-    ========================== */
-
-    .products {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 20px;
-        align-items: stretch;
-    }
-
-
-    /* =========================
-       Product Card
-    ========================== */
-
-    .product-card {
-        background: white;
-
-        padding: 12px;
-
-        border-radius: 16px;
-
-        box-shadow:
-            0 4px 15px rgba(0, 0, 0, 0.08);
-
-        display: flex;
-        flex-direction: column;
-
-        min-height: 0;
-
-        overflow: hidden;
-
-        transition:
-            transform 0.2s ease,
-            box-shadow 0.2s ease;
-    }
-
-
-    .product-card:hover {
-        transform: translateY(-4px);
-
-        box-shadow:
-            0 10px 25px rgba(0, 0, 0, 0.10);
-    }
-
-
-    /* =========================
-       Product Image
-    ========================== */
-
-    .product-image-wrapper {
-        position: relative;
-
-        width: 100%;
-        height: 190px;
-
-        overflow: hidden;
-
-        border-radius: 13px;
-
-        background: #f8fafc;
-    }
-
-
-    .product-image {
-        width: 100%;
-        height: 100%;
-
-        display: block;
-
-        object-fit: cover;
-
-        transition:
-            transform 0.3s ease;
-    }
-
-
-    .product-card:hover .product-image {
-        transform: scale(1.04);
-    }
-
-
-    .product-image-placeholder {
-        display: flex;
-
-        justify-content: center;
-        align-items: center;
-
-        font-size: 45px;
-
-        color: #64748b;
-
-        background: #f8fafc;
-    }
-
-
-    .product-image-wrapper .available-badge {
-        position: absolute;
-
-        top: 12px;
-        right: 12px;
-
-        z-index: 2;
-    }
-
-
-    .available-badge {
-        background: #dcfce7;
-
-        color: #15803d;
-
-        padding: 5px 10px;
-
-        border-radius: 20px;
-
-        font-size: 12px;
-
-        font-weight: bold;
-
-        white-space: nowrap;
-    }
-
-
-    /* =========================
-       Product Content
-    ========================== */
-
-    .product-content {
-        flex: 1;
-
-        padding:
-            16px 8px 0;
-    }
-
-
-    .product-content h3 {
-        margin: 0;
-
-        font-size: 19px;
-
-        line-height: 1.4;
-
-        color: #1f2937;
-    }
-
-
-    .product-description {
-        margin: 8px 0 0;
-
-        color: #6b7280;
-
-        line-height: 1.6;
-
-        font-size: 14px;
-
-        display: -webkit-box;
-
-        -webkit-line-clamp: 3;
-        line-clamp: 3;
-        -webkit-box-orient: vertical;
-
-        overflow: hidden;
-    }
-
-
-    /* =========================
-       Product Footer
-    ========================== */
-
-    .product-footer {
-        display: flex;
-
-        justify-content: space-between;
-        align-items: center;
-
-        gap: 15px;
-
-        padding:
-            0 8px 8px;
-
-        margin-top: 18px;
-    }
-
-
-    .price {
-        color: #1f2937;
-
-        font-size: 20px;
-
-        font-weight: bold;
-
-        white-space: nowrap;
-    }
-
-
-    .price span {
-        color: #6b7280;
-
-        font-size: 13px;
-
-        font-weight: normal;
-    }
-
-
-    .add-button {
-        border: none;
-
-        background: #2563eb;
-
-        color: white;
-
-        padding: 10px 16px;
-
-        border-radius: 9px;
-
-        cursor: pointer;
-
-        font-weight: bold;
-
-        transition:
-            background 0.2s ease,
-            transform 0.2s ease;
-    }
-
-
-    .add-button:hover {
-        background: #1d4ed8;
-
-        transform: translateY(-1px);
-    }
-
-
-    .add-button:active {
-        transform: translateY(0);
-    }
-
-
-    /* =========================
-       No Products
-    ========================== */
-
-    .no-products {
-        grid-column: 1 / -1;
-
-        padding: 25px;
-
-        text-align: center;
-
-        background: white;
-
-        border-radius: 14px;
-
-        color: #6b7280;
-    }
-
-
-    /* =========================
-       Order Box
-    ========================== */
-
-    .order-box {
-        background: white;
-
-        margin-top: 40px;
-
-        padding: 25px;
-
-        border-radius: 16px;
-
-        box-shadow:
-            0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-
-
-    .order-header {
-        display: flex;
-
-        justify-content: space-between;
-
-        align-items: flex-start;
-
-        gap: 20px;
-
-        margin-bottom: 20px;
-    }
-
-
-    .order-header h2 {
-        margin: 0;
-
-        font-size: 24px;
-
-        color: #1f2937;
-    }
-
-
-    .order-header p {
-        margin: 7px 0 0;
-
-        color: #6b7280;
-    }
-
-
-    .order-count {
-        background: #eff6ff;
-
-        color: #2563eb;
-
-        padding: 7px 12px;
-
-        border-radius: 20px;
-
-        font-size: 13px;
-
-        font-weight: bold;
-
-        white-space: nowrap;
-    }
-
-
-    /* =========================
-       Empty Order
-    ========================== */
-
-    .empty-order {
-        text-align: center;
-
-        padding: 35px 20px;
-
-        color: #6b7280;
-    }
-
-
-    .empty-order-icon {
-        font-size: 35px;
-
-        margin-bottom: 10px;
-    }
-
-
-    .empty-order p {
-        margin: 0;
-
-        font-weight: bold;
-
-        color: #4b5563;
-    }
-
-
-    .empty-order span {
-        display: block;
-
-        margin-top: 5px;
-
-        font-size: 14px;
-    }
-
-
-    /* =========================
-       Order Item
-    ========================== */
-
-    .order-item {
-        display: flex;
-        flex-wrap: wrap;
-
-        justify-content: space-between;
-
-        align-items: center;
-
-        gap: 20px;
-
-        padding: 16px 0;
-
-        border-bottom:
-            1px solid #e5e7eb;
-    }
-
-
-    .order-item-info {
-        flex: 1;
-
-        min-width: 0;
-    }
-
-
-    .order-item-name {
-        font-weight: bold;
-
-        color: #1f2937;
-
-        word-break: break-word;
-    }
-
-
-    .order-item-price {
-        margin-top: 5px;
-
-        color: #6b7280;
-
-        font-size: 13px;
-    }
-
-
-    /* =========================
-       Quantity Controls
-    ========================== */
-
-    .quantity-controls {
-        display: flex;
-
-        align-items: center;
-
-        gap: 10px;
-    }
-
-
-    .quantity-button {
-        width: 32px;
-        height: 32px;
-
-        border: none;
-
-        border-radius: 8px;
-
-        background: #f1f5f9;
-
-        color: #1f2937;
-
-        cursor: pointer;
-
-        font-size: 18px;
-
-        font-weight: bold;
-
-        transition:
-            background 0.2s ease;
-    }
-
-
-    .quantity-button:hover {
-        background: #e2e8f0;
-    }
-
-
-    .quantity {
-        min-width: 25px;
-
-        text-align: center;
-
-        font-weight: bold;
-    }
-
-
-    /* =========================
-       Item Notes
-    ========================== */
-
-    .item-notes {
-        flex-basis: 100%;
-
-        margin-top: 4px;
-
-        padding: 6px 10px;
-
-        border: 1px solid #e5e7eb;
-
-        border-radius: 6px;
-
-        font-size: 13px;
-    }
-
-
-    /* =========================
-       Subtotal
-    ========================== */
-
-    .item-subtotal {
-        min-width: 110px;
-
-        text-align: right;
-
-        color: #1f2937;
-    }
-
-
-    /* =========================
-       Remove
-    ========================== */
-
-    .remove-button {
-        border: none;
-
-        background: #fee2e2;
-
-        color: #dc2626;
-
-        padding: 8px 12px;
-
-        border-radius: 8px;
-
-        cursor: pointer;
-
-        font-weight: bold;
-
-        transition:
-            background 0.2s ease;
-    }
-
-
-    .remove-button:hover {
-        background: #fecaca;
-    }
-
-
-    /* =========================
-       Order Total
-    ========================== */
-
-    .order-total {
-        display: flex;
-
-        justify-content: space-between;
-
-        align-items: center;
-
-        margin-top: 20px;
-
-        padding-top: 18px;
-
-        border-top:
-            2px solid #e5e7eb;
-
-        font-size: 20px;
-
-        font-weight: bold;
-
-        color: #1f2937;
-    }
-
-
-    /* =========================
-       Client Info
-    ========================== */
-
-    .client-info {
-        display: flex;
-
-        gap: 12px;
-
-        margin-top: 20px;
-    }
-
-
-    .client-info input {
-        flex: 1;
-
-        padding: 10px 12px;
-
-        border: 1px solid #e5e7eb;
-
-        border-radius: 8px;
-    }
-
-
-    /* =========================
-       Payment Method
-    ========================== */
-
-    .payment-method {
-        display: flex;
-
-        gap: 20px;
-
-        margin-top: 14px;
-
-        align-items: center;
-    }
-
-
-    .payment-method label {
-        display: flex;
-
-        align-items: center;
-
-        gap: 6px;
-
-        font-weight: 500;
-
-        color: #1f2937;
-
-        cursor: pointer;
-    }
-
-
-    /* =========================
-       Submit Button
-    ========================== */
-
-    .submit-button {
-        width: 100%;
-
-        margin-top: 20px;
-
-        padding: 14px;
-
-        border: none;
-
-        border-radius: 10px;
-
-        background: #16a34a;
-
-        color: white;
-
-        font-size: 16px;
-
-        font-weight: bold;
-
-        cursor: pointer;
-
-        transition:
-            background 0.2s ease,
-            transform 0.2s ease;
-    }
-
-
-    .submit-button:hover:not(:disabled) {
-        background: #15803d;
-
-        transform: translateY(-1px);
-    }
-
-
-    .submit-button:disabled {
-        opacity: 0.6;
-
-        cursor: not-allowed;
-    }
-
-
-    /* =========================
-       Messages
-    ========================== */
-
-    #message,
-    #submitted-message {
-        display: none;
-
-        margin-top: 18px;
-
-        padding: 13px 16px;
-
-        border-radius: 10px;
-
-        font-weight: 500;
-    }
-
-
-    #message.success,
-    #submitted-message.success {
-        display: block;
-
-        background: #dcfce7;
-
-        color: #166534;
-    }
-
-
-    #message.error,
-    #submitted-message.error {
-        display: block;
-
-        background: #fee2e2;
-
-        color: #991b1b;
-    }
-
-
-    /* =========================
-       Empty Menu
-    ========================== */
-
-    .empty-menu {
-        background: white;
-
-        padding: 60px 30px;
-
-        border-radius: 16px;
-
-        text-align: center;
-
-        color: #6b7280;
-
-        box-shadow:
-            0 4px 15px rgba(0, 0, 0, 0.08);
-    }
-
-
-    .empty-icon {
-        font-size: 45px;
-
-        margin-bottom: 15px;
-    }
-
-
-    .empty-menu h2 {
-        margin: 0;
-
-        color: #1f2937;
-    }
-
-
-    .empty-menu p {
-        margin: 10px 0 0;
-    }
-
-
-    /* =========================
-       Fake Visa Payment Modal
-    ========================== */
-
-    .payment-modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(15, 23, 42, 0.6);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-        padding: 20px;
-    }
-
-    .payment-modal {
-        background: white;
-        border-radius: 16px;
-        padding: 28px;
-        width: 100%;
-        max-width: 380px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-    }
-
-    .payment-modal h2 {
-        margin: 0 0 6px;
-        font-size: 20px;
-        color: #1f2937;
-    }
-
-    .payment-modal-amount {
-        margin: 0 0 20px;
-        color: #6b7280;
-        font-size: 14px;
-    }
-
-    .payment-modal-amount strong {
-        color: #1f2937;
-        font-size: 17px;
-    }
-
-    .payment-field {
-        margin-bottom: 14px;
-    }
-
-    .payment-field label {
-        display: block;
-        font-size: 13px;
-        color: #4b5563;
-        margin-bottom: 6px;
-        font-weight: 500;
-    }
-
-    .payment-field input {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        font-size: 14px;
-    }
-
-    .payment-field-row {
-        display: flex;
-        gap: 12px;
-    }
-
-    .payment-field-row .payment-field {
-        flex: 1;
-    }
-
-    .payment-modal-error {
-        display: none;
-        background: #fee2e2;
-        color: #991b1b;
-        padding: 10px 12px;
-        border-radius: 8px;
-        font-size: 13px;
-        margin-bottom: 14px;
-    }
-
-    .payment-modal-error.visible {
-        display: block;
-    }
-
-    .cancel-payment-button {
-        width: 100%;
-        margin-top: 10px;
-        padding: 12px;
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        background: white;
-        color: #4b5563;
-        font-weight: bold;
-        font-size: 15px;
-        cursor: pointer;
-    }
-
-    .cancel-payment-button:hover {
-        background: #f9fafb;
-    }
-
-
-    .scan-card-button {
-        width: 100%;
-        margin-bottom: 16px;
-        padding: 11px;
-        border: 1px dashed #2563eb;
-        border-radius: 8px;
-        background: #eff6ff;
-        color: #2563eb;
-        font-weight: bold;
-        font-size: 14px;
-        cursor: pointer;
-    }
-
-    .scan-card-button:hover {
-        background: #dbeafe;
-    }
-
-    .camera-scan-container {
-        position: relative;
-        margin-bottom: 16px;
-        border-radius: 12px;
-        overflow: hidden;
-        background: #000;
-        text-align: center;
-    }
-
-    .camera-scan-container video {
-        width: 100%;
-        display: block;
-        max-height: 220px;
-        object-fit: cover;
-    }
-
-    .camera-scan-frame {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 85%;
-        height: 55%;
-        border: 2px solid #22c55e;
-        border-radius: 10px;
-        pointer-events: none;
-    }
-
-    #camera-scan-status {
-        color: white;
-        font-size: 13px;
-        margin: 8px 0;
-    }
-
-    .camera-scan-container .cancel-payment-button {
-        margin: 0 0 10px;
-        width: 90%;
-    }
-
-
-    /* =========================
-       Responsive
-    ========================== */
-
-    @media (max-width: 768px) {
-
-        .page-header,
-        .table-info,
-        .category-header,
-        .order-header {
-            flex-direction: column;
-
-            align-items: flex-start;
-        }
-
-
-        .table-details {
-            width: 100%;
-
-            justify-content: space-between;
-
-            gap: 15px;
-        }
-
-
-        .products {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-
-        .order-item {
-            flex-wrap: wrap;
-        }
-
-
-        .order-item-info {
-            min-width: 100%;
-        }
-
-
-        .item-subtotal {
-            min-width: auto;
-
-            text-align: left;
-        }
-
-    }
-
-
-    @media (max-width: 600px) {
-
-        .products {
-            grid-template-columns: 1fr;
-        }
-
-    }
-
-
-    @media (max-width: 500px) {
-
-        .page-header h1 {
-            font-size: 27px;
-        }
-
-
-        .category-heading {
-            align-items: flex-start;
-        }
-
-
-        .category-image {
-            width: 54px;
-            height: 54px;
-        }
-
-
-        .category-title {
-            font-size: 21px;
-        }
-
-
-        .category-description {
-            font-size: 14px;
-        }
-
-
-        .product-image-wrapper {
-            height: 200px;
-        }
-
-
-        .product-footer {
-            align-items: flex-start;
-
-            flex-direction: column;
-        }
-
-
-        .add-button {
-            width: 100%;
-        }
-
-
-        .quantity-controls {
-            order: 3;
-        }
-
-
-        .remove-button {
-            margin-left: auto;
-        }
-
-
-        .table-details {
-            flex-direction: column;
-        }
-
-
-        .order-box {
-            padding: 20px 16px;
-        }
-
-        .client-info {
-            flex-direction: column;
-        }
-
-    }
-
-</style>
-
+<link rel="stylesheet" href="{{ asset('css/srms-menu.css') }}?v={{ @filemtime(public_path('css/srms-menu.css')) }}">
+<script src="{{ asset('js/srms-menu-motion.js') }}?v={{ @filemtime(public_path('js/srms-menu-motion.js')) }}" defer></script>
 @endpush
 
-
-{{-- =========================================================
-     JAVASCRIPT
-========================================================= --}}
-
 @push('scripts')
+
+{{-- The cart bar and the two sheets. The ordering logic lives in the script
+     below; this only decides what is on screen. --}}
+<script>
+(function () {
+    var app = document.getElementById('menu-app');
+    if (!app || !app.dataset.tableId) return;
+
+    var bar = document.getElementById('cart-bar');
+    var barCount = document.getElementById('cart-bar-count');
+    var barTotal = document.getElementById('cart-bar-total');
+    var orderSheet = document.getElementById('order-sheet');
+    var submittedSheet = document.getElementById('submitted-order-panel');
+    var openButton = document.getElementById('open-order');
+    var orderItems = document.getElementById('order-items');
+    var orderTotal = document.getElementById('order-total');
+
+    function openSheet(sheet) {
+        if (!sheet) return;
+        if (sheet === submittedSheet) sheet.style.display = 'flex';
+        else sheet.hidden = false;
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeSheet(sheet) {
+        if (!sheet) return;
+        if (sheet === submittedSheet) sheet.style.display = 'none';
+        else sheet.hidden = true;
+        document.body.style.overflow = '';
+    }
+
+    openButton.addEventListener('click', function () {
+        // Once an order is in, the bar reopens that order rather than a new one.
+        openSheet(submittedSheet.dataset.live === 'yes' ? submittedSheet : orderSheet);
+    });
+
+    document.addEventListener('click', function (event) {
+        if (event.target.closest('[data-close-sheet]')) {
+            closeSheet(event.target.closest('.sheet'));
+        } else if (event.target === orderSheet || event.target === submittedSheet) {
+            closeSheet(event.target);
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape') return;
+        closeSheet(orderSheet);
+        if (submittedSheet.style.display !== 'none') closeSheet(submittedSheet);
+    });
+
+    /* Adding from the menu should feel immediate: the bar updates and the
+       button confirms, without the sheet jumping in front of the food. */
+    document.addEventListener('click', function (event) {
+        var button = event.target.closest('.add-button');
+        if (!button || button.classList.contains('goes-with__add')) return;
+
+        var original = button.textContent;
+        button.textContent = @json(__('Added'));
+        button.classList.add('is-added');
+        setTimeout(function () {
+            button.textContent = original;
+            button.classList.remove('is-added');
+        }, 900);
+    });
+
+    /* The order panel is rendered by the script below; mirror its numbers
+       onto the bar whenever they change. */
+    function syncBar() {
+        var count = orderItems ? orderItems.querySelectorAll('.order-item').length : 0;
+        var quantities = orderItems ? orderItems.querySelectorAll('.order-item .quantity') : [];
+        var total = 0;
+
+        for (var i = 0; i < quantities.length; i++) total += Number(quantities[i].textContent) || 0;
+
+        barCount.textContent = total || count;
+        barTotal.textContent = orderTotal ? orderTotal.textContent : '';
+        bar.hidden = count === 0 && submittedSheet.dataset.live !== 'yes';
+    }
+
+    new MutationObserver(syncBar).observe(orderItems, { childList: true, subtree: true, characterData: true });
+    new MutationObserver(function () {
+        var live = submittedSheet.style.display !== 'none';
+        if (live) {
+            submittedSheet.dataset.live = 'yes';
+            closeSheet(orderSheet);
+            openSheet(submittedSheet);
+        }
+        syncBar();
+    }).observe(submittedSheet, { attributes: true, attributeFilter: ['style'] });
+
+    syncBar();
+})();
+</script>
+
 
 <script>
 
@@ -1831,12 +406,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    const tableId =
-        app.dataset.tableId;
-
-
-    const addButtons =
-        document.querySelectorAll('.add-button');
+    const tableToken =
+        app.dataset.tableToken;
 
 
     const orderItemsContainer =
@@ -1976,6 +547,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const EDIT_WINDOW_SECONDS = 150;
 
     let currentOrderId = null;
+
+    // Secret returned once by the server when the order is placed. Every later
+    // request about this order must carry it; it lives only in this page.
+    let currentOrderToken = null;
     let submittedItems = [];
     let countdownInterval = null;
 
@@ -1984,20 +559,25 @@ document.addEventListener('DOMContentLoaded', function () {
        Add Product
     ========================== */
 
-    addButtons.forEach(function (button) {
+    /* Delegated, so a dish suggested inside the basket adds itself the same
+       way a dish on the menu does. */
+    document.addEventListener('click', function (event) {
 
-        button.addEventListener('click', function () {
+        const button = event.target.closest('.add-button');
+
+        if (button) {
 
             const productId =
-                Number(this.dataset.productId);
+                Number(button.dataset.productId);
 
 
             const productName =
-                this.dataset.productName;
+                button.dataset.productLabel ||
+                button.dataset.productName;
 
 
             const productPrice =
-                Number(this.dataset.productPrice);
+                Number(button.dataset.productPrice);
 
 
             const existingItem =
@@ -2035,7 +615,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             renderOrder();
 
-        });
+        }
 
     });
 
@@ -2063,8 +643,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 totalQuantity +
                 (
                     totalQuantity === 1
-                        ? ' Item'
-                        : ' Items'
+                        ? ' ' + __t('Item')
+                        : ' ' + __t('Items')
                 );
 
         }
@@ -2083,11 +663,11 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
 
                         <p>
-                            Your order is empty.
+                            ${__t('Your order is empty.')}
                         </p>
 
                         <span>
-                            Add items from the menu above.
+                            ${__t('Add items from the menu above.')}
                         </span>
 
                     </div>
@@ -2100,7 +680,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (orderTotalElement) {
 
                 orderTotalElement.textContent =
-                    '0.00 EGP';
+                    '0.00 ' + __t('EGP');
 
             }
 
@@ -2110,7 +690,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 submitButton.disabled = true;
 
                 submitButton.textContent =
-                    'Submit Order';
+                    __t('Submit Order');
 
             }
 
@@ -2146,7 +726,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
 
                             <div class="order-item-price">
-                                ${item.price.toFixed(2)} EGP each
+                                ${item.price.toFixed(2)} ${__t('EGP each')}
                             </div>
 
                         </div>
@@ -2182,7 +762,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                         <strong class="item-subtotal">
-                            ${subtotal.toFixed(2)} EGP
+                            ${subtotal.toFixed(2)} ${__t('EGP')}
                         </strong>
 
 
@@ -2192,14 +772,14 @@ document.addEventListener('DOMContentLoaded', function () {
                             data-action="remove"
                             data-index="${index}"
                         >
-                            Remove
+                            ${__t('Remove')}
                         </button>
 
 
                         <input
                             type="text"
                             class="item-notes"
-                            placeholder="Notes (e.g., without tomatoes)"
+                            placeholder="${__t('Notes (e.g., without tomatoes)')}"
                             data-index="${index}"
                             value="${item.notes ? escapeHtml(item.notes) : ''}"
                         >
@@ -2224,7 +804,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             orderTotalElement.textContent =
                 total.toFixed(2) +
-                ' EGP';
+                ' ' + __t('EGP');
 
         }
 
@@ -2237,6 +817,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         attachOrderButtons();
+
+
+        if (window.SRMSGoesWith) {
+
+            SRMSGoesWith.render(
+
+                document.getElementById('goes-with'),
+
+                orderItems.map(
+                    function (item) {
+                        return item.product_id;
+                    }
+                )
+
+            );
+
+        }
 
     }
 
@@ -2370,10 +967,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
 
 
-                if (!tableId) {
+                if (!tableToken) {
 
                     showMessage(
-                        'Table information is missing.',
+                        __t('Table information is missing.'),
                         'error'
                     );
 
@@ -2420,7 +1017,7 @@ document.addEventListener('DOMContentLoaded', function () {
         submitButton.disabled = true;
 
         submitButton.textContent =
-            'Submitting...';
+            __t('Submitting...');
 
 
         hideMessage();
@@ -2469,8 +1066,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         body:
                             JSON.stringify({
 
-                                restaurant_table_id:
-                                    Number(tableId),
+                                table_token:
+                                    tableToken,
 
                                 items:
                                     items,
@@ -2502,7 +1099,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 showMessage(
                     data.message ||
-                    'Failed to create order.',
+                    __t('Failed to create order.'),
                     'error'
                 );
 
@@ -2512,7 +1109,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                 submitButton.textContent =
-                    'Submit Order';
+                    __t('Submit Order');
 
 
                 return false;
@@ -2537,9 +1134,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             showMessage(
-                'Order #' +
+                __t('Order #') +
                 data.order.id +
-                ' created successfully!',
+                ' ' + __t('created successfully!'),
                 'success'
             );
 
@@ -2549,8 +1146,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             submitButton.textContent =
-                'Submit Order';
+                __t('Submit Order');
 
+
+            currentOrderToken = data.order_token;
 
             startEditWindow(data.order);
 
@@ -2564,7 +1163,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             showMessage(
-                'Something went wrong while submitting the order.',
+                __t('Something went wrong while submitting the order.'),
                 'error'
             );
 
@@ -2574,7 +1173,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             submitButton.textContent =
-                'Submit Order';
+                __t('Submit Order');
 
 
             return false;
@@ -2607,7 +1206,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         paymentModalAmount.textContent =
-            total.toFixed(2) + ' EGP';
+            total.toFixed(2) + ' ' + __t('EGP');
 
 
         cardNumberInput.value = '';
@@ -2624,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         payNowButton.disabled = false;
 
-        payNowButton.textContent = 'Pay Now';
+        payNowButton.textContent = __t('Pay Now');
 
 
         paymentModalOverlay.style.display = 'flex';
@@ -2717,7 +1316,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (cardNumber.length < 12 || !/^\d+$/.test(cardNumber)) {
 
                     showPaymentModalError(
-                        'Please enter a valid card number.'
+                        __t('Please enter a valid card number.')
                     );
 
                     return;
@@ -2728,7 +1327,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (! /^\d{2}\/\d{2}$/.test(expiry)) {
 
                     showPaymentModalError(
-                        'Please enter expiry as MM/YY.'
+                        __t('Please enter expiry as MM/YY.')
                     );
 
                     return;
@@ -2739,7 +1338,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (! /^\d{3}$/.test(cvv)) {
 
                     showPaymentModalError(
-                        'Please enter a valid 3-digit CVV.'
+                        __t('Please enter a valid 3-digit CVV.')
                     );
 
                     return;
@@ -2750,7 +1349,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (! name) {
 
                     showPaymentModalError(
-                        'Please enter the cardholder name.'
+                        __t('Please enter the cardholder name.')
                     );
 
                     return;
@@ -2760,7 +1359,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 payNowButton.disabled = true;
 
-                payNowButton.textContent = 'Processing Payment...';
+                payNowButton.textContent = __t('Processing Payment...');
 
 
                 // Simulated payment processing delay.
@@ -2781,10 +1380,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
                             payNowButton.disabled = false;
 
-                            payNowButton.textContent = 'Pay Now';
+                            payNowButton.textContent = __t('Pay Now');
 
                             showPaymentModalError(
-                                'Payment succeeded but the order failed to save. Please contact staff.'
+                                __t('Payment succeeded but the order failed to save. Please contact staff.')
                             );
 
                         }
@@ -2821,9 +1420,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         product_id: item.product_id,
 
-                        name: item.product
-                            ? item.product.name
-                            : 'Unknown Product',
+                        name: item.product_name || __t('Unknown Product'),
 
                         price: Number(item.unit_price),
 
@@ -2848,7 +1445,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         saveChangesButton.disabled = false;
 
-        saveChangesButton.textContent = 'Save Changes';
+        saveChangesButton.textContent = __t('Save Changes');
 
 
         requestHelpButton.style.display = 'none';
@@ -2928,7 +1525,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
             editWindowStatus.textContent =
-                'The edit window has expired.';
+                __t('The edit window has expired.');
 
 
             saveChangesButton.style.display = 'none';
@@ -2973,7 +1570,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             </div>
 
                             <div class="order-item-price">
-                                ${item.price.toFixed(2)} EGP each
+                                ${item.price.toFixed(2)} ${__t('EGP each')}
                             </div>
 
                         </div>
@@ -3009,7 +1606,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                         <strong class="item-subtotal">
-                            ${subtotal.toFixed(2)} EGP
+                            ${subtotal.toFixed(2)} ${__t('EGP')}
                         </strong>
 
 
@@ -3019,14 +1616,14 @@ document.addEventListener('DOMContentLoaded', function () {
                             data-sub-action="remove"
                             data-sub-index="${index}"
                         >
-                            Remove
+                            ${__t('Remove')}
                         </button>
 
 
                         <input
                             type="text"
                             class="item-notes"
-                            placeholder="Notes (e.g., without tomatoes)"
+                            placeholder="${__t('Notes (e.g., without tomatoes)')}"
                             data-sub-index="${index}"
                             value="${item.notes ? escapeHtml(item.notes) : ''}"
                         >
@@ -3051,7 +1648,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             submittedTotalElement.textContent =
                 total.toFixed(2) +
-                ' EGP';
+                ' ' + __t('EGP');
 
         }
 
@@ -3187,7 +1784,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (submittedItems.length === 0) {
 
                     showSubmittedMessage(
-                        'Order must have at least one item.',
+                        __t('Order must have at least one item.'),
                         'error'
                     );
 
@@ -3198,7 +1795,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 saveChangesButton.disabled = true;
 
-                saveChangesButton.textContent = 'Saving...';
+                saveChangesButton.textContent = __t('Saving...');
 
 
                 hideSubmittedMessage();
@@ -3237,7 +1834,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                         'application/json',
 
                                     'Accept':
-                                        'application/json'
+                                        'application/json',
+
+                                    'X-Order-Token':
+                                        currentOrderToken
 
                                 },
 
@@ -3258,14 +1858,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         showSubmittedMessage(
                             data.message ||
-                            'Failed to update order.',
+                            __t('Failed to update order.'),
                             'error'
                         );
 
 
                         saveChangesButton.disabled = false;
 
-                        saveChangesButton.textContent = 'Save Changes';
+                        saveChangesButton.textContent = __t('Save Changes');
 
 
                         return;
@@ -3274,14 +1874,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                     showSubmittedMessage(
-                        'Order updated successfully!',
+                        __t('Order updated successfully!'),
                         'success'
                     );
 
 
                     saveChangesButton.disabled = false;
 
-                    saveChangesButton.textContent = 'Save Changes';
+                    saveChangesButton.textContent = __t('Save Changes');
 
 
                 } catch (error) {
@@ -3290,14 +1890,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                     showSubmittedMessage(
-                        'Something went wrong while saving changes.',
+                        __t('Something went wrong while saving changes.'),
                         'error'
                     );
 
 
                     saveChangesButton.disabled = false;
 
-                    saveChangesButton.textContent = 'Save Changes';
+                    saveChangesButton.textContent = __t('Save Changes');
 
                 }
 
@@ -3324,7 +1924,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 requestHelpButton.disabled = true;
 
-                requestHelpButton.textContent = 'Notifying...';
+                requestHelpButton.textContent = __t('Notifying...');
 
 
                 hideSubmittedMessage();
@@ -3345,7 +1945,10 @@ document.addEventListener('DOMContentLoaded', function () {
                                         'application/json',
 
                                     'Accept':
-                                        'application/json'
+                                        'application/json',
+
+                                    'X-Order-Token':
+                                        currentOrderToken
 
                                 }
 
@@ -3359,13 +1962,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     showSubmittedMessage(
                         data.message ||
-                        'The waiter has been notified.',
+                        __t('The waiter has been notified.'),
                         'success'
                     );
 
 
                     requestHelpButton.textContent =
-                        'Waiter Notified';
+                        __t('Waiter Notified');
 
 
                 } catch (error) {
@@ -3374,7 +1977,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                     showSubmittedMessage(
-                        'Something went wrong. Please try again.',
+                        __t('Something went wrong. Please try again.'),
                         'error'
                     );
 
@@ -3382,7 +1985,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     requestHelpButton.disabled = false;
 
                     requestHelpButton.textContent =
-                        'Request Waiter';
+                        __t('Request Waiter');
 
                 }
 
@@ -3485,7 +2088,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (! navigator.mediaDevices || ! navigator.mediaDevices.getUserMedia) {
 
                     showPaymentModalError(
-                        'Camera is not supported on this device/browser.'
+                        __t('Camera is not supported on this device/browser.')
                     );
 
                     return;
@@ -3509,14 +2112,14 @@ document.addEventListener('DOMContentLoaded', function () {
                     scanCardButton.style.display = 'none';
 
                     cameraScanStatus.textContent =
-                        'Point your camera at the card...';
+                        __t('Point your camera at the card...');
 
 
                     setTimeout(
                         function () {
 
                             cameraScanStatus.textContent =
-                                'Scanning...';
+                                __t('Scanning...');
 
                         },
                         1200
@@ -3543,7 +2146,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 cardNameInput.value =
                                     clientNameInput && clientNameInput.value
                                         ? clientNameInput.value
-                                        : 'Card Holder';
+                                        : __t('Card Holder');
 
                             }
 
@@ -3558,7 +2161,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
                     showPaymentModalError(
-                        'Camera access was denied. Please enter card details manually.'
+                        __t('Camera access was denied. Please enter card details manually.')
                     );
 
                 }
@@ -3697,10 +2300,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
         div.textContent =
-            value;
+            value == null ? '' : String(value);
 
 
-        return div.innerHTML;
+        // textContent escapes < > & only; the result is also placed inside
+        // value="..." attributes, so quotes must be escaped as well.
+        return div.innerHTML
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
 
     }
 

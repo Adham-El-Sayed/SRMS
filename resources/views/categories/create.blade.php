@@ -1,18 +1,18 @@
 @extends('layouts.app')
 
-@section('title', 'Add Category')
+@section('title', __('Add Category'))
 
 @section('content')
 
 <div class="page-header">
 
     <div>
-        <h1>Add Category</h1>
-        <p>Create a new menu category.</p>
+        <h1>{{ __('Add Category') }}</h1>
+        <p>{{ __('Create a new menu category.') }}</p>
     </div>
 
     <a href="{{ route('categories.index') }}" class="back-btn">
-        ← Back to Categories
+        ← {{ __('Back to Categories') }}
     </a>
 
 </div>
@@ -28,7 +28,7 @@
         <div class="form-group">
 
             <label for="name">
-                Category Name
+                {{ __('Category Name') }}
             </label>
 
             <input
@@ -36,7 +36,7 @@
                 id="name"
                 name="name"
                 value="{{ old('name') }}"
-                placeholder="Enter category name"
+                placeholder="{{ __('Enter category name') }}"
                 required
             >
 
@@ -52,14 +52,14 @@
         <div class="form-group">
 
             <label for="description">
-                Description
+                {{ __('Description') }}
             </label>
 
             <textarea
                 id="description"
                 name="description"
                 rows="5"
-                placeholder="Enter category description"
+                placeholder="{{ __('Enter category description') }}"
             >{{ old('description') }}</textarea>
 
             @error('description')
@@ -82,7 +82,7 @@
             >
 
             <label for="is_active">
-                Active Category
+                {{ __('Active Category') }}
             </label>
 
         </div>
@@ -91,14 +91,14 @@
         <div class="form-actions">
 
             <button type="submit" class="save-btn">
-                Save Category
+                {{ __('Save Category') }}
             </button>
 
             <a
                 href="{{ route('categories.index') }}"
                 class="cancel-btn"
             >
-                Cancel
+                {{ __('Cancel') }}
             </a>
 
         </div>

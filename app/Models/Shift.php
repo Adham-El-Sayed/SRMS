@@ -9,13 +9,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Shift extends Model
 {
     protected $fillable = [
-        'user_id', 'status', 'opened_at', 'closed_at', 'counted_cash', 'notes',
+        'user_id', 'status', 'opened_at', 'closed_at',
+        'counted_cash', 'expected_cash', 'expected_card', 'notes',
     ];
 
     protected $casts = [
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
         'counted_cash' => 'decimal:2',
+        'expected_cash' => 'decimal:2',
+        'expected_card' => 'decimal:2',
     ];
 
     public function user(): BelongsTo
@@ -28,24 +31,31 @@ class Shift extends Model
         return $this->hasMany(Order::class);
     }
 
-    protected function paidOrders()
+    /** Money actually taken in this shift, by method, from paid, non-cancelled orders. */
+    public function liveTotal(string $method): float
     {
-        return $this->orders()
-            ->where('payment_status', 'paid');
+        return (float) $this->orders()
+            ->where('payment_status', 'paid')
+            ->where('status', '!=', 'cancelled')
+            ->where('payment_method', $method)
+            ->sum('total');
     }
 
-      public function systemCashTotal(): float
+    public function systemCashTotal(): float
     {
-        return (float) $this->paidOrders()
-            ->where('payment_method', 'cash')->sum('total');
+        return $this->status === 'closed' && $this->expected_cash !== null
+            ? (float) $this->expected_cash
+            : $this->liveTotal('cash');
     }
 
     public function systemVisaTotal(): float
     {
-        return (float) $this->paidOrders()
-            ->where('payment_method', 'card')->sum('total');
+        return $this->status === 'closed' && $this->expected_card !== null
+            ? (float) $this->expected_card
+            : $this->liveTotal('card');
     }
 
+    /** Positive = more cash in the drawer than expected; negative = short. */
     public function cashDifference(): ?float
     {
         if ($this->counted_cash === null) {
@@ -53,5 +63,18 @@ class Shift extends Model
         }
 
         return round((float) $this->counted_cash - $this->systemCashTotal(), 2);
+    }
+
+    /** Orders in this shift where the money has not been collected yet. */
+    public function unpaidOrders()
+    {
+        return $this->orders()
+            ->where('payment_status', '!=', 'paid')
+            ->where('status', '!=', 'cancelled');
+    }
+
+    public function outstandingTotal(): float
+    {
+        return (float) $this->unpaidOrders()->sum('total');
     }
 }

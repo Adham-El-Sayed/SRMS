@@ -9,6 +9,7 @@ class OrderChangeRequest extends Model
 {
     protected $fillable = [
         'order_id',
+        'reason',
         'status',
         'resolved_at',
     ];
@@ -20,5 +21,13 @@ class OrderChangeRequest extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    /** What staff are being called about. */
+    public function reasonLabel(): string
+    {
+        return $this->reason === 'edited'
+            ? __('Changed their order')
+            : __('Asked for a waiter');
     }
 }

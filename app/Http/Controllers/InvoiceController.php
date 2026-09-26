@@ -10,11 +10,11 @@ class InvoiceController extends Controller
 {
     public function show(Order $order): Response
     {
-        $order->load(['table', 'items.product']);
+        $order->load(['table', 'items']);
 
-        $pdf = Pdf::loadView('invoices.show', [
-            'order' => $order,
-        ]);
+        // The PDF library can't join Arabic letters, so invoices are always
+        // rendered in English whatever language the screen is in.
+        $pdf = $this->inEnglish(fn () => Pdf::loadView('invoices.show', ['order' => $order]));
 
         return $pdf->stream("invoice-{$order->id}.pdf");
     }

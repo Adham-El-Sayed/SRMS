@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\RestaurantTable;
 use App\Services\MenuService;
+use App\Services\RecommendationService;
 use Illuminate\Contracts\View\View;
 
 class TableMenuController extends Controller
 {
     public function __construct(
-        private MenuService $menuService
+        private MenuService $menuService,
+        private RecommendationService $recommendations,
     ) {}
 
     public function show(string $qr_token): View
@@ -19,6 +21,12 @@ class TableMenuController extends Controller
 
         $menu = $this->menuService->getMenu();
 
-        return view('menu.index', compact('table', 'menu'));
+        return view('menu.index', [
+            'table' => $table,
+            'menu' => $menu,
+            'recommended' => $this->recommendations->bestPerCategory($menu),
+            'popular' => $this->recommendations->popular(6, $menu),
+            'pairs' => $this->recommendations->pairs(),
+        ]);
     }
 }

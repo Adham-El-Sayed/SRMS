@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Sales Report')
+@section('title', __('Sales Report'))
 
 @section('content')
 
     <div class="header">
         <div>
-            <h1>Sales Report</h1>
-            <p>Export orders for a date range as an Excel file.</p>
+            <h1>{{ __('Sales Report') }}</h1>
+            <p>{{ __('Export orders for a date range as an Excel file.') }}</p>
         </div>
     </div>
 
@@ -16,17 +16,17 @@
         <form method="GET" action="{{ route('reports.sales.export') }}">
 
             <div class="field">
-                <label>From</label>
+                <label>{{ __('From') }}</label>
                 <input type="date" name="from" required>
             </div>
 
             <div class="field">
-                <label>To</label>
+                <label>{{ __('To') }}</label>
                 <input type="date" name="to" required>
             </div>
 
             <button type="submit" class="export-button">
-                Download Excel Report
+                {{ __('Download Excel Report') }}
             </button>
 
         </form>

@@ -11,18 +11,25 @@ use Illuminate\View\View;
 
 class OrderChangeRequestController extends Controller
 {
-    // Called by the client (public, no auth) once the edit window has expired.
-    public function store(Order $order): JsonResponse
+    /** A guest asks for a waiter. Needs the order's own token. */
+    public function store(Request $request, Order $order): JsonResponse
     {
-        // Avoid creating duplicate pending alerts for the same order.
-        $existing = OrderChangeRequest::query()
+        OrderController::authorizeGuest($request, $order);
+
+        if (! $order->isActive()) {
+            return response()->json([
+                'message' => __('This order is already closed.'),
+            ], 422);
+        }
+
+        $alreadyWaiting = OrderChangeRequest::query()
             ->where('order_id', $order->id)
             ->where('status', 'pending')
-            ->first();
+            ->exists();
 
-        if ($existing) {
+        if ($alreadyWaiting) {
             return response()->json([
-                'message' => 'A waiter has already been notified for this order.',
+                'message' => __('A waiter has already been notified for this order.'),
             ]);
         }
 
@@ -32,42 +39,50 @@ class OrderChangeRequestController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'The waiter has been notified.',
+            'message' => __('The waiter has been notified.'),
         ], 201);
     }
 
-    // Admin-facing list.
     public function index(): View
     {
-        $requests = OrderChangeRequest::query()
-            ->where('status', 'pending')
-            ->with(['order.table'])
-            ->latest()
-            ->get();
-
         return view('order-change-requests.index', [
-            'requests' => $requests,
+            'requests' => $this->pending(),
         ]);
     }
 
-    // Admin marks it as handled.
+    /** The list alone, for the page to refresh itself without a reload. */
+    public function board(): JsonResponse
+    {
+        $requests = $this->pending();
+
+        return response()->json([
+            'html' => view('order-change-requests._list', ['requests' => $requests])->render(),
+            'count' => $requests->count(),
+            // Includes the minute so "requested 3 minutes ago" keeps ticking.
+            'signature' => $requests->pluck('id')->implode(',') . '|' . now()->format('H:i'),
+        ]);
+    }
+
     public function resolve(OrderChangeRequest $orderChangeRequest): RedirectResponse
     {
-        $orderChangeRequest->update([
-            'status' => 'resolved',
-            'resolved_at' => now(),
-        ]);
+        if ($orderChangeRequest->status === 'pending') {
+            $orderChangeRequest->update([
+                'status' => 'resolved',
+                'resolved_at' => now(),
+            ]);
+        }
 
         return redirect()
             ->route('order-change-requests.index')
-            ->with('success', 'Request marked as handled.');
+            ->with('success', __('Request marked as handled.'));
     }
 
-    // Small JSON endpoint the nav badge polls periodically.
-    public function pendingCount(): JsonResponse
+    protected function pending()
     {
-        return response()->json([
-            'count' => OrderChangeRequest::where('status', 'pending')->count(),
-        ]);
+        return OrderChangeRequest::query()
+            ->where('status', 'pending')
+            ->with(['order.table'])
+            ->oldest()
+            ->get();
     }
 }

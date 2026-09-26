@@ -13,7 +13,7 @@ A Laravel web app that runs a restaurant floor end to end: guests scan a QR code
 - [Tech stack](#tech-stack)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Creating the first admin](#creating-the-first-admin)
+- [Accounts and access](#accounts-and-access)
 - [How it works](#how-it-works)
 - [Languages](#languages)
 - [Project structure](#project-structure)
@@ -33,16 +33,17 @@ A Laravel web app that runs a restaurant floor end to end: guests scan a QR code
 ### For the kitchen
 
 - **Live order board.** Every open order shows its table, items, notes and total.
-- **One-tap status changes.** Move each order through `Pending → Confirmed → Preparing → Ready → Completed`.
+- **One-tap status changes.** Move each order through `Pending → Confirmed → Preparing → Ready → Completed`, or cancel it before it's served.
+- **Live board with a chime.** New orders appear on their own, without reloading. A chime plays and a notice pops up, and the **Kitchen** tab shows how many orders are open.
 
 ### For managers (admin)
 
 - **Dashboard.** Order counts, completed revenue, table status and the latest orders at a glance.
 - **Tables.** Create tables, set capacity and status, and print each table's QR code.
 - **Menu management.** Categories and products with photos, descriptions and prices. Switch any item on or off without deleting it.
-- **Waiter alerts.** Guest requests appear under *Alerts*, and a badge in the navigation counts pending ones (it refreshes every 15 seconds).
-- **Cash payments.** Confirm cash orders as paid and print an invoice.
-- **Shifts.** Open a shift, then close it by entering the cash you counted. The system compares that with the cash it recorded and flags any **surplus** or **shortage**. Past shifts can be browsed and exported to Excel.
+- **Waiter alerts.** Guest requests appear under *Alerts* the moment they're made, with their own sound and a count in the navigation.
+- **Payments.** Staff confirm each payment once the money is actually in hand (cash in the drawer, or a card on the terminal) and can print an invoice. Nothing counts as paid until then.
+- **Shifts.** Open a shift, then close it by entering the cash you counted. The system compares that with the cash it recorded and flags any **surplus** or **shortage**. A closed shift's figures are frozen, so they never change afterwards. Past shifts can be browsed and exported to Excel.
 - **Reports.** A monthly report with revenue split by cash and card, average order value and the top 5 products, downloadable as PDF. Orders for any date range can also be exported to Excel.
 
 ---
@@ -95,7 +96,7 @@ A Laravel web app that runs a restaurant floor end to end: guests scan a QR code
 | Backend | Laravel 13, PHP 8.3+ |
 | Database | MySQL / MariaDB |
 | Auth | Laravel Breeze |
-| Roles | spatie/laravel-permission (`admin`, `kitchen`) |
+| Roles | spatie/laravel-permission (`super-admin`, `admin`, `cashier`, `kitchen`) |
 | QR codes | simplesoftwareio/simple-qrcode |
 | PDF reports | barryvdh/laravel-dompdf |
 | Excel exports | maatwebsite/excel |
@@ -157,24 +158,57 @@ For development with hot reload, run `composer dev` instead of `php artisan serv
 
 ---
 
-## Creating the first admin
+## Accounts and access
 
-New accounts start **without a role**, so the management pages stay locked until you give one out. Register an account at `/register`, then run:
+Every staff page requires signing in, and what each account may open depends on its role.
+
+| Role | Can open |
+|---|---|
+| **super-admin** | Everything, and switches between the admin, cashier and kitchen views |
+| **admin** | Menu, tables, alerts, payments, shifts, reports and staff |
+| **cashier** | Payments and shifts — the money side |
+| **kitchen** | The kitchen board |
+| *no role yet* | Nothing — a "waiting for access" page until a manager sets the role |
+
+The navigation only shows what the signed-in account can actually open, and a
+page that isn't theirs is refused by the server as well, not just hidden.
+Signing in lands each account where it works: the kitchen on its board, the
+cashier on payments, an admin on the dashboard.
+
+### The super admin's workspace switcher
+
+A super admin may do everything, which would mean every page at once. So the
+top bar offers **Admin / Cashier / Kitchen**: picking one decides what the
+navigation shows and where signing in lands. It is a convenience, not a
+restriction — a super admin is never refused a page, whichever view is active.
+
+### The first administrator
 
 ```bash
-php artisan tinker
+php artisan srms:admin
 ```
 
-```php
-use Spatie\Permission\Models\Role;
+It asks for a name, email and password and creates a **super admin** — the
+owner account. Pass an email to promote an existing account instead, and
+`--role` to make any other kind of account:
 
-Role::findOrCreate('admin');
-Role::findOrCreate('kitchen');
-
-App\Models\User::where('email', 'you@example.com')->first()->assignRole('admin');
+```bash
+php artisan srms:admin someone@example.com            # make them super admin
+php artisan srms:admin chef@example.com --role=kitchen
+php artisan srms:admin till@example.com --role=cashier
 ```
 
-Use `assignRole('kitchen')` for kitchen staff. They can open the dashboard and the kitchen board, and the management pages stay locked.
+### Everyone else
+
+The administrator adds accounts from **Staff & Access** in the navigation: add
+an account, or change anyone's role from the dropdown next to their name. An
+administrator can't remove their own access or delete their own account there,
+so the restaurant can never be left without an administrator. Only a super
+admin can create another super admin, or change one.
+
+New accounts made through public sign-up start with no role and can't reach
+anything until a manager gives them one. Once your staff accounts exist, you
+can switch public sign-up off entirely with `APP_REGISTRATION=false` in `.env`.
 
 ---
 
@@ -191,11 +225,21 @@ Use `assignRole('kitchen')` for kitchen staff. They can open the dashboard and t
 
 ### Editing and waiter requests
 
-After submitting, the guest sees a countdown and can change the order for 150 seconds. The limit is `OrderService::EDIT_WINDOW_SECONDS` in `app/Services/OrderService.php`. After it runs out, **Request Waiter** creates an alert that staff handle from the **Alerts** page.
+After submitting, the guest sees a countdown and can change the order for 150 seconds, as long as the kitchen hasn't confirmed it yet. The limit is `OrderService::EDIT_WINDOW_SECONDS` in `app/Services/OrderService.php`. Once the kitchen starts, or the time runs out, **Request Waiter** creates an alert that staff handle from the **Alerts** page.
+
+Guests at a table can keep ordering during the meal (dessert, another drink). The table shows as occupied from the first order and becomes available again once every order there is completed or cancelled.
 
 ### Payments
 
-Card payment is **a simulation**. The card form checks the number, expiry and CVV, then waits briefly and treats the payment as successful. The camera "scan" fills in a test card. No money is charged. To go live, replace the marked block in `resources/views/menu/index.blade.php` (search for *"Replace this block with a real gateway call"*) with a real payment provider.
+Card payment on the menu is **a simulation**. The card form checks the number, expiry and CVV, then waits briefly and reports success. The camera "scan" fills in a test card. No money is charged.
+
+Because of that, the server never takes the page's word for a payment. Every order, cash or card, starts **unpaid** and appears under **Payments** until staff confirm the money was received. Confirming needs an open shift, and the payment is booked to that shift. To take real card payments, replace the marked block in `resources/views/menu/index.blade.php` (search for *"Replace this block with a real gateway call"*) with a payment provider, and mark the order paid from that provider's server-side confirmation.
+
+### Live updates and sound
+
+Staff pages check with the server every 5 seconds. The Kitchen, Alerts and Payments pages refresh their lists in place, and the navigation shows live counts. A new order plays a two-note chime and a waiter call plays three short beeps, with a pop-up notice either way.
+
+The bell in the top bar turns sound on or off. Browsers only allow a page to play sound after someone has clicked it, so while the bell shows an orange dot, click anywhere on the page once. If the session ends, the page takes you back to sign in.
 
 ### Guest API
 
@@ -203,14 +247,33 @@ The QR menu talks to a small JSON API in `routes/api.php`:
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| `POST` | `/api/orders` | Place an order |
-| `GET` | `/api/orders` | List orders |
-| `GET` | `/api/orders/{order}` | Read an order |
+| `POST` | `/api/orders` | Place an order (needs the table's QR token) |
+| `GET` | `/api/orders/{order}` | Read your order |
 | `PUT` | `/api/orders/{order}/items` | Change items during the edit window |
-| `PATCH` | `/api/orders/{order}/status` | Move an order to its next status |
 | `POST` | `/api/orders/{order}/request-help` | Ask for a waiter |
 
-> **Security note:** these endpoints have no authentication, so anyone who knows the URL can list orders or change an order's status. Before a real deployment, restrict the list and status routes to signed-in staff and tie the guest routes to the table's QR token.
+Placing an order returns an `order_token`, which is sent only once. Every other call must send it back in an `X-Order-Token` header. Without it, the order doesn't exist as far as the API is concerned (404). There's no endpoint for listing orders or changing their status: that's staff work, done behind the login.
+
+---
+
+## Security
+
+What protects the system:
+
+- **Guests** can reach a table only through its QR token, and an order only through its own secret token. Order numbers can't be guessed into.
+- **Prices, totals and payment status** are always decided by the server. Whatever the page sends for them is ignored.
+- **Roles**: `admin` sees everything, and `kitchen` sees the dashboard and the kitchen board. An account with no role reaches nothing but its own profile.
+- **Every form and staff action** carries Laravel's CSRF token.
+- **Rate limits**: 10 orders a minute and 60 other guest requests a minute per device, 5 sign-ups a minute, and Laravel's standard sign-in lockout after repeated failures.
+- **Excel exports** store guest-typed text as plain text, so a name like `=HYPERLINK(...)` can't run as a formula on the manager's computer.
+- **Response headers** block the pages from being framed by other sites, stop content-type guessing and keep QR links out of referrers.
+
+Before putting it on the internet:
+
+1. In `.env`, set `APP_ENV=production` and `APP_DEBUG=false`. Debug mode shows code and settings on every error page.
+2. Serve it over **HTTPS**, and set `SESSION_SECURE_COOKIE=true` and `SESSION_ENCRYPT=true`.
+3. Once your staff accounts exist, set `APP_REGISTRATION=false` to close public sign-up.
+4. Connect a real card payment provider before accepting cards (see [Payments](#payments)).
 
 ---
 

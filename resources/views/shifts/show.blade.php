@@ -1,57 +1,61 @@
 @extends('layouts.app')
 
-@section('title', 'Shift #' . $shift->id)
+@section('title', __('Shift #') . $shift->id)
 
 @section('content')
 
     <div class="header">
         <div>
-            <h1>Shift #{{ $shift->id }}</h1>
+            <h1>{{ __('Shift #') }}{{ $shift->id }}</h1>
             <p>
-                {{ $shift->user->name ?? 'N/A' }} —
+                {{ __($shift->user->name ?? 'N/A') }} —
                 {{ $shift->opened_at->format('Y-m-d H:i') }}
-                to
-                {{ $shift->closed_at?->format('Y-m-d H:i') ?? 'Still open' }}
+                {{ __('to') }}
+                {{ __($shift->closed_at?->format('Y-m-d H:i') ?? 'Still open') }}
             </p>
         </div>
 
         <a href="{{ route('shifts.history') }}" class="back-link">
-            ← Back to History
+            ← {{ __('Back to History') }}
         </a>
         
         <a href="{{ route('shifts.export', $shift) }}" class="back-link">
-            ⬇ Export to Excel
+            ⬇ {{ __('Export to Excel') }}
         </a>
     </div>
+
+    @if (session('success'))
+        <div class="success-message">{{ session('success') }}</div>
+    @endif
 
     <div class="summary-grid">
 
         <div class="summary-card">
-            <p>Cash (System)</p>
-            <strong>{{ number_format($shift->systemCashTotal(), 2) }} EGP</strong>
+            <p>{{ __('Cash (System)') }}</p>
+            <strong>{{ number_format($shift->systemCashTotal(), 2) }} {{ __('EGP') }}</strong>
         </div>
 
         <div class="summary-card">
-            <p>Cash (Counted)</p>
-            <strong>{{ number_format($shift->counted_cash, 2) }} EGP</strong>
+            <p>{{ __('Cash (Counted)') }}</p>
+            <strong>{{ number_format($shift->counted_cash, 2) }} {{ __('EGP') }}</strong>
         </div>
 
         <div class="summary-card">
-            <p>Total Visa</p>
-            <strong>{{ number_format($shift->systemVisaTotal(), 2) }} EGP</strong>
+            <p>{{ __('Total Visa') }}</p>
+            <strong>{{ number_format($shift->systemVisaTotal(), 2) }} {{ __('EGP') }}</strong>
         </div>
 
         <div class="summary-card">
-            <p>Difference</p>
+            <p>{{ __('Difference') }}</p>
 
             @php $diff = $shift->cashDifference(); @endphp
 
             @if($diff == 0)
-                <strong class="ok">Balanced (no difference)</strong>
+                <strong class="ok">{{ __('Balanced (no difference)') }}</strong>
             @elseif($diff > 0)
-                <strong class="surplus">Surplus {{ number_format($diff, 2) }} EGP</strong>
+                <strong class="surplus">{{ __('Surplus') }} {{ number_format($diff, 2) }} {{ __('EGP') }}</strong>
             @else
-                <strong class="shortage">Shortage {{ number_format(abs($diff), 2) }} EGP</strong>
+                <strong class="shortage">{{ __('Shortage') }} {{ number_format(abs($diff), 2) }} {{ __('EGP') }}</strong>
             @endif
         </div>
 
@@ -59,33 +63,33 @@
 
     @if($shift->notes)
         <div class="notes-box">
-            <strong>Notes:</strong> {{ $shift->notes }}
+            <strong>{{ __('Notes') }}:</strong> {{ $shift->notes }}
         </div>
     @endif
 
-    <h2 class="section-title">Shift Orders ({{ $shift->orders->count() }})</h2>
+    <h2 class="section-title">{{ __('Shift Orders') }} ({{ $shift->orders->count() }})</h2>
 
     <div class="orders-table">
         <table>
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Table</th>
-                    <th>Payment Method</th>
-                    <th>Payment Status</th>
-                    <th>Status</th>
-                    <th>Total</th>
+                    <th>{{ __('Table') }}</th>
+                    <th>{{ __('Payment Method') }}</th>
+                    <th>{{ __('Payment Status') }}</th>
+                    <th>{{ __('Status') }}</th>
+                    <th>{{ __('Total') }}</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($shift->orders as $order)
                     <tr>
                         <td>#{{ $order->id }}</td>
-                        <td>{{ $order->table->number ?? 'N/A' }}</td>
-                        <td>{{ $order->payment_method === 'card' ? 'Visa' : 'Cash' }}</td>
-                        <td>{{ ucfirst($order->payment_status) }}</td>
-                        <td>{{ ucfirst($order->status) }}</td>
-                        <td>{{ number_format($order->total, 2) }} EGP</td>
+                        <td>{{ __($order->table->number ?? 'N/A') }}</td>
+                        <td>{{ __($order->payment_method === 'card' ? 'Visa' : 'Cash') }}</td>
+                        <td>{{ __(ucfirst($order->payment_status)) }}</td>
+                        <td>{{ __(ucfirst($order->status)) }}</td>
+                        <td>{{ number_format($order->total, 2) }} {{ __('EGP') }}</td>
                     </tr>
                 @endforeach
             </tbody>

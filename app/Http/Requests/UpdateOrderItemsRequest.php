@@ -14,9 +14,9 @@ class UpdateOrderItemsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'integer', 'exists:products,id'],
-            'items.*.quantity' => ['required', 'integer', 'min:1'],
+            'items' => ['required', 'array', 'min:1', 'max:30'],
+            'items.*.product_id' => ['required', 'integer', 'min:1'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:50'],
             'items.*.notes' => ['nullable', 'string', 'max:255'],
         ];
     }
