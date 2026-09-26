@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Attendance;
 use App\Models\Order;
 use App\Models\Shift;
 use App\Models\User;
@@ -28,11 +29,25 @@ class ShiftService
                 throw new InvalidArgumentException(__('A shift is already open. Close it before starting a new one.'));
             }
 
-            return Shift::create([
+            $shift = Shift::create([
                 'user_id' => $user->id,
                 'status' => 'open',
                 'opened_at' => now(),
             ]);
+
+            // Opening a shift is being at work. Marked only if nobody has
+            // already decided this person's day — a manager's mark wins.
+            Attendance::firstOrCreate(
+                ['user_id' => $user->id, 'day' => today()->toDateString()],
+                [
+                    'status' => Attendance::PRESENT,
+                    'arrived_at' => now(),
+                    'recorded_by' => $user->id,
+                    'note' => __('Opened a shift'),
+                ]
+            );
+
+            return $shift;
         });
     }
 

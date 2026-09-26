@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AskController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CashPaymentController;
 use App\Http\Controllers\CounterOrderController;
 use App\Http\Controllers\DeliveryController;
@@ -180,6 +182,9 @@ Route::middleware(['auth', 'role:super-admin|admin'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+    // The question box. Reads only, and answers from a fixed set of queries.
+    Route::get('/ask', AskController::class)->middleware('throttle:60,1')->name('ask');
+
     // Tables and their QR codes
     Route::resource('tables', RestaurantTableController::class)->except(['show']);
     Route::get('/tables/{table}/qr', [QrCodeController::class, 'show'])->name('tables.qr');
@@ -208,6 +213,11 @@ Route::middleware(['auth', 'role:super-admin|admin'])->group(function () {
     Route::patch('/staff/employees/{user}', [EmployeeController::class, 'update'])->whereNumber('user')->name('employees.update');
     Route::post('/staff/employees/{user}/entries', [EmployeeController::class, 'storeEntry'])->whereNumber('user')->name('employees.entries.store');
     Route::delete('/staff/entries/{entry}', [EmployeeController::class, 'destroyEntry'])->whereNumber('entry')->name('employees.entries.destroy');
+    // Who worked, and who did not
+    Route::get('/staff/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('/staff/attendance/{user}', [AttendanceController::class, 'mark'])->whereNumber('user')->name('attendance.mark');
+    Route::delete('/staff/attendance/{user}', [AttendanceController::class, 'clear'])->whereNumber('user')->name('attendance.clear');
+
     Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
     Route::patch('/staff/{user}', [StaffController::class, 'updateRole'])->whereNumber('user')->name('staff.role');
     Route::delete('/staff/{user}', [StaffController::class, 'destroy'])->whereNumber('user')->name('staff.destroy');

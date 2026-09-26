@@ -18,6 +18,7 @@
     <nav class="kitchen-tabs">
         <a href="{{ route('staff.index') }}" class="{{ request()->routeIs('staff.index') ? 'is-on' : '' }}">{{ __('Staff & Access') }}</a>
         <a href="{{ route('employees.index') }}" class="{{ request()->routeIs('employees.*') ? 'is-on' : '' }}">{{ __('Employee Records') }}</a>
+        <a href="{{ route('attendance.index') }}" class="{{ request()->routeIs('attendance.*') ? 'is-on' : '' }}">{{ __('Attendance') }}</a>
     </nav>
 
     @if (session('success'))

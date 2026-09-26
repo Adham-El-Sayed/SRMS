@@ -36,6 +36,21 @@ class User extends Authenticatable
         return $this->hasOne(EmployeeRecord::class);
     }
 
+    public function attendance()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    /** Days marked absent in a month, which is what a manager asks about. */
+    public function absencesIn($month): int
+    {
+        return $this->attendance()
+            ->where('status', Attendance::ABSENT)
+            ->whereYear('day', $month->year)
+            ->whereMonth('day', $month->month)
+            ->count();
+    }
+
     public function payrollEntries()
     {
         return $this->hasMany(PayrollEntry::class);
